@@ -1,15 +1,15 @@
-# React + Vite
+# NickPocket Edu - Interactive Classroom System
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+[![Deploy to GitHub Pages](https://github.com/nlhsueh/nickedupocket/actions/workflows/deploy.yml/badge.svg)](https://github.com/nlhsueh/nickedupocket/actions/workflows/deploy.yml)
 
-Currently, two official plugins are available:
+An interactive classroom tool suite containing CCQ (Concept Check Questions), Poll, Ordering, and Game templates built as a client-side React single-page app and synchronized in real-time using WebSockets MQTT.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+This project is deployed to GitHub Pages at: [https://nlhsueh.github.io/nickedupocket/](https://nlhsueh.github.io/nickedupocket/)
+
 
 ## Expanding the Oxlint configuration
 

@@ -140,25 +140,33 @@ export default function StudentSession({ roomCode, onLeave }) {
   const selectOptionValue = (letter) => {
     if (hasSubmitted || roomState !== 'answering') return;
     setSelectedOption(letter);
-    
+  };
+
+  const submitChoiceValue = () => {
+    if (hasSubmitted || roomState !== 'answering' || !selectedOption) return;
+    setSubmitting(true);
     const now = Date.now();
     setSubmitTime(now);
-    setSubmitting(true);
 
-    const success = mqttService.publishResponse({
-      event: 'submit_answer',
-      studentName: nickname,
-      answer: letter,
-      timestamp: now,
-      questionIndex: activeQuestion.index
-    });
+    try {
+      const success = mqttService.publishResponse({
+        event: 'submit_answer',
+        studentName: nickname,
+        answer: selectedOption,
+        timestamp: now,
+        questionIndex: activeQuestion.index
+      });
 
-    if (success) {
-      setHasSubmitted(true);
+      if (success) {
+        setHasSubmitted(true);
+      } else {
+        alert('Failed to send answer. Check your connection.');
+      }
+    } catch (e) {
+      console.error('[MQTT] Publish error:', e);
+      alert('Connection error. Please try again.');
+    } finally {
       setSubmitting(false);
-    } else {
-      setSubmitting(false);
-      alert('Failed to send answer. Check your connection.');
     }
   };
 
@@ -401,23 +409,36 @@ export default function StudentSession({ roomCode, onLeave }) {
                 </div>
               ) : (
                 /* Standard Multiple Choice Buttons (A, B, C, D) */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {activeQuestion.options.map((opt, idx) => {
-                    const letters = ['A', 'B', 'C', 'D'];
-                    const isSelected = selectedOption === letters[idx];
-                    return (
-                      <button 
-                        key={idx}
-                        className={`option-btn ${isSelected ? 'selected' : ''}`}
-                        onClick={() => selectOptionValue(letters[idx])}
-                        disabled={submitting}
-                      >
-                        <span className="option-letter">{letters[idx]}</span>
-                        <span style={{ fontSize: '1rem' }}>{opt}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                <div>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                     {activeQuestion.options.map((opt, idx) => {
+                       const letters = ['A', 'B', 'C', 'D'];
+                       const isSelected = selectedOption === letters[idx];
+                       return (
+                         <button 
+                           key={idx}
+                           type="button"
+                           className={`option-btn ${isSelected ? 'selected' : ''}`}
+                           onClick={() => selectOptionValue(letters[idx])}
+                           disabled={submitting}
+                         >
+                           <span className="option-letter">{letters[idx]}</span>
+                           <span style={{ fontSize: '1rem' }}>{opt}</span>
+                         </button>
+                       );
+                     })}
+                   </div>
+
+                   <button
+                     type="button"
+                     className="btn btn-primary"
+                     style={{ width: '100%', padding: '1rem' }}
+                     onClick={submitChoiceValue}
+                     disabled={submitting || !selectedOption}
+                   >
+                     Submit Answer <CornerDownRight size={18} />
+                   </button>
+                 </div>
               )}
             </div>
 

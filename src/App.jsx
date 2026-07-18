@@ -14,30 +14,36 @@ const parseHash = (hash) => {
   
   // Student view: /student/ROOMCODE
   if (parts[0] === 'student' && parts[1]) {
-    return { path: 'student', roomCode: parts[1].toUpperCase() };
+    return { path: 'student', roomCode: parts[1] };
   }
   
-  // Teacher session view: /teacher/ROOMCODE/courseId/chapterId
-  if (parts[0] === 'teacher' && parts[1] && parts[2] && parts[3]) {
-    return { 
-      path: 'teacher', 
-      roomCode: parts[1].toUpperCase(), 
-      courseId: parts[2],
-      chapterId: parts[3]
-    };
+  // Teacher session view: /teacher/ROOMCODE
+  if (parts[0] === 'teacher' && parts[1]) {
+    return { path: 'teacher', roomCode: parts[1] };
   }
   
   return { path: 'dashboard' };
 };
 
-// Room Code Generator
-const generateRoomCode = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 5; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+// Helper to lookup course/chapter/activity from a given room code (case-insensitive)
+const findActivityByRoomCode = (courses, roomCode) => {
+  if (!roomCode) return null;
+  const cleanCode = roomCode.toLowerCase().trim();
+  
+  for (const course of courses) {
+    if (!course.chapters) continue;
+    for (const chap of course.chapters) {
+      if (!chap.activities) continue;
+      for (const act of chap.activities) {
+        const actId = act.id.toLowerCase();
+        // Match exact Activity ID OR check if roomCode ends with -activityId (ignoring teacher prefix)
+        if (cleanCode === actId || cleanCode.endsWith(`-${actId}`)) {
+          return { course, chapter: chap, activity: act };
+        }
+      }
+    }
   }
-  return code;
+  return null;
 };
 
 export default function App() {
@@ -90,12 +96,10 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Combine default and custom courses
   const allCourses = [...defaultCourses, ...customCourses];
 
-  const handleLaunchChapter = (courseId, chapterId) => {
-    const code = generateRoomCode();
-    window.location.hash = `#/teacher/${code}/${courseId}/${chapterId}`;
+  const handleLaunchActivity = (roomCode) => {
+    window.location.hash = `#/teacher/${roomCode}`;
   };
 
   const handleBackToDashboard = () => {
@@ -104,26 +108,26 @@ export default function App() {
 
   // Route views
   if (route.path === 'teacher') {
-    const course = allCourses.find(c => c.id === route.courseId);
-    const chapter = course?.chapters?.find(ch => ch.id === route.chapterId);
+    const match = findActivityByRoomCode(allCourses, route.roomCode);
     
-    if (!course || !chapter) {
+    if (!match) {
       return (
         <div className="container" style={{ textAlign: 'center', marginTop: '5rem' }}>
-          <h2>Course or Chapter Not Found</h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>The requested session template could not be loaded.</p>
+          <h2>Activity Not Found</h2>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+            The room code <strong>{route.roomCode}</strong> does not match any parsed markdown activity ID.
+          </p>
           <button className="btn btn-primary" style={{ marginTop: '1.5rem' }} onClick={handleBackToDashboard}>
             Go Back to Dashboard
           </button>
         </div>
       );
     }
-    
-    // We pass the chapter as the "activity" object. In the session, the activity's questions are executed.
-    // We add the course title for branding/header display inside the session.
+
+    const { course, chapter, activity } = match;
     const sessionActivity = {
-      ...chapter,
-      title: `${course.courseTitle} - ${chapter.title}`,
+      ...activity,
+      title: `${course.courseTitle} - ${activity.title}`,
       courseId: course.id
     };
 
@@ -150,7 +154,7 @@ export default function App() {
       courses={allCourses} 
       customCourses={customCourses}
       setCustomCourses={setCustomCourses} 
-      onLaunch={handleLaunchChapter} 
+      onLaunch={handleLaunchActivity} 
     />
   );
 }

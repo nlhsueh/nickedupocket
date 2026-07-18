@@ -1,46 +1,126 @@
-// Markdown Course Parser for NickPocket Edu
+// Markdown Course Parser for NickPocket Edu supporting Course -> Chapter -> Activity -> Question hierarchy
 
 export function parseMarkdownCourse(mdText, fileId = '') {
   const lines = mdText.split(/\r?\n/);
   let courseTitle = 'Unnamed Course';
   let chapters = [];
   let currentChapter = null;
+  let currentActivity = null;
   let currentQuestion = null;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
 
-    // Course title: # Title
+    // 1. Course title: # Title
     if (line.startsWith('# ')) {
       courseTitle = line.substring(2).trim();
       continue;
     }
 
-    // Chapter: ## Title
+    // 2. Chapter: ## Title
     if (line.startsWith('## ')) {
       currentChapter = {
         id: `chap_${fileId}_${Date.now()}_${chapters.length}`,
         title: line.substring(3).trim(),
-        questions: []
+        activities: []
       };
       chapters.push(currentChapter);
+      currentActivity = null;
       currentQuestion = null;
       continue;
     }
 
-    // Question: ### [Type] Text
-    if (line.startsWith('### ')) {
+    // Ensure we have a chapter if content appears before any "## "
+    const ensureChapter = () => {
       if (!currentChapter) {
         currentChapter = {
           id: `chap_${fileId}_default`,
           title: 'General',
-          questions: []
+          activities: []
         };
         chapters.push(currentChapter);
       }
+    };
 
-      const qTextRaw = line.substring(4).trim();
+    // 3. Activity: ### [Activity: ID] Title or legacy Question ### [Type] Question
+    if (line.startsWith('### ')) {
+      ensureChapter();
+      const rawText = line.substring(4).trim();
+      
+      // Check if it specifies [Activity: ID]
+      const activityMatch = rawText.match(/^\[Activity:\s*([^\]]+)\]/i);
+      
+      if (activityMatch) {
+        const actId = activityMatch[1].trim();
+        const actTitle = rawText.substring(activityMatch[0].length).trim();
+        
+        currentActivity = {
+          id: actId,
+          title: actTitle,
+          questions: []
+        };
+        currentChapter.activities.push(currentActivity);
+        currentQuestion = null;
+      } else {
+        // Legacy Support: Treating "### [Type] Question" as an activity containing a single question
+        const typeMatch = rawText.match(/^\[(CCQ|Poll|Ordering|Game)\]/i);
+        if (typeMatch) {
+          const qType = typeMatch[1].toLowerCase();
+          const qText = rawText.substring(typeMatch[0].length).trim();
+          
+          // Generate an Activity ID from the title/text slug
+          const actId = `act_${fileId}_${qType}_${Date.now()}_${currentChapter.activities.length}`;
+          
+          currentActivity = {
+            id: actId,
+            title: qText,
+            questions: []
+          };
+          
+          currentQuestion = {
+            id: `q_${Date.now()}_0`,
+            type: qType,
+            questionText: qText,
+            options: qType === 'ccq' ? ['True', 'False', '50-50'] : [],
+            correctAnswer: '',
+            items: [],
+            timeLimit: qType === 'game' ? 15 : 0
+          };
+          
+          currentActivity.questions.push(currentQuestion);
+          currentChapter.activities.push(currentActivity);
+        } else {
+          // General level-3 heading with no type tags (treated as an activity name)
+          const actId = `act_${fileId}_${Date.now()}_${currentChapter.activities.length}`;
+          currentActivity = {
+            id: actId,
+            title: rawText,
+            questions: []
+          };
+          currentChapter.activities.push(currentActivity);
+          currentQuestion = null;
+        }
+      }
+      continue;
+    }
+
+    // 4. Question: #### [Type] Text
+    if (line.startsWith('#### ')) {
+      ensureChapter();
+      
+      // Ensure we have an active Activity to attach the question to
+      if (!currentActivity) {
+        const actId = `act_${fileId}_auto_${Date.now()}`;
+        currentActivity = {
+          id: actId,
+          title: 'Activity',
+          questions: []
+        };
+        currentChapter.activities.push(currentActivity);
+      }
+
+      const qTextRaw = line.substring(5).trim();
       const typeMatch = qTextRaw.match(/^\[(CCQ|Poll|Ordering|Game)\]/i);
 
       if (typeMatch) {
@@ -48,28 +128,22 @@ export function parseMarkdownCourse(mdText, fileId = '') {
         const qText = qTextRaw.substring(typeMatch[0].length).trim();
 
         currentQuestion = {
-          id: `q_${Date.now()}_${currentChapter.questions.length}`,
+          id: `q_${Date.now()}_${currentActivity.questions.length}`,
           type: qType,
           questionText: qText,
-          options: [],
+          options: qType === 'ccq' ? ['True', 'False', '50-50'] : [],
           correctAnswer: '',
           items: [],
           timeLimit: qType === 'game' ? 15 : 0
         };
 
-        if (qType === 'ccq') {
-          // CCQs always have exactly: True, False, 50-50
-          currentQuestion.options = ['True', 'False', '50-50'];
-        }
-
-        currentChapter.questions.push(currentQuestion);
+        currentActivity.questions.push(currentQuestion);
       }
       continue;
     }
 
-    // Parse options, keys, items under active question
+    // 5. Question properties (options, answers, timers)
     if (currentQuestion) {
-      // 1. Time Limit: Time: XX
       if (line.toLowerCase().startsWith('time:')) {
         const sec = parseInt(line.substring(5).trim());
         if (!isNaN(sec)) {
@@ -78,11 +152,9 @@ export function parseMarkdownCourse(mdText, fileId = '') {
         continue;
       }
 
-      // 2. Correct Answer: Correct: XX
       if (line.toLowerCase().startsWith('correct:')) {
         const val = line.substring(8).trim();
         if (currentQuestion.type === 'ccq') {
-          // Map CCQ answers directly to letter index: True -> A, False -> B, 50-50 -> C
           if (/^true/i.test(val)) {
             currentQuestion.correctAnswer = 'A';
           } else if (/^false/i.test(val)) {
@@ -93,23 +165,19 @@ export function parseMarkdownCourse(mdText, fileId = '') {
             currentQuestion.correctAnswer = val.toUpperCase();
           }
         } else {
-          // For Game, check if correct matches option text or option index
           if (['A', 'B', 'C', 'D'].includes(val.toUpperCase())) {
             currentQuestion.correctAnswer = val.toUpperCase();
           } else {
-            // Save raw text for mapping after we parse all options
             currentQuestion.rawCorrectText = val;
           }
         }
         continue;
       }
 
-      // 3. Option lists: - Option Text or - Option Text (Correct)
       if (line.startsWith('- ') || line.startsWith('* ')) {
         const optionText = line.substring(2).trim();
         
         if (currentQuestion.type === 'game' || currentQuestion.type === 'poll') {
-          // Check for trailing (Correct) or asterisks indicating answer
           const isCorrect = optionText.toLowerCase().endsWith('(correct)') || 
                             optionText.endsWith('*') || 
                             optionText.toLowerCase().endsWith('(correct answer)');
@@ -133,7 +201,6 @@ export function parseMarkdownCourse(mdText, fileId = '') {
         continue;
       }
 
-      // 4. Ordering items: 1. Item Text
       if (/^\d+\.\s/.test(line)) {
         const itemText = line.replace(/^\d+\.\s/, '').trim();
         if (currentQuestion.type === 'ordering') {
@@ -144,18 +211,20 @@ export function parseMarkdownCourse(mdText, fileId = '') {
     }
   }
 
-  // Post-processing for matching rawCorrectText to option index
+  // Post-processing for matching Game text correct answers
   chapters.forEach(chap => {
-    chap.questions.forEach(q => {
-      if (q.type === 'game' && q.rawCorrectText && !q.correctAnswer) {
-        const matchedIdx = q.options.findIndex(opt => 
-          opt.toLowerCase().trim() === q.rawCorrectText.toLowerCase().trim()
-        );
-        if (matchedIdx !== -1) {
-          q.correctAnswer = ['A', 'B', 'C', 'D'][matchedIdx];
+    chap.activities.forEach(act => {
+      act.questions.forEach(q => {
+        if (q.type === 'game' && q.rawCorrectText && !q.correctAnswer) {
+          const matchedIdx = q.options.findIndex(opt => 
+            opt.toLowerCase().trim() === q.rawCorrectText.toLowerCase().trim()
+          );
+          if (matchedIdx !== -1) {
+            q.correctAnswer = ['A', 'B', 'C', 'D'][matchedIdx];
+          }
+          delete q.rawCorrectText;
         }
-        delete q.rawCorrectText;
-      }
+      });
     });
   });
 

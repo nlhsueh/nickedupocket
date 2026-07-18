@@ -38,7 +38,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
     // Initial broadcast of lobby state
     setTimeout(() => {
-      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: activity.type });
+      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: 'chapter' });
     }, 1500);
 
     return () => {
@@ -84,7 +84,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
   const broadcastLobbyState = () => {
     if (sessionStatus === 'lobby') {
-      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: activity.type });
+      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: 'chapter' });
     } else if (sessionStatus === 'active') {
       broadcastActiveQuestion(currentQIndex);
     } else if (sessionStatus === 'results') {
@@ -102,7 +102,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     broadcastActiveQuestion(currentQIndex);
 
     // Set timer if Game type
-    if (activity.type === 'game' && currentQuestion.timeLimit) {
+    if (currentQuestion.type === 'game' && currentQuestion.timeLimit) {
       setTimeLeft(currentQuestion.timeLimit);
       if (timerRef.current) clearInterval(timerRef.current);
       
@@ -121,7 +121,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
   const broadcastActiveQuestion = (idx) => {
     const q = activity.questions[idx];
-    if (activity.type === 'ordering') {
+    if (q.type === 'ordering') {
       broadcastState({
         event: 'question_start',
         type: 'ordering',
@@ -132,7 +132,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     } else {
       broadcastState({
         event: 'question_start',
-        type: activity.type,
+        type: q.type,
         questionIndex: idx,
         questionText: q.questionText,
         options: q.options,
@@ -147,7 +147,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     broadcastState({ event: 'question_stop' });
 
     // Calculate game scores if type is Game
-    if (activity.type === 'game') {
+    if (currentQuestion.type === 'game') {
       calculateGameScores();
     }
   };
@@ -346,8 +346,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
           <div className="glass-card animate-slide-up" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '2rem' }}>
             <div>
               <div className="flex-between" style={{ marginBottom: '1rem' }}>
-                <span className="badge badge-indigo">Question {currentQIndex + 1} of {activity.questions.length} ({activity.type.toUpperCase()})</span>
-                {activity.type === 'game' && (
+                <span className="badge badge-indigo">Question {currentQIndex + 1} of {activity.questions.length} ({currentQuestion.type.toUpperCase()})</span>
+                {currentQuestion.type === 'game' && (
                   <span className="badge badge-warning" style={{ fontSize: '1rem', padding: '0.4rem 0.8rem' }}>
                     <Hourglass size={16} className="animate-spin" /> {timeLeft}s Left
                   </span>
@@ -359,7 +359,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               </h1>
 
               {/* Render Question Choices (static visual display for students/teacher screen) */}
-              {activity.type !== 'ordering' && currentQuestion.options && (
+              {currentQuestion.type !== 'ordering' && currentQuestion.options && (
                 <div className="grid-2" style={{ gap: '1rem' }}>
                   {currentQuestion.options.map((opt, idx) => {
                     const letters = ['A', 'B', 'C', 'D'];
@@ -374,7 +374,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               )}
 
               {/* Ordering static visual list */}
-              {activity.type === 'ordering' && currentQuestion.items && (
+              {currentQuestion.type === 'ordering' && currentQuestion.items && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '500px' }}>
                   {currentQuestion.items.map((item, idx) => (
                     <div key={idx} className="glass-card" style={{ padding: '0.75rem 1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -424,7 +424,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Live Graph</h3>
                 
                 {/* CCQ or Poll bar charts */}
-                {(activity.type === 'ccq' || activity.type === 'poll') && (() => {
+                {(currentQuestion.type === 'ccq' || currentQuestion.type === 'poll') && (() => {
                   const { stats, total } = getMultipleChoiceStats();
                   const letters = ['A', 'B', 'C', 'D'];
                   
@@ -433,7 +433,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                       {letters.map((letter, idx) => {
                         const count = stats[letter] || 0;
                         const percentage = total > 0 ? (count / total) * 100 : 0;
-                        const isCorrect = activity.type === 'ccq' && currentQuestion.correctAnswer === letter;
+                        const isCorrect = currentQuestion.type === 'ccq' && currentQuestion.correctAnswer === letter;
                         
                         return (
                           <div key={letter} className="chart-bar-container">
@@ -463,7 +463,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 })()}
 
                 {/* Ordering Stats */}
-                {activity.type === 'ordering' && (() => {
+                {currentQuestion.type === 'ordering' && (() => {
                   const { correctCount, total, averages } = getOrderingStats();
                   const pct = total > 0 ? (correctCount / total) * 100 : 0;
                   
@@ -493,7 +493,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 })()}
 
                 {/* Game scoreboard for current question */}
-                {activity.type === 'game' && (
+                {currentQuestion.type === 'game' && (
                   <div>
                     <div className="glass-card flex-between" style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.05)', borderColor: 'rgba(245, 158, 11, 0.2)', marginBottom: '1.5rem' }}>
                       <div>
@@ -530,14 +530,14 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                     let badgeClass = 'badge-danger';
                     
                     if (submission && submission.questionIndex === currentQIndex) {
-                      if (activity.type === 'ccq' || activity.type === 'game') {
+                      if (currentQuestion.type === 'ccq' || currentQuestion.type === 'game') {
                         const isCorrect = submission.answer === currentQuestion.correctAnswer;
                         statusLabel = `Answered ${submission.answer} (${isCorrect ? 'Correct' : 'Incorrect'})`;
                         badgeClass = isCorrect ? 'badge-success' : 'badge-danger';
-                      } else if (activity.type === 'poll') {
+                      } else if (currentQuestion.type === 'poll') {
                         statusLabel = `Answered ${submission.answer}`;
                         badgeClass = 'badge-indigo';
-                      } else if (activity.type === 'ordering') {
+                      } else if (currentQuestion.type === 'ordering') {
                         const isCorrect = Array.isArray(submission.answer) && submission.answer.every((val, index) => val === currentQuestion.items[index]);
                         statusLabel = isCorrect ? 'Sorted Correctly' : 'Sorted Incorrectly';
                         badgeClass = isCorrect ? 'badge-success' : 'badge-danger';
@@ -563,7 +563,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
             <span className="badge badge-success" style={{ marginBottom: '1rem' }}>Finished</span>
             <h1 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Activity Completed!</h1>
             
-            {activity.type === 'game' ? (
+            {activity.questions.some(q => q.type === 'game') ? (
               /* Display 3D Leaderboard Podium for Games */
               <div style={{ width: '100%', maxWidth: '600px' }}>
                 <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>CS Trivia Champions:</h3>

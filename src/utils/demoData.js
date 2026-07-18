@@ -1,135 +1,73 @@
-// Default demo activities for CCQ, Poll, Ordering, and Game
+// Default fallback raw markdown data for Software Engineering and Software Testing courses
 
-export const DEFAULT_ACTIVITIES = [
-  {
-    id: 'demo-ccq-1',
-    type: 'ccq',
-    title: 'Software Engineering Concepts (CCQ)',
-    description: 'Quick check on basic SE principles.',
-    questions: [
-      {
-        id: 'q-ccq-1',
-        questionText: 'Which of the following describes "High Cohesion" in software architecture?',
-        options: [
-          'A module depends heavily on many other modules in the system.',
-          'Elements inside a module belong together and perform a single well-defined task.',
-          'A module has multiple unrelated responsibilities.',
-          'The module is easily integrated with third-party APIs.'
-        ],
-        correctAnswer: 'B'
-      },
-      {
-        id: 'q-ccq-2',
-        questionText: 'What is the main purpose of Refactoring?',
-        options: [
-          'Adding new features to an existing codebase.',
-          'Optimizing code execution performance during runtime.',
-          'Improving internal code structure without changing external behavior.',
-          'Fixing critical security bugs before release.'
-        ],
-        correctAnswer: 'C'
-      }
-    ]
-  },
-  {
-    id: 'demo-poll-1',
-    type: 'poll',
-    title: 'Framework Preferences (Poll)',
-    description: 'Class preference survey.',
-    questions: [
-      {
-        id: 'q-poll-1',
-        questionText: 'Which frontend library/framework do you use most frequently?',
-        options: [
-          'React',
-          'Vue.js',
-          'Angular',
-          'Svelte / Qwik / Solid',
-          'Pure HTML / CSS / Vanilla JS'
-        ]
-      },
-      {
-        id: 'q-poll-2',
-        questionText: 'How comfortable are you with asynchronous programming in JavaScript?',
-        options: [
-          'Exceedingly comfortable (I use async/await and Promises daily)',
-          'Moderately comfortable (I get the concept, but sometimes struggle with error handling)',
-          'Not comfortable (I prefer synchronous code and simple callbacks)'
-        ]
-      }
-    ]
-  },
-  {
-    id: 'demo-ordering-1',
-    type: 'ordering',
-    title: 'Development Lifecycle (Ordering)',
-    description: 'Arrange items in logical progression.',
-    questions: [
-      {
-        id: 'q-order-1',
-        questionText: 'Sort the Waterfall model lifecycle phases in the standard order (first to last):',
-        items: [
-          'Requirements Analysis',
-          'System Design',
-          'Implementation & Coding',
-          'Integration & Testing',
-          'Operations & Maintenance'
-        ]
-      },
-      {
-        id: 'q-order-2',
-        questionText: 'Sort the levels of software testing from lowest to highest granularity:',
-        items: [
-          'Unit Testing',
-          'Integration Testing',
-          'System Testing',
-          'Acceptance Testing'
-        ]
-      }
-    ]
-  },
-  {
-    id: 'demo-game-1',
-    type: 'game',
-    title: 'Computer Science Trivia (Real-time Game)',
-    description: 'A fast-paced competitive trivia game with speed scoring!',
-    questions: [
-      {
-        id: 'q-game-1',
-        questionText: 'Who is widely considered the first computer programmer?',
-        options: [
-          'Alan Turing',
-          'Ada Lovelace',
-          'Grace Hopper',
-          'Charles Babbage'
-        ],
-        correctAnswer: 'B',
-        timeLimit: 15
-      },
-      {
-        id: 'q-game-2',
-        questionText: 'Which of the following data structures operates on a Last-In, First-Out (LIFO) basis?',
-        options: [
-          'Queue',
-          'Stack',
-          'Binary Tree',
-          'Linked List'
-        ],
-        correctAnswer: 'B',
-        timeLimit: 15
-      },
-      {
-        id: 'q-game-3',
-        questionText: 'What is the time complexity of searching a value in a balanced Binary Search Tree (BST) in the average case?',
-        options: [
-          'O(1)',
-          'O(n)',
-          'O(log n)',
-          'O(n log n)'
-        ],
-        correctAnswer: 'C',
-        timeLimit: 20
-      }
-    ]
-  }
-];
+export const DEFAULT_SE_MD = `# Software Engineering
+
+## Chapter 1: Software Process & Lifecycle
+### [CCQ] The Waterfall model is highly suitable for projects with unstable, changing requirements.
+Correct: False
+
+### [Poll] Which development process does your team or class currently use?
+- Waterfall
+- Scrum / Agile
+- Kanban
+- Devops / CI-CD
+- None / No structured process
+
+### [Ordering] Sort the standard Software Engineering phases in chronological order:
+1. Requirements Elicitation
+2. System & Architecture Design
+3. Coding and Unit Testing
+4. Integration & System Testing
+5. Deployment & Maintenance
+
+### [Game] Which of the following is NOT an Agile Manifesto value?
+- Individuals and interactions over processes and tools
+- Working software over comprehensive documentation
+- Following a plan over responding to change (Correct)
+- Customer collaboration over contract negotiation
+Time: 15
+
+## Chapter 2: Design Patterns
+### [CCQ] The Singleton pattern ensures a class has only one instance and provides a global point of access to it.
+Correct: True
+
+### [Game] Which design pattern is used to decouple an abstraction from its implementation so that the two can vary independently?
+- Adapter
+- Bridge (Correct)
+- Decorator
+- Proxy
+Time: 20
+`;
+
+export const DEFAULT_ST_MD = `# Software Testing
+
+## Chapter 1: Introduction to Testing
+### [CCQ] Software testing can prove the absence of bugs in a system.
+Correct: False
+
+### [Ordering] Sort the testing lifecycle steps in order:
+1. Requirements Analysis
+2. Test Planning
+3. Test Case Design
+4. Test Environment Setup
+5. Test Execution
+6. Test Cycle Closure
+
+### [Game] What is the difference between Verification and Validation?
+- Verification is "Are we building the product right?", Validation is "Are we building the right product?" (Correct)
+- Verification is dynamic testing, Validation is static testing
+- Verification is done by developers, Validation is done by QA engineers
+- Verification is unit testing, Validation is system testing
+Time: 20
+
+## Chapter 2: Black Box vs. White Box Testing
+### [CCQ] Boundary Value Analysis is a white-box testing technique.
+Correct: False
+
+### [Game] Which of the following coverage metrics is typically used in White-Box testing?
+- Statement Coverage (Correct)
+- Equivalence Class Coverage
+- Boundary Value Coverage
+- Use Case Coverage
+Time: 15
+`;

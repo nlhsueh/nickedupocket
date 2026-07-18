@@ -1,462 +1,362 @@
 import React, { useState } from 'react';
 import { 
-  Play, Plus, Trash2, Edit2, Download, Upload, RotateCcw, 
-  FileText, BarChart2, ListOrdered, Gamepad2, Check, X, HelpCircle, Save 
+  Play, Book, FileText, ChevronRight, ChevronLeft, Trash2, 
+  Upload, HelpCircle, BarChart2, ListOrdered, Gamepad2, AlertCircle, RefreshCw
 } from 'lucide-react';
-import { DEFAULT_ACTIVITIES } from '../utils/demoData';
+import { parseMarkdownCourse } from '../utils/mdParser';
 
-export default function TeacherDashboard({ activities, setActivities, onLaunch }) {
-  const [editingActivity, setEditingActivity] = useState(null);
-  const [filterType, setFilterType] = useState('all');
+export default function TeacherDashboard({ courses, customCourses, setCustomCourses, onLaunch }) {
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [selectedChapterId, setSelectedChapterId] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
 
-  // Load defaults if empty
-  const resetToDefaults = () => {
-    if (window.confirm('Are you sure you want to reset to default activities? All custom questions will be overwritten.')) {
-      setActivities(DEFAULT_ACTIVITIES);
-      localStorage.setItem('nickpocket_activities', JSON.stringify(DEFAULT_ACTIVITIES));
-    }
-  };
+  // Find currently selected course & chapter
+  const currentCourse = courses.find(c => c.id === selectedCourseId);
+  const currentChapter = currentCourse?.chapters?.find(ch => ch.id === selectedChapterId);
 
-  // Delete activity
-  const deleteActivity = (id) => {
-    if (window.confirm('Delete this activity?')) {
-      const updated = activities.filter(a => a.id !== id);
-      setActivities(updated);
-      localStorage.setItem('nickpocket_activities', JSON.stringify(updated));
-    }
-  };
-
-  // Export to JSON
-  const exportActivities = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activities, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "nickpocket_activities.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
-
-  // Import from JSON
-  const handleImport = (event) => {
-    const file = event.target.files[0];
+  // Markdown uploader handlers
+  const handleMarkdownUpload = (file) => {
     if (!file) return;
+    
+    // Check extension
+    if (!file.name.endsWith('.md') && !file.name.endsWith('.markdown')) {
+      alert('Please upload a standard Markdown (.md) file.');
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const imported = JSON.parse(e.target.result);
-        if (Array.isArray(imported)) {
-          // Basic validation
-          const isValid = imported.every(item => item.id && item.type && item.title && Array.isArray(item.questions));
-          if (isValid) {
-            const merged = [...imported, ...activities.filter(a => !imported.some(imp => imp.id === a.id))];
-            setActivities(merged);
-            localStorage.setItem('nickpocket_activities', JSON.stringify(merged));
-            alert('Activities imported successfully!');
-          } else {
-            alert('Invalid file format. Make sure the JSON represents an array of valid activities.');
-          }
-        } else {
-          alert('Invalid JSON structure. Must be an array.');
+        const text = e.target.result;
+        const fileId = `custom_${Date.now()}`;
+        const parsedCourse = parseMarkdownCourse(text, fileId);
+        
+        if (parsedCourse.chapters.length === 0) {
+          alert('No chapters (## Chapter Title) found in the markdown file.');
+          return;
         }
+
+        const nextCustom = [parsedCourse, ...customCourses.filter(c => c.courseTitle !== parsedCourse.courseTitle)];
+        setCustomCourses(nextCustom);
+        localStorage.setItem('nickpocket_custom_courses', JSON.stringify(nextCustom));
+        setSelectedCourseId(parsedCourse.id);
+        setSelectedChapterId(parsedCourse.chapters[0].id);
+        alert(`Successfully imported "${parsedCourse.courseTitle}" with ${parsedCourse.chapters.length} chapters!`);
       } catch (err) {
-        alert('Error parsing JSON file: ' + err.message);
+        alert('Failed to parse Markdown file: ' + err.message);
       }
     };
     reader.readAsText(file);
   };
 
-  // Create new activity
-  const createNewActivity = (type) => {
-    const newAct = {
-      id: `act_${Date.now()}`,
-      type,
-      title: `New ${type.toUpperCase()} Activity`,
-      description: `Description for ${type} activity`,
-      questions: [
-        type === 'ordering' 
-          ? { id: `q_${Date.now()}_1`, questionText: 'Arrange these items in order:', items: ['Item 1', 'Item 2', 'Item 3'] }
-          : { 
-              id: `q_${Date.now()}_1`, 
-              questionText: 'New Question Text', 
-              options: ['Option A', 'Option B', 'Option C', 'Option D'], 
-              correctAnswer: 'A',
-              timeLimit: 15
-            }
-      ]
-    };
-    setEditingActivity(JSON.parse(JSON.stringify(newAct)));
-  };
-
-  // Save edited activity
-  const saveActivity = () => {
-    if (!editingActivity.title.trim()) {
-      alert('Activity title is required.');
-      return;
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleMarkdownUpload(e.target.files[0]);
     }
-    
-    let updated;
-    const exists = activities.some(a => a.id === editingActivity.id);
-    if (exists) {
-      updated = activities.map(a => a.id === editingActivity.id ? editingActivity : a);
-    } else {
-      updated = [editingActivity, ...activities];
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
     }
-    
-    setActivities(updated);
-    localStorage.setItem('nickpocket_activities', JSON.stringify(updated));
-    setEditingActivity(null);
   };
 
-  // Question editing helpers
-  const updateQuestionText = (index, val) => {
-    const updated = { ...editingActivity };
-    updated.questions[index].questionText = val;
-    setEditingActivity(updated);
-  };
-
-  const updateOptionText = (qIndex, oIndex, val) => {
-    const updated = { ...editingActivity };
-    updated.questions[qIndex].options[oIndex] = val;
-    setEditingActivity(updated);
-  };
-
-  const setCorrectAnswer = (qIndex, letter) => {
-    const updated = { ...editingActivity };
-    updated.questions[qIndex].correctAnswer = letter;
-    setEditingActivity(updated);
-  };
-
-  const updateTimeLimit = (qIndex, seconds) => {
-    const updated = { ...editingActivity };
-    updated.questions[qIndex].timeLimit = parseInt(seconds) || 10;
-    setEditingActivity(updated);
-  };
-
-  // Ordering items helpers
-  const updateOrderItemText = (qIndex, iIndex, val) => {
-    const updated = { ...editingActivity };
-    updated.questions[qIndex].items[iIndex] = val;
-    setEditingActivity(updated);
-  };
-
-  const addOrderItem = (qIndex) => {
-    const updated = { ...editingActivity };
-    updated.questions[qIndex].items.push(`New Item ${updated.questions[qIndex].items.length + 1}`);
-    setEditingActivity(updated);
-  };
-
-  const removeOrderItem = (qIndex, iIndex) => {
-    const updated = { ...editingActivity };
-    if (updated.questions[qIndex].items.length <= 2) {
-      alert('Must have at least 2 items to sort.');
-      return;
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleMarkdownUpload(e.dataTransfer.files[0]);
     }
-    updated.questions[qIndex].items.splice(iIndex, 1);
-    setEditingActivity(updated);
   };
 
-  // Add question to activity
-  const addQuestion = () => {
-    const type = editingActivity.type;
-    const newQ = type === 'ordering'
-      ? { id: `q_${Date.now()}_${editingActivity.questions.length + 1}`, questionText: 'Arrange these items in order:', items: ['Item A', 'Item B', 'Item C'] }
-      : { 
-          id: `q_${Date.now()}_${editingActivity.questions.length + 1}`, 
-          questionText: 'Question Text', 
-          options: ['Option A', 'Option B', 'Option C', 'Option D'], 
-          correctAnswer: 'A',
-          timeLimit: 15
-        };
-    
-    setEditingActivity({
-      ...editingActivity,
-      questions: [...editingActivity.questions, newQ]
-    });
-  };
-
-  const removeQuestion = (qIndex) => {
-    if (editingActivity.questions.length <= 1) {
-      alert('Activity must contain at least 1 question.');
-      return;
+  // Remove custom course
+  const deleteCustomCourse = (e, id) => {
+    e.stopPropagation(); // Avoid triggering card selection
+    if (window.confirm('Are you sure you want to delete this custom course?')) {
+      const nextCustom = customCourses.filter(c => c.id !== id);
+      setCustomCourses(nextCustom);
+      localStorage.setItem('nickpocket_custom_courses', JSON.stringify(nextCustom));
+      if (selectedCourseId === id) {
+        setSelectedCourseId(null);
+        setSelectedChapterId(null);
+      }
     }
-    const updated = { ...editingActivity };
-    updated.questions.splice(qIndex, 1);
-    setEditingActivity(updated);
   };
 
-  const getActivityIcon = (type) => {
+  const clearAllCustom = () => {
+    if (window.confirm('Delete all custom uploaded courses?')) {
+      setCustomCourses([]);
+      localStorage.removeItem('nickpocket_custom_courses');
+      setSelectedCourseId(null);
+      setSelectedChapterId(null);
+    }
+  };
+
+  const getQuestionIcon = (type) => {
     switch (type) {
-      case 'ccq': return <HelpCircle style={{ color: 'var(--color-indigo)' }} />;
-      case 'poll': return <BarChart2 style={{ color: 'var(--color-violet)' }} />;
-      case 'ordering': return <ListOrdered style={{ color: 'var(--color-pink)' }} />;
-      case 'game': return <Gamepad2 style={{ color: 'var(--color-warning)' }} />;
-      default: return <FileText />;
+      case 'ccq': return <HelpCircle size={16} style={{ color: 'var(--color-indigo)' }} />;
+      case 'poll': return <BarChart2 size={16} style={{ color: 'var(--color-success)' }} />;
+      case 'ordering': return <ListOrdered size={16} style={{ color: 'var(--color-pink)' }} />;
+      case 'game': return <Gamepad2 size={16} style={{ color: 'var(--color-warning)' }} />;
+      default: return <FileText size={16} />;
     }
   };
-
-  const filteredActivities = activities.filter(a => filterType === 'all' || a.type === filterType);
 
   return (
-    <div className="container animate-slide-up">
-      {/* Header bar */}
+    <div className="container animate-slide-up" style={{ minHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+      
+      {/* Header Panel */}
       <div className="flex-between glass-card" style={{ marginBottom: '2rem' }}>
         <div>
           <h1 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>NickPocket Edu</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Interactive classroom suite (CCQ, Poll, Ordering, Game)</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            Interactive classroom interaction system from Markdown files.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <button className="btn btn-secondary" onClick={exportActivities} title="Export Questions">
-            <Download size={18} /> Export
+        {customCourses.length > 0 && !selectedCourseId && (
+          <button className="btn btn-danger" onClick={clearAllCustom}>
+            <Trash2 size={16} /> Clear Custom
           </button>
-          <label className="btn btn-secondary" style={{ cursor: 'pointer' }} title="Import Questions">
-            <Upload size={18} /> Import
-            <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
-          </label>
-          <button className="btn btn-danger" onClick={resetToDefaults} title="Reset to Defaults">
-            <RotateCcw size={18} /> Reset
-          </button>
-        </div>
+        )}
       </div>
 
-      {/* Main dashboard content */}
-      {!editingActivity ? (
-        <>
-          {/* Create section & filter tab */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '2rem', justifyContent: 'space-between', alignItems: 'center' }}>
-            {/* Create buttons */}
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <button className="btn btn-primary" onClick={() => createNewActivity('ccq')}>
-                <Plus size={18} /> CCQ
-              </button>
-              <button className="btn btn-primary" onClick={() => createNewActivity('poll')} style={{ background: 'linear-gradient(135deg, var(--color-violet) 0%, var(--color-pink) 100%)', boxShadow: '0 4px 15px rgba(139, 92, 246, 0.25)' }}>
-                <Plus size={18} /> Poll
-              </button>
-              <button className="btn btn-primary" onClick={() => createNewActivity('ordering')} style={{ background: 'linear-gradient(135deg, var(--color-pink) 0%, #f43f5e 100%)', boxShadow: '0 4px 15px rgba(236, 72, 153, 0.25)' }}>
-                <Plus size={18} /> Ordering
-              </button>
-              <button className="btn btn-primary" onClick={() => createNewActivity('game')} style={{ background: 'linear-gradient(135deg, var(--color-warning) 0%, #d97706 100%)', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.25)' }}>
-                <Plus size={18} /> Game
-              </button>
-            </div>
-
-            {/* Filter */}
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {['all', 'ccq', 'poll', 'ordering', 'game'].map(t => (
-                <button 
-                  key={t}
-                  className={`btn ${filterType === t ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-                  onClick={() => setFilterType(t)}
+      {/* VIEW 1: SELECT COURSE (Main Menu) */}
+      {!selectedCourseId ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Courses grid */}
+          <div>
+            <h2 style={{ fontSize: '1.4rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Book size={22} style={{ color: 'var(--color-indigo)' }} /> Available Courses
+            </h2>
+            
+            <div className="grid-2">
+              {courses.map((course) => (
+                <div 
+                  key={course.id} 
+                  className="glass-card interactive" 
+                  style={{ padding: '1.5rem', cursor: 'pointer', position: 'relative' }}
+                  onClick={() => {
+                    setSelectedCourseId(course.id);
+                    if (course.chapters?.length > 0) {
+                      setSelectedChapterId(course.chapters[0].id);
+                    }
+                  }}
                 >
-                  {t.toUpperCase()}
-                </button>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <span className={`badge ${course.id.startsWith('custom_') ? 'badge-warning' : 'badge-indigo'}`}>
+                      {course.id.startsWith('custom_') ? 'Custom' : 'Standard'}
+                    </span>
+                    {course.id.startsWith('custom_') && (
+                      <button 
+                        className="btn btn-secondary btn-icon" 
+                        style={{ padding: '0.25rem', border: 'none', color: '#f87171' }} 
+                        onClick={(e) => deleteCustomCourse(e, course.id)}
+                        title="Delete Course"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  <h3 style={{ fontSize: '1.3rem', margin: '1rem 0 0.5rem 0' }}>{course.courseTitle}</h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    Chapters: {course.chapters?.length || 0} • Questions: {
+                      course.chapters?.reduce((acc, chap) => acc + (chap.questions?.length || 0), 0) || 0
+                    }
+                  </p>
+
+                  <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', color: 'var(--color-indigo)' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      Select Chapters <ChevronRight size={16} />
+                    </span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Activities list grid */}
-          <div className="grid-2">
-            {filteredActivities.length > 0 ? (
-              filteredActivities.map((act) => (
-                <div key={act.id} className="glass-card flex-between" style={{ padding: '1.25rem' }}>
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <div className="glass-card" style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
-                      {getActivityIcon(act.type)}
-                    </div>
-                    <div>
-                      <span className={`badge ${
-                        act.type === 'ccq' ? 'badge-indigo' : 
-                        act.type === 'poll' ? 'badge-success' : 
-                        act.type === 'ordering' ? 'badge-warning' : 'badge-danger'
-                      }`} style={{ marginBottom: '0.25rem' }}>
-                        {act.type}
-                      </span>
-                      <h3 style={{ fontSize: '1.15rem', marginBottom: '0.2rem' }}>{act.title}</h3>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                        {act.questions.length} Question{act.questions.length > 1 ? 's' : ''} • {act.description}
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-success btn-icon" onClick={() => onLaunch(act)} title="Launch Session">
-                      <Play size={18} fill="white" />
-                    </button>
-                    <button className="btn btn-secondary btn-icon" onClick={() => setEditingActivity(JSON.parse(JSON.stringify(act)))} title="Edit">
-                      <Edit2 size={18} />
-                    </button>
-                    <button className="btn btn-secondary btn-icon" onClick={() => deleteActivity(act.id)} title="Delete" style={{ color: '#f87171' }}>
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="glass-card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 1.5rem' }}>
-                <FileText size={48} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
-                <p style={{ color: 'var(--text-secondary)' }}>No activities found matching this filter.</p>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>Create a new activity above or reset to defaults.</p>
-              </div>
-            )}
+          {/* Drag & Drop Markdown Uploader */}
+          <div 
+            className="glass-card flex-center"
+            onDragEnter={handleDrag}
+            onDragOver={handleDrag}
+            onDragLeave={handleDrag}
+            onDrop={handleDrop}
+            style={{
+              border: dragActive ? '2px dashed var(--color-indigo)' : '1px dashed var(--border-light)',
+              background: dragActive ? 'rgba(99, 102, 241, 0.05)' : 'rgba(255,255,255,0.01)',
+              padding: '3rem 2rem',
+              borderRadius: '16px',
+              textAlign: 'center',
+              flexDirection: 'column',
+              cursor: 'pointer',
+              transition: 'var(--transition-smooth)'
+            }}
+            onClick={() => document.getElementById('md-file-input').click()}
+          >
+            <Upload size={48} className="animate-float" style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>Drag & Drop Course Markdown File</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '380px' }}>
+              Upload any course `.md` file. The file must be structured with `# Course` and `## Chapters` to build chapter sessions instantly!
+            </p>
+            <input 
+              type="file" 
+              id="md-file-input" 
+              accept=".md,.markdown" 
+              onChange={handleFileChange} 
+              style={{ display: 'none' }} 
+            />
+            <button className="btn btn-secondary" style={{ marginTop: '1.5rem' }}>
+              Select File from Computer
+            </button>
           </div>
-        </>
+
+        </div>
       ) : (
-        /* Edit Section */
-        <div className="glass-card animate-slide-up" style={{ padding: '2rem' }}>
-          <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-              {getActivityIcon(editingActivity.type)}
-              <h2 style={{ fontSize: '1.5rem' }}>Editing {editingActivity.type.toUpperCase()}: {editingActivity.title}</h2>
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button className="btn btn-secondary" onClick={() => setEditingActivity(null)}>
-                <X size={18} /> Cancel
-              </button>
-              <button className="btn btn-primary" onClick={saveActivity}>
-                <Save size={18} /> Save Activity
-              </button>
+        /* VIEW 2: COURSE EXPANDED (Chapter list & Question details) */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', flex: 1 }}>
+          
+          {/* Back button and course title summary */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button className="btn btn-secondary btn-icon" onClick={() => { setSelectedCourseId(null); setSelectedChapterId(null); }}>
+              <ChevronLeft size={20} /> Back
+            </button>
+            <div>
+              <span className="badge badge-indigo">{currentCourse.id.startsWith('custom_') ? 'Custom Markdown' : 'System Course'}</span>
+              <h2 style={{ fontSize: '1.5rem', marginTop: '0.2rem' }}>{currentCourse.courseTitle}</h2>
             </div>
           </div>
 
-          <div className="grid-2" style={{ marginBottom: '2rem' }}>
-            <div className="form-group">
-              <label className="form-label">Activity Title</label>
-              <input 
-                type="text" 
-                className="input-field" 
-                value={editingActivity.title} 
-                onChange={(e) => setEditingActivity({ ...editingActivity, title: e.target.value })} 
-              />
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '1.5rem', alignItems: 'start' }}>
+            
+            {/* Left sidebar: Chapters selector */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Course Chapters
+              </h4>
+              {currentCourse.chapters.map((chapter) => {
+                const isSelected = selectedChapterId === chapter.id;
+                return (
+                  <button
+                    key={chapter.id}
+                    className={`btn ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ 
+                      justifyContent: 'space-between', 
+                      padding: '1rem', 
+                      textAlign: 'left',
+                      borderRadius: '12px',
+                      border: isSelected ? 'none' : '1px solid var(--border-light)'
+                    }}
+                    onClick={() => setSelectedChapterId(chapter.id)}
+                  >
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }}>
+                      {chapter.title}
+                    </span>
+                    <span className="badge" style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', background: 'rgba(255,255,255,0.08)' }}>
+                      {chapter.questions?.length || 0} Qs
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <div className="form-group">
-              <label className="form-label">Activity Description</label>
-              <input 
-                type="text" 
-                className="input-field" 
-                value={editingActivity.description} 
-                onChange={(e) => setEditingActivity({ ...editingActivity, description: e.target.value })} 
-              />
-            </div>
-          </div>
 
-          {/* Questions list */}
-          <div>
-            <div className="flex-between" style={{ marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.25rem' }}>Questions ({editingActivity.questions.length})</h3>
-              <button className="btn btn-secondary" onClick={addQuestion}>
-                <Plus size={16} /> Add Question
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {editingActivity.questions.map((q, qIndex) => (
-                <div key={q.id || qIndex} className="glass-card animate-pop" style={{ borderLeft: '4px solid var(--color-indigo)', background: 'rgba(255,255,255,0.015)' }}>
-                  <div className="flex-between" style={{ marginBottom: '1rem' }}>
-                    <h4 style={{ color: 'var(--text-secondary)' }}>Question #{qIndex + 1}</h4>
-                    <button className="btn btn-danger btn-icon" onClick={() => removeQuestion(qIndex)} title="Delete Question">
-                      <Trash2 size={16} />
-                    </button>
+            {/* Right content pane: Questions preview & Launch button */}
+            {currentChapter ? (
+              <div className="glass-card animate-slide-up" style={{ padding: '2rem' }}>
+                <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                  <div>
+                    <span className="badge badge-success">Chapter selected</span>
+                    <h3 style={{ fontSize: '1.4rem', marginTop: '0.2rem' }}>{currentChapter.title}</h3>
                   </div>
+                  <button className="btn btn-success" style={{ padding: '1rem 2rem' }} onClick={() => onLaunch(currentCourse.id, currentChapter.id)}>
+                    <Play size={18} fill="white" /> Launch Chapter Session
+                  </button>
+                </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Question Prompt</label>
-                    <input 
-                      type="text" 
-                      className="input-field" 
-                      placeholder="e.g. What is 2 + 2?"
-                      value={q.questionText} 
-                      onChange={(e) => updateQuestionText(qIndex, e.target.value)} 
-                    />
-                  </div>
+                <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+                  Questions Sequence ({currentChapter.questions?.length || 0}):
+                </h4>
 
-                  {/* Rendering questions based on Type */}
-                  {editingActivity.type === 'ordering' ? (
-                    /* ORDERING OPTIONS */
-                    <div>
-                      <label className="form-label">Sequence Items (Write in the CORRECT order from top to bottom):</label>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                        {q.items.map((item, itemIdx) => (
-                          <div key={itemIdx} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <span style={{ minWidth: '24px', fontWeight: 'bold', color: 'var(--text-muted)' }}>{itemIdx + 1}.</span>
-                            <input 
-                              type="text" 
-                              className="input-field" 
-                              value={item} 
-                              onChange={(e) => updateOrderItemText(qIndex, itemIdx, e.target.value)} 
-                            />
-                            <button className="btn btn-secondary btn-icon" style={{ color: '#f87171' }} onClick={() => removeOrderItem(qIndex, itemIdx)}>
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {currentChapter.questions?.map((q, idx) => (
+                    <div 
+                      key={q.id || idx} 
+                      className="glass-card" 
+                      style={{ 
+                        background: 'rgba(255,255,255,0.015)', 
+                        padding: '1.25rem',
+                        borderLeft: `4px solid ${
+                          q.type === 'ccq' ? 'var(--color-indigo)' : 
+                          q.type === 'poll' ? 'var(--color-success)' : 
+                          q.type === 'ordering' ? 'var(--color-pink)' : 'var(--color-warning)'
+                        }`
+                      }}
+                    >
+                      <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Question #{idx + 1}</span>
+                        <span className="badge" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          {getQuestionIcon(q.type)} {q.type.toUpperCase()}
+                        </span>
                       </div>
-                      <button className="btn btn-secondary" onClick={() => addOrderItem(qIndex)} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-                        <Plus size={14} /> Add Sequence Item
-                      </button>
-                    </div>
-                  ) : (
-                    /* CCQ / POLL / GAME OPTIONS */
-                    <div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                        {['A', 'B', 'C', 'D'].map((letter, idx) => (
-                          <div key={letter} className="form-group" style={{ marginBottom: 0 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                              <label className="form-label" style={{ marginBottom: 0 }}>Option {letter}</label>
-                              {editingActivity.type !== 'poll' && (
-                                <button 
-                                  className="btn" 
-                                  style={{ 
-                                    padding: '0 0.4rem', 
-                                    fontSize: '0.75rem', 
-                                    background: q.correctAnswer === letter ? 'var(--color-success)' : 'transparent',
-                                    borderColor: q.correctAnswer === letter ? 'transparent' : 'var(--border-light)',
-                                    color: q.correctAnswer === letter ? 'white' : 'var(--text-secondary)'
-                                  }}
-                                  onClick={() => setCorrectAnswer(qIndex, letter)}
-                                >
-                                  {q.correctAnswer === letter ? 'Correct Answer' : 'Set Correct'}
-                                </button>
-                              )}
-                            </div>
-                            <input 
-                              type="text" 
-                              className="input-field" 
-                              value={q.options[idx] || ''} 
-                              onChange={(e) => updateOptionText(qIndex, idx, e.target.value)} 
-                              placeholder={`Option ${letter}`}
-                            />
-                          </div>
-                        ))}
-                      </div>
+                      
+                      <h4 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 600 }}>{q.questionText}</h4>
 
-                      {editingActivity.type === 'game' && (
-                        <div className="form-group" style={{ maxWidth: '200px' }}>
-                          <label className="form-label">Time Limit (Seconds)</label>
-                          <select 
-                            className="select-field" 
-                            value={q.timeLimit || 15} 
-                            onChange={(e) => updateTimeLimit(qIndex, e.target.value)}
-                          >
-                            <option value={10}>10 Seconds</option>
-                            <option value={15}>15 Seconds</option>
-                            <option value={20}>20 Seconds</option>
-                            <option value={30}>30 Seconds</option>
-                            <option value={45}>45 Seconds</option>
-                          </select>
+                      {/* Display options / configurations based on type */}
+                      {q.type === 'ordering' ? (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          {q.items.map((item, i) => (
+                            <span key={i} className="badge" style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.04)' }}>
+                              <strong>{i + 1}.</strong> {item}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          {q.options.map((opt, i) => {
+                            const letters = ['A', 'B', 'C', 'D'];
+                            const isCorrect = q.correctAnswer === letters[i];
+                            return (
+                              <div 
+                                key={i} 
+                                style={{ 
+                                  fontSize: '0.85rem', 
+                                  padding: '0.4rem 0.6rem', 
+                                  borderRadius: '6px', 
+                                  background: isCorrect ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.02)',
+                                  border: isCorrect ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-light)',
+                                  color: isCorrect ? 'var(--color-success)' : 'var(--text-primary)'
+                                }}
+                              >
+                                <strong>{letters[i]}.</strong> {opt}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="glass-card flex-center" style={{ padding: '4rem 2rem', flexDirection: 'column' }}>
+                <AlertCircle size={36} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
+                <p style={{ color: 'var(--text-secondary)' }}>Select a chapter from the sidebar to preview questions.</p>
+              </div>
+            )}
+
           </div>
+
         </div>
       )}
 
       {/* Brand footer */}
-      <footer className="footer-branding">
+      <footer className="footer-branding" style={{ marginTop: 'auto', paddingTop: '3rem' }}>
         designed by <span>Nien-Lin Hsueh, Feng Chia University</span>
       </footer>
     </div>

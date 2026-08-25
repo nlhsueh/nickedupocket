@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wifi, WifiOff, Users, ArrowRight, Hourglass, CheckCircle2, 
-  AlertCircle, ChevronUp, ChevronDown, Check, Play, CornerDownRight
+  AlertCircle, ChevronUp, ChevronDown, Check, Play, CornerDownRight, RefreshCw
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 
@@ -10,6 +10,10 @@ export default function StudentSession({ roomCode, onLeave }) {
   const [isJoined, setIsJoined] = useState(false);
   const [connStatus, setConnStatus] = useState('disconnected');
   const [connError, setConnError] = useState('');
+  
+  // Track if room is active/started by the teacher
+  const [roomActiveStatus, setRoomActiveStatus] = useState('checking'); // 'checking', 'active', 'inactive'
+  const checkTimerRef = useRef(null);
 
   // Active question state from teacher
   const [roomState, setRoomState] = useState('waiting'); // 'waiting', 'answering', 'stopped', 'finished'
@@ -48,22 +52,51 @@ export default function StudentSession({ roomCode, onLeave }) {
 
     return () => {
       mqttService.disconnect();
+      if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
     };
   }, [isJoined, roomCode, nickname]);
 
   const handleStatusChange = (status, info) => {
     setConnStatus(status);
     if (status === 'connected') {
+      setRoomActiveStatus('checking');
       mqttService.publishResponse({ event: 'join', studentName: nickname });
+      
+      if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
+      checkTimerRef.current = setTimeout(() => {
+        setRoomActiveStatus(prev => prev === 'checking' ? 'inactive' : prev);
+      }, 3500);
     }
     if (status === 'error') {
       setConnError(info || 'Connection failed');
     }
   };
 
+  const handleRetryJoin = () => {
+    setRoomActiveStatus('checking');
+    if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
+    
+    // Publish join presence to see if teacher is now connected
+    mqttService.publishResponse({ event: 'join', studentName: nickname });
+    
+    checkTimerRef.current = setTimeout(() => {
+      setRoomActiveStatus(prev => prev === 'checking' ? 'inactive' : prev);
+    }, 3500);
+  };
+
   // 2. State dispatcher based on teacher broadcasts
   const handleBrokerMessage = (topic, payload) => {
     console.log('[Student] Broker message received:', payload);
+    
+    // Mark room as active and clear checking timer upon any valid teacher state broadcast
+    const validEvents = ['lobby', 'question_start', 'question_stop', 'next_question_waiting', 'results', 'session_finished'];
+    if (validEvents.includes(payload.event)) {
+      setRoomActiveStatus('active');
+      if (checkTimerRef.current) {
+        clearTimeout(checkTimerRef.current);
+        checkTimerRef.current = null;
+      }
+    }
     
     if (payload.event === 'lobby') {
       setRoomState('waiting');
@@ -275,6 +308,55 @@ export default function StudentSession({ roomCode, onLeave }) {
         <footer className="footer-branding" style={{ marginTop: '2rem', width: '100%' }}>
           designed by <span>Nien-Lin Hsueh, Feng Chia University</span>
         </footer>
+      </div>
+    );
+  }
+
+  // Handle room status checking and inactive notifications
+  if (roomActiveStatus === 'checking') {
+    return (
+      <div className="mobile-container animate-slide-up flex-center" style={{ minHeight: '85vh', flexDirection: 'column', textAlign: 'center' }}>
+        <div className="glass-card flex-center" style={{ width: '100%', padding: '3rem 1.5rem', flexDirection: 'column' }}>
+          <Hourglass size={48} className="animate-spin" style={{ color: 'var(--color-indigo)', marginBottom: '1.5rem' }} />
+          <h2 style={{ fontSize: '1.3rem', marginBottom: '0.5rem' }}>Checking Room Status...</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            Connecting to room <strong style={{ color: 'var(--text-primary)' }}>{roomCode}</strong> and verifying if the instructor has launched the session.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (roomActiveStatus === 'inactive') {
+    return (
+      <div className="mobile-container animate-slide-up flex-center" style={{ minHeight: '85vh', flexDirection: 'column', textAlign: 'center' }}>
+        <div className="glass-card flex-center animate-pop" style={{ width: '100%', padding: '3rem 1.5rem', flexDirection: 'column' }}>
+          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⚠️</div>
+          <h2 style={{ fontSize: '1.4rem', color: 'var(--color-warning)', marginBottom: '0.75rem' }}>Activity Not Started</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '2rem', lineHeight: '1.5' }}>
+            This activity session has not been launched by your instructor yet. Please wait for the teacher to start the session, or double check your Room Code.
+          </p>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+            <button 
+              className="btn btn-primary" 
+              style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} 
+              onClick={handleRetryJoin}
+            >
+              <RefreshCw size={18} /> Try Again
+            </button>
+            <button 
+              className="btn btn-secondary" 
+              style={{ width: '100%', padding: '1rem' }} 
+              onClick={() => {
+                setIsJoined(false);
+                if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
+              }}
+            >
+              Change Room / Nickname
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

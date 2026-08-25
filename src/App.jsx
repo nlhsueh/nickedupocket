@@ -53,6 +53,10 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
   
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [selectedChapterId, setSelectedChapterId] = useState(null);
+  const [selectedActivityId, setSelectedActivityId] = useState(null);
+  
   const [route, setRoute] = useState(() => parseHash(window.location.hash));
 
   // 1. Fetch default courses on mount
@@ -155,6 +159,12 @@ export default function App() {
       customCourses={customCourses}
       setCustomCourses={setCustomCourses} 
       onLaunch={handleLaunchActivity} 
+      selectedCourseId={selectedCourseId}
+      setSelectedCourseId={setSelectedCourseId}
+      selectedChapterId={selectedChapterId}
+      setSelectedChapterId={setSelectedChapterId}
+      selectedActivityId={selectedActivityId}
+      setSelectedActivityId={setSelectedActivityId}
     />
   );
 }

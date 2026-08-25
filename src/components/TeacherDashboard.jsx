@@ -6,10 +6,12 @@ import {
 import { parseMarkdownCourse } from '../utils/mdParser';
 import { QRCodeCanvas } from 'qrcode.react';
 
-export default function TeacherDashboard({ courses, customCourses, setCustomCourses, onLaunch }) {
-  const [selectedCourseId, setSelectedCourseId] = useState(null);
-  const [selectedChapterId, setSelectedChapterId] = useState(null);
-  const [selectedActivityId, setSelectedActivityId] = useState(null);
+export default function TeacherDashboard({ 
+  courses, customCourses, setCustomCourses, onLaunch,
+  selectedCourseId, setSelectedCourseId,
+  selectedChapterId, setSelectedChapterId,
+  selectedActivityId, setSelectedActivityId
+}) {
   const [dragActive, setDragActive] = useState(false);
   const [copied, setCopied] = useState(false);
   const [qrCopied, setQrCopied] = useState(false);
@@ -459,7 +461,17 @@ export default function TeacherDashboard({ courses, customCourses, setCustomCour
                     />
                     <button 
                       className="btn btn-secondary" 
-                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
+                      style={{ 
+                        padding: '0.25rem 0.5rem', 
+                        fontSize: '0.75rem', 
+                        width: '100%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '0.25rem',
+                        color: 'var(--color-indigo)',
+                        borderColor: 'rgba(99, 102, 241, 0.3)'
+                      }}
                       onClick={copyQrCodeToClipboard}
                       type="button"
                     >

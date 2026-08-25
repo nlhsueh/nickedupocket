@@ -46,11 +46,6 @@ export default function StudentSession({ roomCode, onLeave }) {
       handleStatusChange
     );
 
-    // Alert room of join presence
-    setTimeout(() => {
-      mqttService.publishResponse({ event: 'join', studentName: nickname });
-    }, 1500);
-
     return () => {
       mqttService.disconnect();
     };
@@ -58,6 +53,9 @@ export default function StudentSession({ roomCode, onLeave }) {
 
   const handleStatusChange = (status, info) => {
     setConnStatus(status);
+    if (status === 'connected') {
+      mqttService.publishResponse({ event: 'join', studentName: nickname });
+    }
     if (status === 'error') {
       setConnError(info || 'Connection failed');
     }
@@ -73,6 +71,8 @@ export default function StudentSession({ roomCode, onLeave }) {
       setHasSubmitted(false);
       setSelectedOption(null);
       setOrderingItems([]);
+      // Announce presence to the teacher
+      mqttService.publishResponse({ event: 'join', studentName: nickname });
     } 
     else if (payload.event === 'question_start') {
       setRoomState('answering');

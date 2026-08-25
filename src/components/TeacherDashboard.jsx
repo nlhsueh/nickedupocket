@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Play, Book, FileText, ChevronRight, ChevronLeft, Trash2, 
-  Upload, HelpCircle, BarChart2, ListOrdered, Gamepad2, AlertCircle, Copy, Check
+  Upload, HelpCircle, BarChart2, ListOrdered, Gamepad2, AlertCircle, Copy, Check, QrCode
 } from 'lucide-react';
 import { parseMarkdownCourse } from '../utils/mdParser';
+import { QRCodeCanvas } from 'qrcode.react';
 
 export default function TeacherDashboard({ courses, customCourses, setCustomCourses, onLaunch }) {
   const [selectedCourseId, setSelectedCourseId] = useState(null);
@@ -11,6 +12,13 @@ export default function TeacherDashboard({ courses, customCourses, setCustomCour
   const [selectedActivityId, setSelectedActivityId] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [qrCopied, setQrCopied] = useState(false);
+  
+  // Track recently accessed courses
+  const [recentCourseIds, setRecentCourseIds] = useState(() => {
+    const saved = localStorage.getItem('nickpocket_recent_courses');
+    return saved ? JSON.parse(saved) : [];
+  });
   
   // Teacher ID Prefix to prevent broker topic collisions
   const [teacherPrefix, setTeacherPrefix] = useState(() => {
@@ -22,6 +30,16 @@ export default function TeacherDashboard({ courses, customCourses, setCustomCour
     setTeacherPrefix(clean);
     localStorage.setItem('nickpocket_teacher_prefix', clean);
   };
+
+  // Sort courses by recently accessed
+  const sortedCourses = [...courses].sort((a, b) => {
+    const idxA = recentCourseIds.indexOf(a.id);
+    const idxB = recentCourseIds.indexOf(b.id);
+    if (idxA === -1 && idxB === -1) return 0;
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  });
 
   // Find currently selected course, chapter, activity
   const currentCourse = courses.find(c => c.id === selectedCourseId);
@@ -145,9 +163,32 @@ export default function TeacherDashboard({ courses, customCourses, setCustomCour
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const copyQrCodeToClipboard = () => {
+    const canvas = document.getElementById('dashboard-qr-canvas');
+    if (!canvas) return;
+    
+    canvas.toBlob(async (blob) => {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type]: blob })
+        ]);
+        setQrCopied(true);
+        setTimeout(() => setQrCopied(false), 2000);
+      } catch (err) {
+        console.error("Failed to copy QR Code image:", err);
+      }
+    });
+  };
+
   // Trigger when course selections happen
   const selectCourse = (course) => {
     setSelectedCourseId(course.id);
+    
+    // Update recently accessed list
+    const nextRecents = [course.id, ...recentCourseIds.filter(id => id !== course.id)];
+    setRecentCourseIds(nextRecents);
+    localStorage.setItem('nickpocket_recent_courses', JSON.stringify(nextRecents));
+
     if (course.chapters?.length > 0) {
       const firstChap = course.chapters[0];
       setSelectedChapterId(firstChap.id);
@@ -211,7 +252,7 @@ export default function TeacherDashboard({ courses, customCourses, setCustomCour
             </h2>
             
             <div className="grid-2">
-              {courses.map((course) => (
+              {sortedCourses.map((course) => (
                 <div 
                   key={course.id} 
                   className="glass-card interactive" 
@@ -406,12 +447,25 @@ export default function TeacherDashboard({ courses, customCourses, setCustomCour
                   }}
                 >
                   {/* QR Code */}
-                  <div style={{ background: 'white', padding: '0.5rem', borderRadius: '8px', display: 'inline-block' }}>
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(getShareUrl(currentActivity.id))}`} 
-                      alt="Student Join QR Code"
-                      style={{ display: 'block', width: '130px', height: '130px' }}
+                  <div style={{ background: 'white', padding: '0.5rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <QRCodeCanvas 
+                      id="dashboard-qr-canvas"
+                      value={getShareUrl(currentActivity.id)}
+                      size={130}
+                      bgColor="#ffffff"
+                      fgColor="#080B11"
+                      level="H"
+                      includeMargin={false}
                     />
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
+                      onClick={copyQrCodeToClipboard}
+                      type="button"
+                    >
+                      {qrCopied ? <Check size={12} style={{ color: 'var(--color-success)' }} /> : <QrCode size={12} />}
+                      {qrCopied ? 'Copied QR!' : 'Copy QR'}
+                    </button>
                   </div>
 
                   {/* Share Link Details */}

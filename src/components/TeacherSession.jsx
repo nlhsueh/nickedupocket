@@ -36,11 +36,6 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       handleStatusChange
     );
 
-    // Initial broadcast of lobby state
-    setTimeout(() => {
-      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: 'chapter' });
-    }, 1500);
-
     return () => {
       mqttService.disconnect();
       if (timerRef.current) clearInterval(timerRef.current);
@@ -50,6 +45,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   // Status handler
   const handleStatusChange = (status, info) => {
     setConnectionStatus(status);
+    if (status === 'connected') {
+      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: 'chapter' });
+    }
     if (status === 'error') {
       setConnectionError(info || 'Real-time broker error');
     }
@@ -83,9 +81,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   };
 
   const broadcastLobbyState = () => {
-    if (sessionStatus === 'lobby') {
-      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: 'chapter' });
-    } else if (sessionStatus === 'active') {
+    if (sessionStatus === 'active') {
       broadcastActiveQuestion(currentQIndex);
     } else if (sessionStatus === 'results') {
       broadcastState({ event: 'results' });
@@ -283,9 +279,25 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               <span className="badge badge-danger" title={connectionError}><WifiOff size={14} /> Offline</span>
             )}
           </div>
-          <div className="glass-card" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginRight: '0.5rem' }}>Room Code:</span>
-            <strong style={{ fontSize: '1.2rem', color: 'var(--color-indigo)', letterSpacing: '1px' }}>{roomCode}</strong>
+          <div className="glass-card" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginRight: '0.5rem' }}>Room Code:</span>
+              <strong style={{ fontSize: '1.2rem', color: 'var(--color-indigo)', letterSpacing: '1px' }}>{roomCode}</strong>
+            </div>
+            
+            {/* Small thumbnail QR code that expands on hover */}
+            <div className="qr-thumbnail-container" style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ background: 'white', padding: '2px', borderRadius: '4px', display: 'flex', alignItems: 'center' }}>
+                <QRCodeSVG value={studentUrl} size={28} bgColor="#ffffff" fgColor="#080B11" />
+              </div>
+              <div className="qr-expanded-popover glass-card">
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>Scan to Join Room</p>
+                <div style={{ background: 'white', padding: '8px', borderRadius: '8px', display: 'inline-block' }}>
+                  <QRCodeSVG value={studentUrl} size={150} bgColor="#ffffff" fgColor="#080B11" />
+                </div>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)', wordBreak: 'break-all' }}>{studentUrl}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -64,6 +64,13 @@ Correct: False
 5. Test Execution
 6. Test Cycle Closure
 
+### [Activity: test-patriot-ccq] Patriot Missile Failure CCQ
+#### [CCQ] 愛國者反導彈系統（1991）在達蘭基地攔截失效的根本軟體原因為何？
+- 通訊網路中斷導致雷達無法傳送指令給飛彈發射架
+- 24-bit 時鐘暫存器的浮點捨入誤差在連續運行 100 小時後累加達 0.33 秒 (Correct)
+- 程式碼發生記憶體洩漏（Memory Leak）導致作業系統當機
+- 雷達演算法誤將美軍戰機辨識為敵方飛毛腿飛彈
+
 ### [Activity: test-intro-game] Verification vs Validation Game
 #### [Game] What is the difference between Verification and Validation?
 - Verification is "Are we building the product right?", Validation is "Are we building the right product?" (Correct)

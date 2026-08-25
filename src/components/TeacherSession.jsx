@@ -439,7 +439,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                           <div key={letter} className="chart-bar-container">
                             <div className="chart-bar-label">
                               <span>
-                                <strong>Option {letter}</strong> 
+                                <strong>Option {letter}</strong>
+                                {currentQuestion.options && currentQuestion.options[idx] && `: ${currentQuestion.options[idx]}`}
                                 {isCorrect && <span style={{ color: 'var(--color-success)', marginLeft: '0.5rem' }}>(Correct Answer)</span>}
                               </span>
                               <span>{count} votes ({percentage.toFixed(0)}%)</span>

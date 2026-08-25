@@ -177,7 +177,12 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       if (line.startsWith('- ') || line.startsWith('* ')) {
         const optionText = line.substring(2).trim();
         
-        if (currentQuestion.type === 'game' || currentQuestion.type === 'poll') {
+        if (currentQuestion.type === 'game' || currentQuestion.type === 'poll' || currentQuestion.type === 'ccq') {
+          // If CCQ has custom options defined, clear the default True/False/50-50 array on the first option parsed.
+          if (currentQuestion.type === 'ccq' && currentQuestion.options.length === 3 && currentQuestion.options[0] === 'True' && currentQuestion.options[1] === 'False') {
+            currentQuestion.options = [];
+          }
+
           const isCorrect = optionText.toLowerCase().endsWith('(correct)') || 
                             optionText.endsWith('*') || 
                             optionText.toLowerCase().endsWith('(correct answer)');
@@ -193,7 +198,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
 
           currentQuestion.options.push(cleanText);
 
-          if (isCorrect && currentQuestion.type === 'game') {
+          if (isCorrect && (currentQuestion.type === 'game' || currentQuestion.type === 'ccq')) {
             const idx = currentQuestion.options.length - 1;
             currentQuestion.correctAnswer = ['A', 'B', 'C', 'D'][idx] || 'A';
           }

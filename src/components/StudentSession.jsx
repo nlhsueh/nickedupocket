@@ -109,8 +109,12 @@ export default function StudentSession({ roomCode, onLeave }) {
       setActiveQuestion(qData);
       
       if (payload.type === 'ordering') {
-        // Shuffle items for the student to sort
-        const shuffled = [...(payload.items || [])].sort(() => Math.random() - 0.5);
+        // Shuffle items with correct number mappings
+        const itemsWithIndex = (payload.items || []).map((item, idx) => ({
+          text: item,
+          correctNum: idx + 1
+        }));
+        const shuffled = [...itemsWithIndex].sort(() => Math.random() - 0.5);
         setOrderingItems(shuffled);
       }
       
@@ -257,7 +261,7 @@ export default function StudentSession({ roomCode, onLeave }) {
     const success = mqttService.publishResponse({
       event: 'submit_answer',
       studentName: nickname,
-      answer: orderingItems,
+      answer: orderingItems.map(item => item.text),
       timestamp: now,
       questionIndex: activeQuestion.index
     });
@@ -480,15 +484,63 @@ export default function StudentSession({ roomCode, onLeave }) {
               {/* Options display */}
               {hasSubmitted ? (
                 /* Post-Submission Screen */
-                <div className="flex-center" style={{ flexDirection: 'column', padding: '3rem 0', textAlign: 'center' }}>
-                  <CheckCircle2 size={56} style={{ color: 'var(--color-success)', marginBottom: '1rem' }} />
-                  <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Answer Submitted!</h3>
-                  {elapsedTime || getElapsedSeconds() ? (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                      Speed: {elapsedTime || getElapsedSeconds()} seconds
-                    </p>
-                  ) : null}
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '1rem' }}>
+                <div>
+                  <div className="flex-center" style={{ flexDirection: 'column', padding: '1.5rem 0', textAlign: 'center' }}>
+                    <CheckCircle2 size={48} style={{ color: 'var(--color-success)', marginBottom: '0.75rem' }} />
+                    <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Answer Submitted!</h3>
+                    {elapsedTime || getElapsedSeconds() ? (
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                        Speed: {elapsedTime || getElapsedSeconds()} seconds
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {activeQuestion.type === 'ordering' && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <h4 style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>Your Submission Details:</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                        {orderingItems.map((item, idx) => {
+                          const isCorrect = item.correctNum === idx + 1;
+                          return (
+                            <div 
+                              key={idx} 
+                              className="glass-card" 
+                              style={{ 
+                                padding: '0.75rem 1rem', 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center',
+                                background: isCorrect ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.05)',
+                                borderColor: isCorrect ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.15)'
+                              }}
+                            >
+                              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: isCorrect ? 'var(--color-success)' : '#ef4444' }}>
+                                  #{idx + 1}
+                                </span>
+                                <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{item.text}</span>
+                              </div>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 500, color: isCorrect ? 'var(--color-success)' : 'var(--text-secondary)' }}>
+                                {isCorrect ? 'Correct ✅' : `Correct is #${item.correctNum}`}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <h4 style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>🏆 Standard Correct Order:</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', padding: '1rem', background: 'rgba(255,255,255,0.01)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                        {[...orderingItems].sort((a, b) => a.correctNum - b.correctNum).map((item, idx) => (
+                          <div key={idx} style={{ fontSize: '0.85rem', display: 'flex', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                            <strong>{item.correctNum}.</strong>
+                            <span>{item.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '1.5rem', textAlign: 'center' }}>
                     Look at the projector screen. Results will be shown once answering stops.
                   </p>
                 </div>
@@ -511,7 +563,7 @@ export default function StudentSession({ roomCode, onLeave }) {
                       >
                         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>{idx + 1}</span>
-                          <span style={{ fontSize: '0.95rem' }}>{item}</span>
+                          <span style={{ fontSize: '0.95rem' }}>{item.text}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '0.25rem' }}>
                           <button 

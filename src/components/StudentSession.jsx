@@ -267,6 +267,15 @@ export default function StudentSession({ roomCode, onLeave }) {
     return ((submitTime - questionStartMs) / 1000).toFixed(2);
   };
 
+  const handleTeacherLaunch = () => {
+    const password = prompt('Enter Teacher Access Password:');
+    if (password === 'nlhsueh007') {
+      window.location.hash = `#/teacher/${roomCode}`;
+    } else if (password !== null) {
+      alert('Incorrect password.');
+    }
+  };
+
   // --- RENDERS ---
 
   // Nickname entry screen
@@ -305,7 +314,26 @@ export default function StudentSession({ roomCode, onLeave }) {
           </button>
         </form>
 
-        <footer className="footer-branding" style={{ marginTop: '2rem', width: '100%' }}>
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <button 
+            type="button" 
+            onClick={handleTeacherLaunch}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              color: 'var(--text-muted)', 
+              fontSize: '0.75rem', 
+              cursor: 'pointer', 
+              textDecoration: 'underline', 
+              opacity: 0.5 
+            }}
+            title="Launch session as teacher"
+          >
+            Teacher Host Launch
+          </button>
+        </div>
+
+        <footer className="footer-branding" style={{ marginTop: '1.5rem', width: '100%' }}>
           designed by <span>Nien-Lin Hsueh, Feng Chia University</span>
         </footer>
       </div>
@@ -354,6 +382,25 @@ export default function StudentSession({ roomCode, onLeave }) {
               }}
             >
               Change Room / Nickname
+            </button>
+
+            {/* Subtle teacher launch link */}
+            <button 
+              type="button" 
+              onClick={handleTeacherLaunch}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: 'var(--text-muted)', 
+                fontSize: '0.75rem', 
+                cursor: 'pointer', 
+                textDecoration: 'underline', 
+                opacity: 0.5,
+                marginTop: '0.5rem'
+              }}
+              title="Launch session as teacher"
+            >
+              Teacher Host Launch
             </button>
           </div>
         </div>

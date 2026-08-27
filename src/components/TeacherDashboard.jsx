@@ -15,6 +15,9 @@ export default function TeacherDashboard({
   const [dragActive, setDragActive] = useState(false);
   const [copied, setCopied] = useState(false);
   const [qrCopied, setQrCopied] = useState(false);
+  const [activityTypeFilter, setActivityTypeFilter] = useState('all');
+  const [copiedId, setCopiedId] = useState(null);
+  const [qrCopiedId, setQrCopiedId] = useState(null);
   
   // Track recently accessed courses
   const [recentCourseIds, setRecentCourseIds] = useState(() => {
@@ -182,6 +185,30 @@ export default function TeacherDashboard({
     });
   };
 
+  const copyActivityQrToClipboard = (actId) => {
+    const canvas = document.getElementById(`canvas_qr_${actId}`);
+    if (!canvas) return;
+    
+    canvas.toBlob(async (blob) => {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type]: blob })
+        ]);
+        setQrCopiedId(actId);
+        setTimeout(() => setQrCopiedId(null), 2000);
+      } catch (err) {
+        console.error("Failed to copy QR Code image:", err);
+      }
+    });
+  };
+
+  const copyActivityLinkToClipboard = (actId) => {
+    const url = getShareUrl(actId);
+    navigator.clipboard.writeText(url);
+    setCopiedId(actId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   // Trigger when course selections happen
   const selectCourse = (course) => {
     setSelectedCourseId(course.id);
@@ -194,11 +221,7 @@ export default function TeacherDashboard({
     if (course.chapters?.length > 0) {
       const firstChap = course.chapters[0];
       setSelectedChapterId(firstChap.id);
-      if (firstChap.activities?.length > 0) {
-        setSelectedActivityId(firstChap.activities[0].id);
-      } else {
-        setSelectedActivityId(null);
-      }
+      setSelectedActivityId(null); // Show chapter overview by default
     } else {
       setSelectedChapterId(null);
       setSelectedActivityId(null);
@@ -207,12 +230,7 @@ export default function TeacherDashboard({
 
   const selectChapter = (chapId) => {
     setSelectedChapterId(chapId);
-    const chap = currentCourse.chapters.find(c => c.id === chapId);
-    if (chap?.activities?.length > 0) {
-      setSelectedActivityId(chap.activities[0].id);
-    } else {
-      setSelectedActivityId(null);
-    }
+    setSelectedActivityId(null); // Show chapter overview by default
   };
 
   return (
@@ -385,6 +403,21 @@ export default function TeacherDashboard({
                     Activities
                   </h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <button
+                      className={`btn ${selectedActivityId === null ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 1rem',
+                        textAlign: 'left',
+                        borderRadius: '10px',
+                        border: selectedActivityId === null ? 'none' : '1px solid var(--border-light)',
+                        fontSize: '0.85rem'
+                      }}
+                      onClick={() => setSelectedActivityId(null)}
+                    >
+                      <span>📂 Chapter Overview (All)</span>
+                    </button>
+
                     {currentChapter.activities?.map((act) => {
                       const isSelected = selectedActivityId === act.id;
                       return (
@@ -576,6 +609,179 @@ export default function TeacherDashboard({
                         )}
                       </div>
                     ))}
+                  </div>
+                </div>
+
+              </div>
+            ) : currentChapter ? (
+              <div className="glass-card animate-slide-up" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                
+                {/* Header row */}
+                <div style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
+                  <span className="badge badge-indigo">Chapter Overview</span>
+                  <h3 style={{ fontSize: '1.55rem', marginTop: '0.25rem', marginBottom: '0.25rem' }}>{currentChapter.title}</h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    Total activities: {currentChapter.activities?.length || 0}
+                  </p>
+                </div>
+
+                {/* Filter bar */}
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>
+                    Filter Activities by Type:
+                  </h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {['all', 'ccq', 'poll', 'ordering', 'game', 'short'].map((type) => {
+                      const isActive = activityTypeFilter === type;
+                      return (
+                        <button
+                          key={type}
+                          className={`btn ${isActive ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textTransform: 'capitalize' }}
+                          onClick={() => setActivityTypeFilter(type)}
+                        >
+                          {type === 'all' ? '📁 Show All' : 
+                           type === 'ccq' ? '❓ CCQ' : 
+                           type === 'poll' ? '📊 Poll' : 
+                           type === 'ordering' ? '🔢 Ordering' : 
+                           type === 'game' ? '🎮 Game' : '📝 Short Answer'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Activities List */}
+                <div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    {(() => {
+                      const getActivityType = (act) => {
+                        if (!act.questions || act.questions.length === 0) return 'unknown';
+                        return act.questions[0].type;
+                      };
+
+                      const filteredActs = (currentChapter.activities || []).filter((act) => {
+                        if (activityTypeFilter === 'all') return true;
+                        return getActivityType(act) === activityTypeFilter;
+                      });
+
+                      if (filteredActs.length === 0) {
+                        return (
+                          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            No activities match this filter in this chapter.
+                          </div>
+                        );
+                      }
+
+                      return filteredActs.map((act) => {
+                        const actType = getActivityType(act);
+                        const isLinkCopied = copiedId === act.id;
+                        const isQrCopied = qrCopiedId === act.id;
+                        const roomCodeForAct = getRoomCode(act.id);
+                        const shareUrlForAct = getShareUrl(act.id);
+
+                        return (
+                          <div 
+                            key={act.id} 
+                            className="glass-card" 
+                            style={{ 
+                              background: 'rgba(255,255,255,0.015)', 
+                              padding: '1.5rem',
+                              borderLeft: `4px solid ${
+                                actType === 'ccq' ? 'var(--color-indigo)' : 
+                                actType === 'poll' ? 'var(--color-success)' : 
+                                actType === 'ordering' ? 'var(--color-pink)' : 
+                                actType === 'game' ? 'var(--color-warning)' : 'var(--color-violet)'
+                              }`,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '1rem'
+                            }}
+                          >
+                            <div className="flex-between" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+                              <div>
+                                <span className="badge" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                                  {actType}
+                                </span>
+                                <h4 style={{ fontSize: '1.15rem', fontWeight: 600, marginTop: '0.2rem' }}>{act.title}</h4>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Room: {roomCodeForAct}</span>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button 
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.5rem 0.75rem', gap: '0.25rem', fontSize: '0.75rem', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  onClick={() => copyActivityLinkToClipboard(act.id)}
+                                  title="Copy Student Link"
+                                >
+                                  {isLinkCopied ? <Check size={14} style={{ color: 'var(--color-success)' }} /> : <Copy size={14} />}
+                                  {isLinkCopied ? 'Link Copied!' : 'Copy Link'}
+                                </button>
+
+                                <button 
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.5rem 0.75rem', gap: '0.25rem', fontSize: '0.75rem', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-indigo)', borderColor: 'rgba(99, 102, 241, 0.3)' }}
+                                  onClick={() => copyActivityQrToClipboard(act.id)}
+                                  title="Copy QR Code Image"
+                                >
+                                  {isQrCopied ? <Check size={14} style={{ color: 'var(--color-success)' }} /> : <QrCode size={14} />}
+                                  {isQrCopied ? 'QR Copied!' : 'Copy QR'}
+                                </button>
+
+                                <button 
+                                  className="btn btn-success" 
+                                  style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} 
+                                  onClick={() => onLaunch(roomCodeForAct)}
+                                >
+                                  <Play size={12} fill="white" /> Launch
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Question Details Preview */}
+                            {act.questions && act.questions.length > 0 && (
+                              <div style={{ background: 'rgba(255,255,255,0.01)', padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, margin: '0 0 0.5rem 0' }}>
+                                  Question: "{act.questions[0].questionText}"
+                                </p>
+                                {actType !== 'ordering' && actType !== 'short' && act.questions[0].options && (
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                    {act.questions[0].options.map((opt, oIdx) => (
+                                      <span key={oIdx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.03)' }}>
+                                        {['A','B','C','D'][oIdx]}. {opt}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {actType === 'ordering' && act.questions[0].items && (
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                    {act.questions[0].items.map((item, oIdx) => (
+                                      <span key={oIdx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.03)' }}>
+                                        {oIdx + 1}. {item}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Hidden QR Code Canvas container for image copying */}
+                            <div style={{ display: 'none' }}>
+                              <QRCodeCanvas 
+                                id={`canvas_qr_${act.id}`}
+                                value={shareUrlForAct}
+                                size={120}
+                                bgColor="#ffffff"
+                                fgColor="#080B11"
+                                level="H"
+                                includeMargin={false}
+                              />
+                            </div>
+
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
 

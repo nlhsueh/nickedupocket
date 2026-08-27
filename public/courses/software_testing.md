@@ -6,6 +6,13 @@
 #### [CCQ] Software testing can prove the absence of bugs in a system.
 Correct: False
 
+
+### [Activity: AI-test-ccq] AI test CCQ
+#### [CCQ] 程式碼可以透過 AI 來產生，但需要人來進行測試，所以不可以透過 AI 來輔助產生測試碼。
+Correct: False
+
+
+
 ### [Activity: test-intro-order] Testing Lifecycle Ordering
 #### [Ordering] Sort the testing lifecycle steps in order:
 1. Requirements Analysis

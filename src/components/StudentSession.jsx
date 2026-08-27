@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Wifi, WifiOff, Users, ArrowRight, Hourglass, CheckCircle2, 
-  AlertCircle, ChevronUp, ChevronDown, Check, Play, CornerDownRight, RefreshCw
+  Wifi, WifiOff, Hourglass, CheckCircle2, 
+  ChevronUp, ChevronDown, CornerDownRight, ArrowRight
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 
@@ -12,8 +12,7 @@ export default function StudentSession({ roomCode, onLeave }) {
   const [connError, setConnError] = useState('');
   
   // Track if room is active/started by the teacher
-  const [roomActiveStatus, setRoomActiveStatus] = useState('checking'); // 'checking', 'active', 'inactive'
-  const checkTimerRef = useRef(null);
+  const [roomActiveStatus, setRoomActiveStatus] = useState('checking'); // 'checking', 'active'
 
   // Active question state from teacher
   const [roomState, setRoomState] = useState('waiting'); // 'waiting', 'answering', 'stopped', 'finished'
@@ -32,7 +31,7 @@ export default function StudentSession({ roomCode, onLeave }) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [questionStartMs, setQuestionStartMs] = useState(0);
 
-  // Handle local storage nickname update
+  // Student Nickname and Join status (managed locally)
   const handleJoin = (e) => {
     e.preventDefault();
     if (!nickname.trim()) return;
@@ -53,7 +52,6 @@ export default function StudentSession({ roomCode, onLeave }) {
 
     return () => {
       mqttService.disconnect();
-      if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
     };
   }, [isJoined, roomCode, nickname]);
 
@@ -62,41 +60,20 @@ export default function StudentSession({ roomCode, onLeave }) {
     if (status === 'connected') {
       setRoomActiveStatus('checking');
       mqttService.publishResponse({ event: 'join', studentName: nickname });
-      
-      if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
-      checkTimerRef.current = setTimeout(() => {
-        setRoomActiveStatus(prev => prev === 'checking' ? 'inactive' : prev);
-      }, 7000);
     }
     if (status === 'error') {
       setConnError(info || 'Connection failed');
     }
   };
 
-  const handleRetryJoin = () => {
-    setRoomActiveStatus('checking');
-    if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
-    
-    // Publish join presence to see if teacher is now connected
-    mqttService.publishResponse({ event: 'join', studentName: nickname });
-    
-    checkTimerRef.current = setTimeout(() => {
-      setRoomActiveStatus(prev => prev === 'checking' ? 'inactive' : prev);
-    }, 7000);
-  };
-
   // 2. State dispatcher based on teacher broadcasts
   const handleBrokerMessage = (topic, payload) => {
     console.log('[Student] Broker message received:', payload);
     
-    // Mark room as active and clear checking timer upon any valid teacher state broadcast
+    // Mark room as active upon any valid teacher state broadcast
     const validEvents = ['lobby', 'question_start', 'question_stop', 'next_question_waiting', 'results', 'session_finished'];
     if (validEvents.includes(payload.event)) {
       setRoomActiveStatus('active');
-      if (checkTimerRef.current) {
-        clearTimeout(checkTimerRef.current);
-        checkTimerRef.current = null;
-      }
     }
     
     if (payload.event === 'lobby') {
@@ -373,69 +350,69 @@ export default function StudentSession({ roomCode, onLeave }) {
     );
   }
 
-  // Handle room status checking and inactive notifications
+  // Handle room status checking and waiting
   if (roomActiveStatus === 'checking') {
+    const isConnecting = connStatus === 'connecting' || connStatus === 'disconnected';
     return (
       <div className="mobile-container animate-slide-up flex-center" style={{ minHeight: '85vh', flexDirection: 'column', textAlign: 'center' }}>
-        <div className="glass-card flex-center" style={{ width: '100%', padding: '3rem 1.5rem', flexDirection: 'column' }}>
-          <Hourglass size={48} className="animate-spin" style={{ color: 'var(--color-indigo)', marginBottom: '1.5rem' }} />
-          <h2 style={{ fontSize: '1.3rem', marginBottom: '0.5rem' }}>Checking Room Status...</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Connecting to room <strong style={{ color: 'var(--text-primary)' }}>{roomCode}</strong> and verifying if the instructor has launched the session.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (roomActiveStatus === 'inactive') {
-    return (
-      <div className="mobile-container animate-slide-up flex-center" style={{ minHeight: '85vh', flexDirection: 'column', textAlign: 'center' }}>
-        <div className="glass-card flex-center animate-pop" style={{ width: '100%', padding: '3rem 1.5rem', flexDirection: 'column' }}>
-          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⚠️</div>
-          <h2 style={{ fontSize: '1.4rem', color: 'var(--color-warning)', marginBottom: '0.75rem' }}>Activity Not Started</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '2rem', lineHeight: '1.5' }}>
-            This activity session has not been launched by your instructor yet. Please wait for the teacher to start the session, or double check your Room Code.
-          </p>
+        <div className="glass-card flex-center animate-pop" style={{ width: '100%', padding: '3rem 1.5rem', flexDirection: 'column', gap: '1.5rem' }}>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
-            <button 
-              className="btn btn-primary" 
-              style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} 
-              onClick={handleRetryJoin}
-            >
-              <RefreshCw size={18} /> Try Again
-            </button>
-            <button 
-              className="btn btn-secondary" 
-              style={{ width: '100%', padding: '1rem' }} 
-              onClick={() => {
-                setIsJoined(false);
-                if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
-              }}
-            >
-              Change Room / Nickname
-            </button>
+          {isConnecting ? (
+            <Hourglass size={48} className="animate-spin" style={{ color: 'var(--color-indigo)' }} />
+          ) : (
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <div className="animate-pulse-glow" style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Wifi size={32} style={{ color: 'var(--color-indigo)' }} />
+              </div>
+            </div>
+          )}
 
-            {/* Subtle teacher launch link */}
-            <button 
-              type="button" 
-              onClick={handleTeacherLaunch}
-              style={{ 
-                background: 'none', 
-                border: 'none', 
-                color: 'var(--text-muted)', 
-                fontSize: '0.75rem', 
-                cursor: 'pointer', 
-                textDecoration: 'underline', 
-                opacity: 0.5,
-                marginTop: '0.5rem'
-              }}
-              title="Launch session as teacher"
-            >
-              Teacher Host Launch
-            </button>
+          <div>
+            <h2 style={{ fontSize: '1.35rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+              {isConnecting ? 'Connecting to Room...' : 'Waiting for Instructor'}
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>
+              {isConnecting ? (
+                `Connecting to real-time server for room ${roomCode}...`
+              ) : (
+                <>
+                  Successfully connected as <strong style={{ color: 'var(--text-primary)' }}>{nickname}</strong>!<br />
+                  Waiting for the instructor to start the activity.
+                </>
+              )}
+            </p>
           </div>
+
+          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.6rem 1.25rem', borderRadius: '10px', border: '1px solid var(--border-light)', fontSize: '0.85rem' }}>
+            Room Code: <strong style={{ color: 'var(--color-indigo)' }}>{roomCode}</strong>
+          </div>
+
+          <button 
+            className="btn btn-secondary" 
+            style={{ width: '100%', padding: '0.85rem' }} 
+            onClick={() => setIsJoined(false)}
+          >
+            Exit / Change Room
+          </button>
+
+          {/* Subtle teacher launch link */}
+          <button 
+            type="button" 
+            onClick={handleTeacherLaunch}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              color: 'var(--text-muted)', 
+              fontSize: '0.75rem', 
+              cursor: 'pointer', 
+              textDecoration: 'underline',
+              marginTop: '0.5rem',
+              opacity: 0.6
+            }}
+          >
+            Instructor? Launch host session
+          </button>
+
         </div>
       </div>
     );

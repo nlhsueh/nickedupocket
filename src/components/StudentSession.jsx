@@ -66,7 +66,7 @@ export default function StudentSession({ roomCode, onLeave }) {
       if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
       checkTimerRef.current = setTimeout(() => {
         setRoomActiveStatus(prev => prev === 'checking' ? 'inactive' : prev);
-      }, 3500);
+      }, 7000);
     }
     if (status === 'error') {
       setConnError(info || 'Connection failed');
@@ -82,7 +82,7 @@ export default function StudentSession({ roomCode, onLeave }) {
     
     checkTimerRef.current = setTimeout(() => {
       setRoomActiveStatus(prev => prev === 'checking' ? 'inactive' : prev);
-    }, 3500);
+    }, 7000);
   };
 
   // 2. State dispatcher based on teacher broadcasts
@@ -133,7 +133,7 @@ export default function StudentSession({ roomCode, onLeave }) {
       
       if (payload.type === 'ordering') {
         // Shuffle items for the student to sort
-        const shuffled = [...payload.items].sort(() => Math.random() - 0.5);
+        const shuffled = [...(payload.items || [])].sort(() => Math.random() - 0.5);
         setOrderingItems(shuffled);
       }
       

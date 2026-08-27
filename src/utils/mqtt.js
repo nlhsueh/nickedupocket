@@ -55,15 +55,16 @@ class MqttService {
     this.client.on('connect', () => {
       this.isConnected = true;
       console.log(`[MQTT] Connected successfully as ${role}`);
-      if (this.onStatusCallback) this.onStatusCallback('connected', 'Connected');
 
-      // Subscribe to relevant topics
+      // Subscribe to relevant topics first, then notify connection status
       const topic = this.getSubscribeTopic();
       this.client.subscribe(topic, { qos: 1 }, (err) => {
         if (err) {
           console.error(`[MQTT] Subscription error for topic ${topic}:`, err);
+          if (this.onStatusCallback) this.onStatusCallback('error', 'Subscription failed');
         } else {
           console.log(`[MQTT] Subscribed to topic: ${topic}`);
+          if (this.onStatusCallback) this.onStatusCallback('connected', 'Connected');
         }
       });
     });

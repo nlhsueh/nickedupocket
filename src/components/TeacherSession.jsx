@@ -84,10 +84,16 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   };
 
   const broadcastLobbyState = () => {
-    if (sessionStatus === 'active') {
+    if (sessionStatus === 'lobby') {
+      broadcastState({ event: 'lobby', acknowledged: true });
+    } else if (sessionStatus === 'active') {
       broadcastActiveQuestion(currentQIndex);
+    } else if (sessionStatus === 'stopped') {
+      broadcastState({ event: 'question_stop' });
     } else if (sessionStatus === 'results') {
       broadcastState({ event: 'results' });
+    } else if (sessionStatus === 'finished') {
+      broadcastState({ event: 'session_finished' });
     }
   };
 
@@ -126,7 +132,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         type: 'ordering',
         questionIndex: idx,
         questionText: q.questionText,
-        items: q.items // Students will receive these to sort
+        items: q.items
       });
     } else {
       broadcastState({
@@ -135,7 +141,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         questionIndex: idx,
         questionText: q.questionText,
         options: q.options,
-        timeLimit: q.timeLimit || 0
+        timeLimit: q.type === 'game' ? timeLeft : (q.timeLimit || 0)
       });
     }
   };

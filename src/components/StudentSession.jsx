@@ -106,8 +106,10 @@ export default function StudentSession({ roomCode, onLeave }) {
       setSelectedOption(null);
       setTextAnswer('');
       setOrderingItems([]);
-      // Announce presence to the teacher
-      mqttService.publishResponse({ event: 'join', studentName: nickname });
+      // Announce presence only if the event is not a teacher acknowledgment broadcast (prevents loops)
+      if (!payload.acknowledged) {
+        mqttService.publishResponse({ event: 'join', studentName: nickname });
+      }
     } 
     else if (payload.event === 'question_start') {
       setRoomState('answering');
@@ -139,7 +141,7 @@ export default function StudentSession({ roomCode, onLeave }) {
         setTimeLeft(payload.timeLimit);
       }
     } 
-    else if (payload.event === 'question_stop') {
+    else if (payload.event === 'question_stop' || payload.event === 'results') {
       setRoomState('stopped');
     }
     else if (payload.event === 'next_question_waiting') {

@@ -82,6 +82,13 @@ Time: 20
 ### [Activity: test-intro-short] SQA Benefits QA
 #### [QA] What is the most important benefit of software quality assurance in your opinion?
 
+### [Activity: test-intro-poll] Testing Experience Poll
+#### [Poll] Which aspect of software testing do you think is the most challenging for beginners?
+- Writing test cases and identifying edge cases
+- Configuring test environments and automated tools
+- Debugging failing tests and locating root faults
+- Designing test plans and estimating test coverage
+
 ## Chapter 2: Black Box vs. White Box Testing
 
 ### [Activity: test-blackwhite-ccq] Boundary Value Analysis CCQ

@@ -21,6 +21,7 @@ export default function StudentSession({ roomCode, onLeave }) {
   
   // Student answer states
   const [selectedOption, setSelectedOption] = useState(null);
+  const [textAnswer, setTextAnswer] = useState('');
   const [orderingItems, setOrderingItems] = useState([]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -103,6 +104,7 @@ export default function StudentSession({ roomCode, onLeave }) {
       setActiveQuestion(null);
       setHasSubmitted(false);
       setSelectedOption(null);
+      setTextAnswer('');
       setOrderingItems([]);
       // Announce presence to the teacher
       mqttService.publishResponse({ event: 'join', studentName: nickname });
@@ -111,6 +113,7 @@ export default function StudentSession({ roomCode, onLeave }) {
       setRoomState('answering');
       setHasSubmitted(false);
       setSelectedOption(null);
+      setTextAnswer('');
       setSubmitting(false);
       setSubmitTime(null);
       setQuestionStartMs(Date.now());
@@ -186,6 +189,34 @@ export default function StudentSession({ roomCode, onLeave }) {
         event: 'submit_answer',
         studentName: nickname,
         answer: selectedOption,
+        timestamp: now,
+        questionIndex: activeQuestion.index
+      });
+
+      if (success) {
+        setHasSubmitted(true);
+      } else {
+        alert('Failed to send answer. Check your connection.');
+      }
+    } catch (e) {
+      console.error('[MQTT] Publish error:', e);
+      alert('Connection error. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitTextValue = () => {
+    if (hasSubmitted || roomState !== 'answering' || !textAnswer.trim()) return;
+    setSubmitting(true);
+    const now = Date.now();
+    setSubmitTime(now);
+
+    try {
+      const success = mqttService.publishResponse({
+        event: 'submit_answer',
+        studentName: nickname,
+        answer: textAnswer.trim(),
         timestamp: now,
         questionIndex: activeQuestion.index
       });
@@ -534,6 +565,46 @@ export default function StudentSession({ roomCode, onLeave }) {
                     disabled={submitting}
                   >
                     Submit Order <CornerDownRight size={18} />
+                  </button>
+                </div>
+              ) : activeQuestion.type === 'short' ? (
+                /* Short Answer Text Input UI */
+                <div>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <textarea
+                      className="input-field"
+                      style={{ 
+                        width: '100%', 
+                        minHeight: '120px', 
+                        padding: '1rem', 
+                        fontSize: '1rem',
+                        resize: 'none',
+                        fontFamily: 'inherit',
+                        borderRadius: '12px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-primary)',
+                        margin: '0 0 0.5rem 0'
+                      }}
+                      value={textAnswer}
+                      onChange={(e) => setTextAnswer(e.target.value)}
+                      placeholder="Type your answer here..."
+                      maxLength={100}
+                      disabled={submitting}
+                    />
+                    <div style={{ textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      {textAnswer.length}/100 characters
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '1rem' }}
+                    onClick={submitTextValue}
+                    disabled={submitting || !textAnswer.trim()}
+                  >
+                    Submit Answer <CornerDownRight size={18} />
                   </button>
                 </div>
               ) : (

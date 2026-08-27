@@ -32,6 +32,11 @@ Correct: False
 - Verification is unit testing, Validation is system testing
 Time: 20
 
+
+### [Activity: test-intro-short] SQA Benefits QA
+#### [QA] What is the most important benefit of software quality assurance in your opinion?
+
+
 ## Chapter 2: Black Box vs. White Box Testing
 
 ### [Activity: test-blackwhite-ccq] Boundary Value Analysis CCQ

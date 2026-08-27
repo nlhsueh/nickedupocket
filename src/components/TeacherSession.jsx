@@ -19,6 +19,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   // Game scores state
   const [studentScores, setStudentScores] = useState({}); // { studentName: score }
   
+  // View mode for short answers
+  const [shortAnswerViewMode, setShortAnswerViewMode] = useState('grid'); // 'grid' or 'danmaku'
+  
   // Timer for Game
   const [timeLeft, setTimeLeft] = useState(0);
   const [questionStartTime, setQuestionStartTime] = useState(0);
@@ -153,6 +156,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       setCurrentQIndex(currentQIndex + 1);
       setSessionStatus('lobby'); // Go back to lobbying / ready state for next question
       setAnswers({});
+      setShortAnswerViewMode('grid');
       // Alert students that we are moving to next question
       broadcastState({ event: 'next_question_waiting', questionIndex: currentQIndex + 1 });
     } else {
@@ -215,6 +219,22 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     });
 
     return { stats, total };
+  };
+
+  // Extract all short answer responses
+  const getShortAnswers = () => {
+    const list = [];
+    Object.keys(answers).forEach((studentName) => {
+      const ans = answers[studentName];
+      if (ans.questionIndex === currentQIndex && ans.answer) {
+        list.push({
+          studentName,
+          text: ans.answer,
+          timestamp: ans.timestamp
+        });
+      }
+    });
+    return list;
   };
 
   // For Ordering, check correctness and order configurations
@@ -371,7 +391,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               </h1>
 
               {/* Render Question Choices (static visual display for students/teacher screen) */}
-              {currentQuestion.type !== 'ordering' && currentQuestion.options && (
+              {currentQuestion.type !== 'ordering' && currentQuestion.type !== 'short' && currentQuestion.options && (
                 <div className="grid-2" style={{ gap: '1rem' }}>
                   {currentQuestion.options.map((opt, idx) => {
                     const letters = ['A', 'B', 'C', 'D'];
@@ -475,6 +495,112 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   );
                 })()}
 
+                {/* Short Answer Stats & View Mode Toggle */}
+                {currentQuestion.type === 'short' && (() => {
+                  const items = getShortAnswers();
+                  const colors = [
+                    'linear-gradient(135deg, #fef08a 0%, #fde047 100%)', // yellow
+                    'linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%)', // blue
+                    'linear-gradient(135deg, #bbf7d0 0%, #86efac 100%)', // green
+                    'linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%)', // pink
+                    'linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%)'  // purple
+                  ];
+
+                  return (
+                    <div>
+                      {/* View Mode Toggle Controls */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                        <button 
+                          className={`btn ${shortAnswerViewMode === 'grid' ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                          onClick={() => setShortAnswerViewMode('grid')}
+                        >
+                          Grid View
+                        </button>
+                        <button 
+                          className={`btn ${shortAnswerViewMode === 'danmaku' ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                          onClick={() => setShortAnswerViewMode('danmaku')}
+                        >
+                          Danmaku Ticker
+                        </button>
+                      </div>
+
+                      {items.length === 0 ? (
+                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          No short answers submitted.
+                        </div>
+                      ) : shortAnswerViewMode === 'grid' ? (
+                        /* Sticky Notes Grid */
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1.25rem' }}>
+                          {items.map((item, idx) => {
+                            const bg = colors[idx % colors.length];
+                            const rotation = ((idx % 3) - 1) * 2; // -2, 0, or 2 degrees
+                            return (
+                              <div 
+                                key={idx}
+                                className="sticky-note animate-pop"
+                                style={{ 
+                                  background: bg,
+                                  transform: `rotate(${rotation}deg)`,
+                                  padding: '1.25rem',
+                                  borderRadius: '8px',
+                                  boxShadow: '0 6px 15px rgba(0,0,0,0.15)',
+                                  minHeight: '140px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'space-between',
+                                  color: '#0f172a'
+                                }}
+                              >
+                                <p style={{ fontSize: '0.95rem', fontWeight: 500, lineHeight: '1.4', wordBreak: 'break-word', margin: 0 }}>
+                                  "{item.text}"
+                                </p>
+                                <div style={{ fontSize: '0.75rem', color: '#475569', textAlign: 'right', borderTop: '1px dashed rgba(0,0,0,0.1)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+                                  — {item.studentName}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        /* Danmaku Ticker View */
+                        <div className="danmaku-container glass-card" style={{ height: '280px', overflow: 'hidden', position: 'relative', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-light)' }}>
+                          <div className="danmaku-track" style={{ position: 'relative', width: '100%', height: '100%' }}>
+                            {items.map((item, idx) => {
+                              const lane = idx % 5;
+                              const topPos = 20 + lane * 48;
+                              const delay = idx * 1.8;
+                              const textColors = ['#fef08a', '#bfdbfe', '#bbf7d0', '#fbcfe8', '#e9d5ff'];
+                              const color = textColors[idx % textColors.length];
+
+                              return (
+                                <div 
+                                  key={idx}
+                                  className="danmaku-item"
+                                  style={{
+                                    position: 'absolute',
+                                    top: `${topPos}px`,
+                                    whiteSpace: 'nowrap',
+                                    color: color,
+                                    fontSize: '1.1rem',
+                                    fontWeight: 'bold',
+                                    textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                                    animation: `floatLeft 12s linear infinite`,
+                                    animationDelay: `${delay}s`
+                                  }}
+                                >
+                                  <strong>{item.studentName}:</strong> "{item.text}"
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* Ordering Stats */}
                 {currentQuestion.type === 'ordering' && (() => {
                   const { correctCount, total, averages } = getOrderingStats();
@@ -554,6 +680,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                         const isCorrect = Array.isArray(submission.answer) && submission.answer.every((val, index) => val === currentQuestion.items[index]);
                         statusLabel = isCorrect ? 'Sorted Correctly' : 'Sorted Incorrectly';
                         badgeClass = isCorrect ? 'badge-success' : 'badge-danger';
+                      } else if (currentQuestion.type === 'short') {
+                        statusLabel = submission.answer ? 'Submitted' : 'No Answer';
+                        badgeClass = submission.answer ? 'badge-indigo' : 'badge-danger';
                       }
                     }
 

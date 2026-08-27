@@ -64,9 +64,10 @@ export function parseMarkdownCourse(mdText, fileId = '') {
         currentQuestion = null;
       } else {
         // Legacy Support: Treating "### [Type] Question" as an activity containing a single question
-        const typeMatch = rawText.match(/^\[(CCQ|Poll|Ordering|Game)\]/i);
+        const typeMatch = rawText.match(/^\[(CCQ|Poll|Ordering|Game|Short|QA)\]/i);
         if (typeMatch) {
-          const qType = typeMatch[1].toLowerCase();
+          const rawType = typeMatch[1].toLowerCase();
+          const qType = (rawType === 'qa') ? 'short' : rawType;
           const qText = rawText.substring(typeMatch[0].length).trim();
           
           // Generate an Activity ID from the title/text slug
@@ -121,10 +122,11 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       }
 
       const qTextRaw = line.substring(5).trim();
-      const typeMatch = qTextRaw.match(/^\[(CCQ|Poll|Ordering|Game)\]/i);
+      const typeMatch = qTextRaw.match(/^\[(CCQ|Poll|Ordering|Game|Short|QA)\]/i);
 
       if (typeMatch) {
-        const qType = typeMatch[1].toLowerCase();
+        const rawType = typeMatch[1].toLowerCase();
+        const qType = (rawType === 'qa') ? 'short' : rawType;
         const qText = qTextRaw.substring(typeMatch[0].length).trim();
 
         currentQuestion = {

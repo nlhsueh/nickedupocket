@@ -64,10 +64,10 @@ export default function App() {
     const loadDefaultCourses = async () => {
       const baseUrl = import.meta.env.BASE_URL || '/';
       const courseFiles = [
-        { id: 'software_testing', file: 'software_testing.md', fallback: DEFAULT_ST_MD },
-        { id: 'software_eng', file: 'software_eng.md', fallback: DEFAULT_SE_MD },
-        { id: 'python', file: 'python.md', fallback: null },
-        { id: 'ux', file: 'ux.md', fallback: null },
+        { id: 'gTeachSQA', file: 'gTeachSQA.md', fallback: DEFAULT_ST_MD },
+        { id: 'gTeachASE', file: 'gTeachASE.md', fallback: DEFAULT_SE_MD },
+        { id: 'gTeachPython', file: 'gTeachPython.md', fallback: null },
+        { id: 'gTeachUX', file: 'gTeachUX.md', fallback: null },
       ];
 
       const loaded = [];

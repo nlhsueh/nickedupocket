@@ -422,10 +422,26 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
 }
 
-.chart-bar-fill {
-  height: 100%;
-  border-radius: 5px;
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+/* Word Cloud styles */
+.wordcloud-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem 1.75rem;
+  border-radius: 16px;
+  position: relative;
+}
+
+.wordcloud-tag {
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), text-shadow 0.25s ease;
+}
+
+.wordcloud-tag:hover {
+  transform: scale(1.18);
 }
 
 /* Ordering styles */

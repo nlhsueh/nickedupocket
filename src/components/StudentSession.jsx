@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Wifi, WifiOff, Hourglass, CheckCircle2, AlertCircle, 
-  ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2
+  ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 
@@ -39,7 +39,8 @@ export default function StudentSession({ roomCode, onLeave }) {
     stats: { A: 0, B: 0, C: 0, D: 0, E: 0 },
     totalSubmissions: 0,
     totalStudents: 0,
-    shortAnswers: []
+    shortAnswers: [],
+    wordCloud: null
   });
   const [revealedCorrectAnswer, setRevealedCorrectAnswer] = useState(null);
 
@@ -148,12 +149,13 @@ export default function StudentSession({ roomCode, onLeave }) {
     } 
     else if (payload.event === 'stats_update') {
       if (activeQuestion && payload.questionIndex === activeQuestion.index) {
-        setLiveStats({
-          stats: payload.stats || {},
-          totalSubmissions: payload.totalSubmissions || 0,
-          totalStudents: payload.totalStudents || 0,
-          shortAnswers: payload.shortAnswers || []
-        });
+        setLiveStats(prev => ({
+          stats: payload.stats || prev.stats,
+          totalSubmissions: payload.totalSubmissions !== undefined ? payload.totalSubmissions : prev.totalSubmissions,
+          totalStudents: payload.totalStudents !== undefined ? payload.totalStudents : prev.totalStudents,
+          shortAnswers: payload.shortAnswers || prev.shortAnswers,
+          wordCloud: payload.wordCloud || prev.wordCloud
+        }));
         if (payload.correctAnswer) {
           setRevealedCorrectAnswer(payload.correctAnswer);
         }
@@ -164,13 +166,14 @@ export default function StudentSession({ roomCode, onLeave }) {
       if (payload.correctAnswer) {
         setRevealedCorrectAnswer(payload.correctAnswer);
       }
-      if (payload.stats) {
+      if (payload.stats || payload.wordCloud || payload.shortAnswers) {
         setLiveStats(prev => ({
           ...prev,
-          stats: payload.stats,
+          stats: payload.stats || prev.stats,
           totalSubmissions: payload.totalSubmissions !== undefined ? payload.totalSubmissions : prev.totalSubmissions,
           totalStudents: payload.totalStudents !== undefined ? payload.totalStudents : prev.totalStudents,
-          shortAnswers: payload.shortAnswers || prev.shortAnswers
+          shortAnswers: payload.shortAnswers || prev.shortAnswers,
+          wordCloud: payload.wordCloud || prev.wordCloud
         }));
       }
     }
@@ -181,7 +184,7 @@ export default function StudentSession({ roomCode, onLeave }) {
       setSelectedOption(null);
       setOrderingItems([]);
       setRevealedCorrectAnswer(null);
-      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [] });
+      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [], wordCloud: null });
     }
     else if (payload.event === 'timer_extend') {
       setTimeLeft(prev => prev + (payload.addSeconds || 30));
@@ -636,9 +639,21 @@ export default function StudentSession({ roomCode, onLeave }) {
                             ) : null}
                           </div>
                         )}
-                        {textAnswer && (activeQuestion.type === 'short' || activeQuestion.type === 'wordcloud') && (
+                        {textAnswer && activeQuestion.type === 'short' && (
                           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
                             你的回答：<strong style={{ color: 'var(--text-primary)' }}>"{textAnswer}"</strong>
+                          </div>
+                        )}
+                        {textAnswer && activeQuestion.type === 'wordcloud' && (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
+                            你的詞彙：
+                            <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.35rem', marginLeft: '0.3rem' }}>
+                              {textAnswer.split(/[,，;；、\s\n]+/).filter(t => t.trim().length > 0).map((w, i) => (
+                                <span key={i} className="badge badge-indigo animate-pop" style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem' }}>
+                                  ✨ {w.trim()}
+                                </span>
+                              ))}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -729,8 +744,80 @@ export default function StudentSession({ roomCode, onLeave }) {
                     </div>
                   )}
 
+                  {/* Word Cloud Live Mobile Graphic */}
+                  {activeQuestion.type === 'wordcloud' && (
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <div className="flex-between" style={{ marginBottom: '0.6rem' }}>
+                        <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <Cloud size={16} style={{ color: 'var(--color-indigo)' }} />
+                          全班即時文字雲 (Class Word Cloud)：
+                        </h4>
+                      </div>
+                      
+                      <div 
+                        className="glass-card wordcloud-container animate-slide-up"
+                        style={{ 
+                          minHeight: '180px', 
+                          maxHeight: '260px',
+                          overflowY: 'auto',
+                          padding: '1.25rem', 
+                          background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.08) 0%, rgba(15, 23, 42, 0.4) 100%)',
+                          border: '1px solid var(--border-glow)'
+                        }}
+                      >
+                        {(() => {
+                          const myWords = (textAnswer || '').split(/[,，;；、\s\n]+/).map(w => w.trim().toLowerCase());
+                          const sortedList = (liveStats.wordCloud && liveStats.wordCloud.sortedList) || [];
+                          
+                          if (sortedList.length === 0) {
+                            return (
+                              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                <Cloud size={32} style={{ opacity: 0.4, marginBottom: '0.4rem' }} className="animate-pulse" />
+                                <p style={{ margin: 0 }}>即時文字雲統計中...</p>
+                              </div>
+                            );
+                          }
+
+                          const maxCount = sortedList[0].count;
+                          const minCount = sortedList[sortedList.length - 1].count;
+                          const WORD_COLORS = ['#818cf8', '#a78bfa', '#f472b6', '#22d3ee', '#34d399', '#fbbf24', '#60a5fa'];
+
+                          return sortedList.map((item, idx) => {
+                            const isMine = myWords.includes(item.text.toLowerCase());
+                            const color = WORD_COLORS[idx % WORD_COLORS.length];
+                            const ratio = maxCount === minCount ? 0.5 : (item.count - minCount) / (maxCount - minCount);
+                            const fontSize = `${(0.95 + ratio * 1.15).toFixed(2)}rem`;
+
+                            return (
+                              <span 
+                                key={idx}
+                                className="wordcloud-tag animate-pop"
+                                style={{
+                                  fontSize,
+                                  fontWeight: isMine || item.count > 1 ? 700 : 500,
+                                  color: isMine ? '#fff' : color,
+                                  background: isMine ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                                  border: isMine ? '1px solid var(--color-indigo)' : 'none',
+                                  padding: isMine ? '0.15rem 0.45rem' : '0',
+                                  borderRadius: '6px',
+                                  textShadow: isMine ? '0 0 12px rgba(99, 102, 241, 0.8)' : `0 0 8px ${color}33`,
+                                  lineHeight: '1.2'
+                                }}
+                              >
+                                {item.text}
+                                {item.count > 1 && (
+                                  <sup style={{ fontSize: '0.6em', opacity: 0.85, marginLeft: '0.15rem' }}>({item.count})</sup>
+                                )}
+                              </span>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Short Answer Responses List */}
-                  {(activeQuestion.type === 'short' || activeQuestion.type === 'wordcloud') && (
+                  {activeQuestion.type === 'short' && (
                     <div style={{ marginBottom: '1.5rem' }}>
                       <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>全班回答列表 (Class Responses)：</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.25rem' }}>
@@ -863,7 +950,60 @@ export default function StudentSession({ roomCode, onLeave }) {
                     Submit Order <CornerDownRight size={18} />
                   </button>
                 </div>
-              ) : (activeQuestion.type === 'short' || activeQuestion.type === 'wordcloud') ? (
+              ) : activeQuestion.type === 'wordcloud' ? (
+                /* Word Cloud Keyword Input UI */
+                <div>
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+                      <Cloud size={16} style={{ color: 'var(--color-indigo)' }} />
+                      輸入關鍵字 / 詞彙 (可輸入 1~3 個)：
+                    </label>
+                    <textarea
+                      className="input-field"
+                      style={{ 
+                        width: '100%', 
+                        minHeight: '85px', 
+                        padding: '0.85rem 1rem', 
+                        fontSize: '1rem',
+                        resize: 'none',
+                        fontFamily: 'inherit',
+                        borderRadius: '12px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-primary)',
+                        margin: '0 0 0.4rem 0'
+                      }}
+                      value={textAnswer}
+                      onChange={(e) => setTextAnswer(e.target.value)}
+                      placeholder="例如：iPhone, Notion, 保溫杯 (可用逗號或空格分隔)"
+                      maxLength={100}
+                      disabled={submitting}
+                    />
+                    
+                    {/* Live Preview Chips */}
+                    {textAnswer.trim() && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.35rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', alignSelf: 'center' }}>預覽詞彙：</span>
+                        {textAnswer.split(/[,，;；、\s\n]+/).filter(t => t.trim().length > 0).map((w, i) => (
+                          <span key={i} className="badge badge-indigo animate-pop" style={{ fontSize: '0.8rem', padding: '0.2rem 0.55rem' }}>
+                            ✨ {w.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '1rem', fontSize: '1rem' }}
+                    onClick={submitTextValue}
+                    disabled={submitting || !textAnswer.trim()}
+                  >
+                    送出詞彙 Submit Words <CornerDownRight size={18} />
+                  </button>
+                </div>
+              ) : activeQuestion.type === 'short' ? (
                 /* Short Answer Text Input UI */
                 <div>
                   <div style={{ marginBottom: '1.5rem' }}>

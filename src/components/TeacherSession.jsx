@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
   Play, Square, ChevronRight, ArrowLeft, Users, Wifi, WifiOff, 
-  CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star
+  CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 
@@ -26,8 +26,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   // Game scores state
   const [studentScores, setStudentScores] = useState({}); // { studentName: score }
   
-  // View mode for short answers
+  // View modes
   const [shortAnswerViewMode, setShortAnswerViewMode] = useState('grid'); // 'grid' or 'danmaku'
+  const [wordCloudViewMode, setWordCloudViewMode] = useState('cloud'); // 'cloud', 'ranking', 'raw'
   
   // Lobby idle timeout (5 minutes = 300 seconds)
   const [lobbyTimeLeft, setLobbyTimeLeft] = useState(300);
@@ -113,6 +114,44 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     mqttService.publishState(stateObj);
   };
 
+  // Extract word cloud frequencies and submissions
+  const getWordCloudFrequencies = (answersMap) => {
+    const ansMap = answersMap || answers;
+    const qIndex = currentQIndexRef.current;
+    const freqMap = {};
+    const submissions = [];
+
+    Object.keys(ansMap).forEach(stName => {
+      const item = ansMap[stName];
+      if (item && item.questionIndex === qIndex && item.answer) {
+        const rawText = String(item.answer).trim();
+        submissions.push({ studentName: stName, text: rawText, timestamp: item.timestamp });
+        
+        // Tokenize words by comma, fullwidth comma, semicolon, space, newline, slash, etc.
+        const tokens = rawText
+          .split(/[,，;；、\/\\\s\n+&|]+/)
+          .map(t => t.trim().replace(/^["'“”‘’#@]+|["'“”‘’#@]+$/g, ''))
+          .filter(t => t.length > 0 && t.length <= 40);
+
+        tokens.forEach(tok => {
+          freqMap[tok] = (freqMap[tok] || 0) + 1;
+        });
+      }
+    });
+
+    const sortedList = Object.entries(freqMap)
+      .map(([text, count]) => ({ text, count }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      freqMap,
+      sortedList,
+      totalSubmissions: submissions.length,
+      totalWords: sortedList.reduce((acc, curr) => acc + curr.count, 0),
+      submissions
+    };
+  };
+
   // Broadcast real-time stats to students
   const broadcastCurrentStats = (nextAnswers) => {
     const qIndex = currentQIndexRef.current;
@@ -133,11 +172,13 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
           stats[item.answer]++;
         }
         total++;
-        if (q.type === 'short') {
+        if (q.type === 'short' || q.type === 'wordcloud') {
           shortList.push({ studentName: stName, text: item.answer, timestamp: item.timestamp });
         }
       }
     });
+
+    const wordCloudData = (q.type === 'wordcloud') ? getWordCloudFrequencies(ansMap) : null;
 
     broadcastState({
       event: 'stats_update',
@@ -146,6 +187,11 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       totalSubmissions: total,
       totalStudents: joinedStudents.length,
       shortAnswers: shortList,
+      wordCloud: wordCloudData ? {
+        freqMap: wordCloudData.freqMap,
+        sortedList: wordCloudData.sortedList,
+        totalWords: wordCloudData.totalWords
+      } : null,
       correctAnswer: sessionStatusRef.current === 'results' ? q.correctAnswer : null
     });
   };
@@ -574,6 +620,97 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 </div>
               )}
 
+              {/* Active Screen Live Word Cloud */}
+              {currentQuestion.type === 'wordcloud' && (() => {
+                const { sortedList, totalWords } = getWordCloudFrequencies();
+                const maxCount = sortedList.length > 0 ? sortedList[0].count : 1;
+                const minCount = sortedList.length > 0 ? sortedList[sortedList.length - 1].count : 1;
+                const WORD_COLORS = ['#818cf8', '#a78bfa', '#f472b6', '#22d3ee', '#34d399', '#fbbf24', '#60a5fa', '#f87171', '#c084fc', '#38bdf8'];
+
+                const getFontSize = (count) => {
+                  if (maxCount === minCount) return '2.3rem';
+                  const ratio = (count - minCount) / (maxCount - minCount);
+                  return `${(1.5 + ratio * 2.8).toFixed(2)}rem`;
+                };
+
+                return (
+                  <div style={{ marginTop: '1.5rem' }}>
+                    {/* Hot Keywords Bar */}
+                    {sortedList.length > 0 && (
+                      <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          🔥 熱門詞彙：
+                        </span>
+                        {sortedList.slice(0, 5).map((item, idx) => (
+                          <span 
+                            key={idx} 
+                            className="badge animate-pop" 
+                            style={{ 
+                              fontSize: '0.95rem', 
+                              padding: '0.35rem 0.8rem',
+                              background: idx === 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.1)',
+                              borderColor: idx === 0 ? 'rgba(245, 158, 11, 0.4)' : 'rgba(99, 102, 241, 0.3)',
+                              color: idx === 0 ? '#fbbf24' : 'var(--text-primary)'
+                            }}
+                          >
+                            {idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : `#${idx + 1} `}
+                            <strong>{item.text}</strong> ({item.count})
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Word Cloud Visual Canvas */}
+                    <div 
+                      className="glass-card flex-center wordcloud-container animate-slide-up" 
+                      style={{ 
+                        minHeight: '280px', 
+                        maxHeight: '380px', 
+                        overflowY: 'auto',
+                        padding: '2rem', 
+                        background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.08) 0%, rgba(15, 23, 42, 0.4) 100%)',
+                        border: '1px solid var(--border-glow)'
+                      }}
+                    >
+                      {sortedList.length > 0 ? (
+                        sortedList.map((item, idx) => {
+                          const color = WORD_COLORS[idx % WORD_COLORS.length];
+                          const size = getFontSize(item.count);
+                          const isTop = idx === 0 && item.count > 1;
+
+                          return (
+                            <span 
+                              key={idx} 
+                              className="wordcloud-tag animate-pop"
+                              style={{ 
+                                fontSize: size,
+                                fontWeight: item.count > 1 ? 700 : 500,
+                                color: color,
+                                textShadow: isTop ? `0 0 20px ${color}88` : `0 0 10px ${color}44`,
+                                lineHeight: '1.2'
+                              }}
+                              title={`${item.text}: ${item.count} 次提及`}
+                            >
+                              {item.text}
+                              {item.count > 1 && (
+                                <sup style={{ fontSize: '0.55em', opacity: 0.8, background: 'rgba(255,255,255,0.1)', padding: '0.1em 0.35em', borderRadius: '10px' }}>
+                                  {item.count}
+                                </sup>
+                              )}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                          <Cloud size={48} style={{ opacity: 0.3, marginBottom: '0.75rem' }} className="animate-pulse" />
+                          <p style={{ fontSize: '1.1rem', margin: 0 }}>等待同學輸入詞彙中... (Waiting for submissions)</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Ordering static visual list */}
               {currentQuestion.type === 'ordering' && currentQuestion.items && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '500px' }}>
@@ -664,8 +801,167 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   );
                 })()}
 
+                {/* Word Cloud Results & Mode Toggle */}
+                {currentQuestion.type === 'wordcloud' && (() => {
+                  const { sortedList, totalWords, totalSubmissions, submissions } = getWordCloudFrequencies();
+                  const maxCount = sortedList.length > 0 ? sortedList[0].count : 1;
+                  const minCount = sortedList.length > 0 ? sortedList[sortedList.length - 1].count : 1;
+                  const WORD_COLORS = ['#818cf8', '#a78bfa', '#f472b6', '#22d3ee', '#34d399', '#fbbf24', '#60a5fa', '#f87171', '#c084fc', '#38bdf8'];
+
+                  const getFontSize = (count) => {
+                    if (maxCount === minCount) return '2.4rem';
+                    const ratio = (count - minCount) / (maxCount - minCount);
+                    return `${(1.4 + ratio * 3.0).toFixed(2)}rem`;
+                  };
+
+                  return (
+                    <div>
+                      {/* View Mode Toggle Controls */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                        <button 
+                          className={`btn ${wordCloudViewMode === 'cloud' ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }}
+                          onClick={() => setWordCloudViewMode('cloud')}
+                        >
+                          ☁️ 文字雲 (Word Cloud)
+                        </button>
+                        <button 
+                          className={`btn ${wordCloudViewMode === 'ranking' ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }}
+                          onClick={() => setWordCloudViewMode('ranking')}
+                        >
+                          📊 詞頻排行榜 (Ranking)
+                        </button>
+                        <button 
+                          className={`btn ${wordCloudViewMode === 'raw' ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }}
+                          onClick={() => setWordCloudViewMode('raw')}
+                        >
+                          💬 學生作答卡片 ({submissions.length})
+                        </button>
+                      </div>
+
+                      {sortedList.length === 0 ? (
+                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          No word cloud answers submitted.
+                        </div>
+                      ) : wordCloudViewMode === 'cloud' ? (
+                        /* Word Cloud Graphic Display */
+                        <div>
+                          {/* Hot Keywords Top Bar */}
+                          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                              🔥 最高頻詞彙：
+                            </span>
+                            {sortedList.slice(0, 5).map((item, idx) => (
+                              <span 
+                                key={idx} 
+                                className="badge animate-pop" 
+                                style={{ 
+                                  fontSize: '0.9rem', 
+                                  padding: '0.3rem 0.75rem',
+                                  background: idx === 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.1)',
+                                  borderColor: idx === 0 ? 'rgba(245, 158, 11, 0.4)' : 'rgba(99, 102, 241, 0.3)',
+                                  color: idx === 0 ? '#fbbf24' : 'var(--text-primary)'
+                                }}
+                              >
+                                {idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : `#${idx + 1} `}
+                                <strong>{item.text}</strong> ({item.count} 次)
+                              </span>
+                            ))}
+                          </div>
+
+                          <div 
+                            className="glass-card flex-center wordcloud-container animate-slide-up" 
+                            style={{ 
+                              minHeight: '300px', 
+                              maxHeight: '420px', 
+                              overflowY: 'auto',
+                              padding: '2.5rem', 
+                              background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.08) 0%, rgba(15, 23, 42, 0.5) 100%)',
+                              border: '1px solid var(--border-glow)'
+                            }}
+                          >
+                            {sortedList.map((item, idx) => {
+                              const color = WORD_COLORS[idx % WORD_COLORS.length];
+                              const size = getFontSize(item.count);
+                              const isTop = idx === 0 && item.count > 1;
+
+                              return (
+                                <span 
+                                  key={idx} 
+                                  className="wordcloud-tag animate-pop"
+                                  style={{ 
+                                    fontSize: size,
+                                    fontWeight: item.count > 1 ? 700 : 500,
+                                    color: color,
+                                    textShadow: isTop ? `0 0 24px ${color}aa` : `0 0 10px ${color}44`,
+                                    lineHeight: '1.2'
+                                  }}
+                                  title={`${item.text}: ${item.count} 次提及 (${((item.count / totalWords) * 100).toFixed(1)}%)`}
+                                >
+                                  {item.text}
+                                  {item.count > 1 && (
+                                    <sup style={{ fontSize: '0.55em', opacity: 0.85, background: 'rgba(255,255,255,0.12)', padding: '0.1em 0.4em', borderRadius: '10px' }}>
+                                      {item.count}
+                                    </sup>
+                                  )}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : wordCloudViewMode === 'ranking' ? (
+                        /* Word Frequency Ranking Table */
+                        <div className="glass-card" style={{ maxHeight: '350px', overflowY: 'auto', padding: '1rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                            {sortedList.map((item, idx) => {
+                              const pct = totalWords > 0 ? (item.count / totalWords) * 100 : 0;
+                              return (
+                                <div key={idx} className="chart-bar-container" style={{ margin: 0 }}>
+                                  <div className="chart-bar-label" style={{ fontSize: '0.9rem' }}>
+                                    <span>
+                                      <strong>#{idx + 1} {item.text}</strong>
+                                    </span>
+                                    <span>{item.count} 次 ({pct.toFixed(0)}%)</span>
+                                  </div>
+                                  <div className="chart-bar-track" style={{ height: '8px' }}>
+                                    <div 
+                                      className="chart-bar-fill" 
+                                      style={{ 
+                                        width: `${pct}%`,
+                                        background: idx === 0 
+                                          ? 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)' 
+                                          : 'linear-gradient(90deg, var(--color-indigo) 0%, var(--color-violet) 100%)'
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        /* Raw Student Submissions */
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem', maxHeight: '350px', overflowY: 'auto' }}>
+                          {submissions.map((sub, idx) => (
+                            <div key={idx} className="glass-card animate-pop" style={{ padding: '1rem', border: '1px solid var(--border-light)' }}>
+                              <p style={{ margin: '0 0 0.5rem 0', fontWeight: 600, color: 'var(--color-indigo)' }}>
+                                "{sub.text}"
+                              </p>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'right' }}>
+                                — {sub.studentName}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* Short Answer Stats & View Mode Toggle */}
-                {(currentQuestion.type === 'short' || currentQuestion.type === 'wordcloud') && (() => {
+                {currentQuestion.type === 'short' && (() => {
                   const items = getShortAnswers();
                   const colors = [
                     'linear-gradient(135deg, #fef08a 0%, #fde047 100%)', // yellow

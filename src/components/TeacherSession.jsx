@@ -113,6 +113,43 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     mqttService.publishState(stateObj);
   };
 
+  // Broadcast real-time stats to students
+  const broadcastCurrentStats = (nextAnswers) => {
+    const qIndex = currentQIndexRef.current;
+    const act = activityRef.current;
+    if (!act || !act.questions) return;
+    const q = act.questions[qIndex];
+    if (!q) return;
+
+    const stats = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    let total = 0;
+    const shortList = [];
+
+    const ansMap = nextAnswers || answers;
+    Object.keys(ansMap).forEach(stName => {
+      const item = ansMap[stName];
+      if (item && item.questionIndex === qIndex && item.answer !== undefined) {
+        if (stats[item.answer] !== undefined) {
+          stats[item.answer]++;
+        }
+        total++;
+        if (q.type === 'short') {
+          shortList.push({ studentName: stName, text: item.answer, timestamp: item.timestamp });
+        }
+      }
+    });
+
+    broadcastState({
+      event: 'stats_update',
+      questionIndex: qIndex,
+      stats,
+      totalSubmissions: total,
+      totalStudents: joinedStudents.length,
+      shortAnswers: shortList,
+      correctAnswer: sessionStatusRef.current === 'results' ? q.correctAnswer : null
+    });
+  };
+
   // 2. Message Dispatcher
   const handleIncomingMessage = (topic, payload) => {
     if (payload.event === 'join') {
@@ -124,14 +161,18 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       broadcastLobbyState();
     } 
     else if (payload.event === 'submit_answer') {
-      setAnswers(prev => ({
-        ...prev,
-        [payload.studentName]: {
-          answer: payload.answer,
-          timestamp: payload.timestamp,
-          questionIndex: payload.questionIndex
-        }
-      }));
+      setAnswers(prev => {
+        const next = {
+          ...prev,
+          [payload.studentName]: {
+            answer: payload.answer,
+            timestamp: payload.timestamp,
+            questionIndex: payload.questionIndex
+          }
+        };
+        broadcastCurrentStats(next);
+        return next;
+      });
     }
   };
 
@@ -142,10 +183,19 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       broadcastState({ event: 'lobby', acknowledged: true, activityTitle: activityRef.current.title });
     } else if (status === 'active') {
       broadcastActiveQuestion(qIndex);
-    } else if (status === 'stopped') {
-      broadcastState({ event: 'question_stop' });
-    } else if (status === 'results') {
-      broadcastState({ event: 'results' });
+      broadcastCurrentStats();
+    } else if (status === 'stopped' || status === 'results') {
+      const q = activityRef.current.questions[qIndex];
+      const statsObj = getMultipleChoiceStats();
+      broadcastState({ 
+        event: 'question_stop', 
+        questionIndex: qIndex,
+        correctAnswer: q ? q.correctAnswer : null,
+        stats: statsObj.stats,
+        totalSubmissions: statsObj.total,
+        totalStudents: joinedStudents.length,
+        shortAnswers: getShortAnswers()
+      });
     } else if (status === 'finished') {
       broadcastState({ event: 'session_finished' });
     }
@@ -238,7 +288,18 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const stopQuestion = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     setSessionStatus('results');
-    broadcastState({ event: 'question_stop' });
+
+    const q = activity.questions[currentQIndex];
+    const statsObj = getMultipleChoiceStats();
+    broadcastState({ 
+      event: 'question_stop', 
+      questionIndex: currentQIndex,
+      correctAnswer: q ? q.correctAnswer : null,
+      stats: statsObj.stats,
+      totalSubmissions: statsObj.total,
+      totalStudents: joinedStudents.length,
+      shortAnswers: getShortAnswers()
+    });
 
     // Calculate game scores if type is Game
     if (currentQuestion.type === 'game') {

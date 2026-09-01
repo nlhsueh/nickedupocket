@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Wifi, WifiOff, Hourglass, CheckCircle2, AlertCircle, 
-  ChevronUp, ChevronDown, CornerDownRight, ArrowRight
+  ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 
@@ -33,6 +33,15 @@ export default function StudentSession({ roomCode, onLeave }) {
   const [submitting, setSubmitting] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(null);
   const [submitTime, setSubmitTime] = useState(null);
+
+  // Real-time live stats received from teacher
+  const [liveStats, setLiveStats] = useState({
+    stats: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+    totalSubmissions: 0,
+    totalStudents: 0,
+    shortAnswers: []
+  });
+  const [revealedCorrectAnswer, setRevealedCorrectAnswer] = useState(null);
 
   // Time tracker for game timer display
   const [timeLeft, setTimeLeft] = useState(0);
@@ -79,7 +88,7 @@ export default function StudentSession({ roomCode, onLeave }) {
     console.log('[Student] Broker message received:', payload);
     
     // Mark room as active upon any valid teacher state broadcast
-    const validEvents = ['lobby', 'question_start', 'question_stop', 'next_question_waiting', 'results', 'session_finished'];
+    const validEvents = ['lobby', 'question_start', 'question_stop', 'next_question_waiting', 'results', 'session_finished', 'stats_update'];
     if (validEvents.includes(payload.event)) {
       setRoomActiveStatus('active');
     }
@@ -94,6 +103,8 @@ export default function StudentSession({ roomCode, onLeave }) {
       setSelectedOption(null);
       setTextAnswer('');
       setOrderingItems([]);
+      setRevealedCorrectAnswer(null);
+      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [] });
       // Announce presence only if the event is not a teacher acknowledgment broadcast (prevents loops)
       if (!payload.acknowledged) {
         mqttService.publishResponse({ event: 'join', studentName: nickname });
@@ -107,6 +118,8 @@ export default function StudentSession({ roomCode, onLeave }) {
       setSubmitting(false);
       setSubmitTime(null);
       setQuestionStartMs(Date.now());
+      setRevealedCorrectAnswer(null);
+      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [] });
       
       const qData = {
         type: payload.type,
@@ -133,8 +146,33 @@ export default function StudentSession({ roomCode, onLeave }) {
         setTimeLeft(payload.timeLimit);
       }
     } 
+    else if (payload.event === 'stats_update') {
+      if (activeQuestion && payload.questionIndex === activeQuestion.index) {
+        setLiveStats({
+          stats: payload.stats || {},
+          totalSubmissions: payload.totalSubmissions || 0,
+          totalStudents: payload.totalStudents || 0,
+          shortAnswers: payload.shortAnswers || []
+        });
+        if (payload.correctAnswer) {
+          setRevealedCorrectAnswer(payload.correctAnswer);
+        }
+      }
+    }
     else if (payload.event === 'question_stop' || payload.event === 'results') {
       setRoomState('stopped');
+      if (payload.correctAnswer) {
+        setRevealedCorrectAnswer(payload.correctAnswer);
+      }
+      if (payload.stats) {
+        setLiveStats(prev => ({
+          ...prev,
+          stats: payload.stats,
+          totalSubmissions: payload.totalSubmissions !== undefined ? payload.totalSubmissions : prev.totalSubmissions,
+          totalStudents: payload.totalStudents !== undefined ? payload.totalStudents : prev.totalStudents,
+          shortAnswers: payload.shortAnswers || prev.shortAnswers
+        }));
+      }
     }
     else if (payload.event === 'next_question_waiting') {
       setRoomState('waiting');
@@ -142,6 +180,8 @@ export default function StudentSession({ roomCode, onLeave }) {
       setHasSubmitted(false);
       setSelectedOption(null);
       setOrderingItems([]);
+      setRevealedCorrectAnswer(null);
+      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [] });
     }
     else if (payload.event === 'timer_extend') {
       setTimeLeft(prev => prev + (payload.addSeconds || 30));
@@ -538,8 +578,8 @@ export default function StudentSession({ roomCode, onLeave }) {
           </div>
         )}
 
-        {/* ANSWERING SCREEN */}
-        {roomState === 'answering' && activeQuestion && (
+        {/* ANSWERING / RESULTS SCREEN */}
+        {(roomState === 'answering' || (roomState === 'stopped' && activeQuestion)) && activeQuestion && (
           <div className="glass-card animate-slide-up" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '1.5rem' }}>
             <div>
               {/* Question Header */}
@@ -547,12 +587,16 @@ export default function StudentSession({ roomCode, onLeave }) {
                 <span className="badge badge-indigo">
                   {activeQuestion.type === 'ccq' ? 'Concept Check' : activeQuestion.type.toUpperCase()}
                 </span>
-                {timeLeft > 0 && (
+                {roomState === 'answering' && timeLeft > 0 ? (
                   <span className={`badge ${timeLeft <= 15 ? 'badge-danger animate-pulse-glow' : 'badge-warning'}`} style={{ fontSize: '0.9rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Hourglass size={14} className="animate-spin" />
                     Time Left: <strong style={{ fontFamily: 'monospace' }}>{formatTime(timeLeft)}</strong>
                   </span>
-                )}
+                ) : roomState === 'stopped' ? (
+                  <span className="badge badge-danger" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem' }}>
+                    🛑 作答已結束
+                  </span>
+                ) : null}
               </div>
 
               {/* Question Text */}
@@ -560,23 +604,159 @@ export default function StudentSession({ roomCode, onLeave }) {
                 {activeQuestion.questionText}
               </h2>
 
-              {/* Options display */}
-              {hasSubmitted ? (
-                /* Post-Submission Screen */
-                <div>
-                  <div className="flex-center" style={{ flexDirection: 'column', padding: '1.5rem 0', textAlign: 'center' }}>
-                    <CheckCircle2 size={48} style={{ color: 'var(--color-success)', marginBottom: '0.75rem' }} />
-                    <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Answer Submitted!</h3>
-                    {elapsedTime || getElapsedSeconds() ? (
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                        Speed: {elapsedTime || getElapsedSeconds()} seconds
-                      </p>
+              {/* Options or Post-Submission Live Statistics Screen */}
+              {hasSubmitted || roomState === 'stopped' ? (
+                /* Post-Submission Screen with Live Statistics */
+                <div className="animate-fade-in">
+                  {/* Status Banner */}
+                  <div 
+                    className="glass-card flex-between" 
+                    style={{ 
+                      padding: '1rem 1.25rem', 
+                      background: hasSubmitted ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)', 
+                      borderColor: hasSubmitted ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)', 
+                      marginBottom: '1.25rem' 
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      {hasSubmitted ? (
+                        <CheckCircle2 size={28} style={{ color: 'var(--color-success)', flexShrink: 0 }} />
+                      ) : (
+                        <AlertCircle size={28} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />
+                      )}
+                      <div>
+                        <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
+                          {hasSubmitted ? (roomState === 'stopped' ? '作答已結束' : '作答已送出 (Submitted!)') : '未在時間內提交'}
+                        </strong>
+                        {selectedOption && (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                            你的選擇：<strong style={{ color: 'var(--color-indigo)' }}>{selectedOption}</strong>
+                            {activeQuestion.options && activeQuestion.options[selectedOption.charCodeAt(0) - 65] ? (
+                              <span> - {activeQuestion.options[selectedOption.charCodeAt(0) - 65]}</span>
+                            ) : null}
+                          </div>
+                        )}
+                        {textAnswer && activeQuestion.type === 'short' && (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                            你的回答：<strong style={{ color: 'var(--text-primary)' }}>"{textAnswer}"</strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {(elapsedTime || getElapsedSeconds()) && hasSubmitted ? (
+                      <span className="badge badge-success" style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}>
+                        ⏱️ {elapsedTime || getElapsedSeconds()}s
+                      </span>
                     ) : null}
                   </div>
 
+                  {/* Live Statistics Section Header */}
+                  <div className="flex-between" style={{ marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <BarChart2 size={18} style={{ color: 'var(--color-indigo)' }} />
+                      <h3 style={{ fontSize: '1.05rem', margin: 0 }}>即時作答分佈 (Live Distribution)</h3>
+                    </div>
+                    <span className="badge badge-indigo" style={{ fontSize: '0.8rem' }}>
+                      已作答：<strong>{liveStats.totalSubmissions || (hasSubmitted ? 1 : 0)}</strong> 人
+                    </span>
+                  </div>
+
+                  {/* Multiple Choice / CCQ / Poll / Game Live Chart */}
+                  {(activeQuestion.type === 'ccq' || activeQuestion.type === 'poll' || activeQuestion.type === 'game') && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.5rem' }}>
+                      {(activeQuestion.options || []).map((opt, idx) => {
+                        const letter = String.fromCharCode(65 + idx);
+                        const count = (liveStats.stats && liveStats.stats[letter] !== undefined)
+                          ? liveStats.stats[letter]
+                          : (selectedOption === letter ? 1 : 0);
+                        const total = Math.max(liveStats.totalSubmissions || 0, count, 1);
+                        const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+                        const isMyChoice = selectedOption === letter;
+                        const isRevealedCorrect = revealedCorrectAnswer === letter;
+
+                        return (
+                          <div key={letter} className="chart-bar-container" style={{ margin: 0, gap: '0.35rem' }}>
+                            <div className="chart-bar-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <span className="option-letter" style={{ 
+                                  width: '24px', 
+                                  height: '24px', 
+                                  fontSize: '0.8rem',
+                                  background: isMyChoice ? 'var(--color-indigo)' : 'rgba(255,255,255,0.08)',
+                                  color: isMyChoice ? '#fff' : 'var(--text-secondary)',
+                                  border: isMyChoice ? '2px solid var(--color-indigo)' : 'none'
+                                }}>
+                                  {letter}
+                                </span>
+                                <span style={{ 
+                                  fontSize: '0.9rem', 
+                                  color: isRevealedCorrect ? 'var(--color-success)' : isMyChoice ? 'var(--text-primary)' : 'var(--text-secondary)', 
+                                  fontWeight: isMyChoice || isRevealedCorrect ? 600 : 400 
+                                }}>
+                                  {opt}
+                                </span>
+                                {isMyChoice && (
+                                  <span className="badge badge-indigo" style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>
+                                    你的選擇 🎯
+                                  </span>
+                                )}
+                                {isRevealedCorrect && (
+                                  <span className="badge badge-success" style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>
+                                    正確答案 ✅
+                                  </span>
+                                )}
+                              </div>
+                              <strong style={{ fontSize: '0.9rem', color: isMyChoice ? 'var(--color-indigo)' : 'var(--text-secondary)', flexShrink: 0, marginLeft: '0.5rem' }}>
+                                {count} 票 ({percentage}%)
+                              </strong>
+                            </div>
+                            <div className="chart-bar-track" style={{ height: '14px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px' }}>
+                              <div 
+                                className="chart-bar-fill" 
+                                style={{ 
+                                  width: `${percentage}%`,
+                                  background: isRevealedCorrect 
+                                    ? 'linear-gradient(90deg, #10b981, #059669)'
+                                    : isMyChoice 
+                                      ? 'linear-gradient(90deg, #6366f1, #8b5cf6)' 
+                                      : 'rgba(255,255,255,0.2)'
+                                }} 
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Short Answer Responses List */}
+                  {activeQuestion.type === 'short' && (
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>全班回答列表 (Class Responses)：</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                        {liveStats.shortAnswers && liveStats.shortAnswers.length > 0 ? (
+                          liveStats.shortAnswers.map((item, idx) => (
+                            <div key={idx} className="glass-card" style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: item.studentName === nickname ? 'var(--color-indigo)' : 'var(--text-secondary)' }}>
+                                {item.studentName}{item.studentName === nickname ? ' (你)' : ''}
+                              </span>
+                              <span style={{ color: 'var(--text-primary)' }}>{item.text}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="glass-card" style={{ padding: '0.75rem 1rem', fontSize: '0.85rem' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-indigo)' }}>{nickname} (你)</span>
+                            <div style={{ color: 'var(--text-primary)', marginTop: '0.2rem' }}>{textAnswer}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ordering Details */}
                   {activeQuestion.type === 'ordering' && (
-                    <div style={{ marginTop: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>Your Submission Details:</h4>
+                    <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+                      <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>你的排序結果 (Your Submitted Order)：</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
                         {orderingItems.map((item, idx) => {
                           const isCorrect = item.correctNum === idx + 1;
@@ -607,7 +787,7 @@ export default function StudentSession({ roomCode, onLeave }) {
                         })}
                       </div>
 
-                      <h4 style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>🏆 Standard Correct Order:</h4>
+                      <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>🏆 標準正確排序：</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', padding: '1rem', background: 'rgba(255,255,255,0.01)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
                         {[...orderingItems].sort((a, b) => a.correctNum - b.correctNum).map((item, idx) => (
                           <div key={idx} style={{ fontSize: '0.85rem', display: 'flex', gap: '0.5rem', color: 'var(--text-secondary)' }}>
@@ -619,9 +799,15 @@ export default function StudentSession({ roomCode, onLeave }) {
                     </div>
                   )}
 
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '1.5rem', textAlign: 'center' }}>
-                    Look at the projector screen. Results will be shown once answering stops.
-                  </p>
+                  {/* Live Status Notice Footer */}
+                  <div style={{ marginTop: '1.25rem', textAlign: 'center', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid var(--border-light)' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                      <Hourglass size={14} className="animate-spin" />
+                      {roomState === 'stopped' 
+                        ? '老師已停止答題，請看前方投影幕檢討，等待下一題...' 
+                        : '即時統計持續更新中，請稍候老師結束作答...'}
+                    </p>
+                  </div>
                 </div>
               ) : activeQuestion.type === 'ordering' ? (
                 /* Ordering Sorting UI */
@@ -718,21 +904,21 @@ export default function StudentSession({ roomCode, onLeave }) {
                   </button>
                 </div>
               ) : (
-                /* Standard Multiple Choice Buttons (A, B, C, D) */
+                /* Standard Multiple Choice Buttons (A, B, C, D, E...) */
                 <div>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
                      {activeQuestion.options.map((opt, idx) => {
-                       const letters = ['A', 'B', 'C', 'D'];
-                       const isSelected = selectedOption === letters[idx];
+                       const letter = String.fromCharCode(65 + idx);
+                       const isSelected = selectedOption === letter;
                        return (
                          <button 
                            key={idx}
                            type="button"
                            className={`option-btn ${isSelected ? 'selected' : ''}`}
-                           onClick={() => selectOptionValue(letters[idx])}
+                           onClick={() => selectOptionValue(letter)}
                            disabled={submitting}
                          >
-                           <span className="option-letter">{letters[idx]}</span>
+                           <span className="option-letter">{letter}</span>
                            <span style={{ fontSize: '1rem' }}>{opt}</span>
                          </button>
                        );
@@ -752,16 +938,18 @@ export default function StudentSession({ roomCode, onLeave }) {
               )}
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '2rem', borderTop: '1px solid var(--border-light)', paddingTop: '1rem' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                {activeQuestion.type === 'game' ? '⚠️ Speed scoring enabled! Answer quickly.' : 'Review your selection before closing.'}
-              </span>
-            </div>
+            {!hasSubmitted && roomState === 'answering' && (
+              <div style={{ textAlign: 'center', marginTop: '2rem', borderTop: '1px solid var(--border-light)', paddingTop: '1rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {activeQuestion.type === 'game' ? '⚠️ Speed scoring enabled! Answer quickly.' : 'Review your selection before submitting.'}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
-        {/* STOPPED / WAITING RESULTS STATE */}
-        {roomState === 'stopped' && (
+        {/* STOPPED / WAITING RESULTS STATE WITHOUT ACTIVE QUESTION */}
+        {roomState === 'stopped' && !activeQuestion && (
           <div className="glass-card flex-center animate-pop" style={{ flex: 1, flexDirection: 'column', textAlign: 'center', padding: '3rem 1.5rem' }}>
             <CheckCircle2 size={64} style={{ color: 'var(--color-success)', marginBottom: '1.5rem' }} />
             <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>Time's Up / Stopped</h2>
@@ -774,7 +962,7 @@ export default function StudentSession({ roomCode, onLeave }) {
           </div>
         )}
 
-                {/* TIMEOUT SESSION STATE */}
+        {/* TIMEOUT SESSION STATE */}
         {roomState === 'timeout' && (
           <div className="glass-card flex-center animate-pop" style={{ flex: 1, flexDirection: 'column', textAlign: 'center', padding: '3rem 1.5rem' }}>
             <AlertCircle size={64} style={{ color: 'var(--color-warning)', marginBottom: '1.5rem' }} />

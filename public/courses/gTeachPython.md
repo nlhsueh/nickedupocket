@@ -1,5 +1,28 @@
 # Python Programming (Python 程式設計)
 
+## **Ch01 導論**
+
+### [Activity: python-ch01-ccq1] **Ch01 導論** CCQ 1
+#### [CCQ] 下列關於「編譯語言 (如 C++)」與「直譯語言 (如 Python)」特性的比較敘述，何者正確？
+- 直譯語言在執行前必須先花費數分鐘編譯產生 `.exe` 二進位執行檔才能運行。
+- 編譯語言通常執行效能極高，但修改程式碼後必須重新編譯；Python 則支援逐行直譯，具備隨改隨測與極佳的跨平台開發彈性。 (Correct)
+- Python 直譯器可以直接讓硬體 CPU 執行純英文字串，完全不需經過任何轉譯過程。
+- 編譯語言天生不具備型別檢查機制，直譯語言則在編譯期即鎖死型別。
+
+### [Activity: python-ch01-ccq2] **Ch01 導論** CCQ 2
+#### [CCQ] 在 Windows 系統安裝 Python 官方安裝檔時，如果遺漏勾選了「Add python.exe to PATH」選項，後續在命令提示字元 (cmd) 中輸入 `python` 指令時，最常遇到什麼問題？
+- 電腦螢幕解析度會被自動調降。
+- 系統會顯示「'python' 不是內部或外部命令、可執行的程式或批次檔」，因為作業系統不知道去哪個資料夾路徑尋找 `python.exe`。 (Correct)
+- 安裝程式會自動格式化硬碟。
+- Python 程式碼中的字串會全部變成亂碼。
+
+### [Activity: python-ch01-ccq3] **Ch01 導論** CCQ 3
+#### [CCQ] 身為 Python 初學者，若你撰寫了一行程式碼 `Print("歡迎學習 Python")`，在執行時系統回報了 `NameError: name 'Print' is not defined`。這項錯誤發生的最主要原因為何？
+- 電腦尚未連接網際網路，無法下載字型檔。
+- Python 的函式名稱對英文大小寫極度敏感，內建的輸出函式是全小寫的 `print`，大寫開頭的 `Print` 會被視為未宣告的變數。 (Correct)
+- 字串必須用三個雙引號包覆才合法。
+- Python 不支援在字串中印出繁體中文字元。
+
 ## why 變數的型態?
 
 ### [Activity: python-ch02-ccq1] why 變數的型態? CCQ 1
@@ -84,7 +107,8 @@
 - `func(1, c=20, b=30)`
 
 ### [Activity: python-ch05-ccq2] hello2(msg = 'Good morning', 'Nick')  # ERROR CCQ 2
-#### [CCQ] 下列程式碼執行後，螢幕上會印出什麼結果？ ```python def modify_values(a, b): a = a + 10 b.append(10) x = 5 y = [5] modify_values(x, y) print(x, y) ```
+#### [CCQ] 下列程式碼執行後，螢幕上會印出什麼結果？ ```python def modify_values(a, b): a = a + 10
+- append(10)
 - `5 [5]`
 - `15 [5, 10]`
 - `5 [5, 10]` (Correct)

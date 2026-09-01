@@ -202,7 +202,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
 
           if (isCorrect && (currentQuestion.type === 'game' || currentQuestion.type === 'ccq')) {
             const idx = currentQuestion.options.length - 1;
-            currentQuestion.correctAnswer = ['A', 'B', 'C', 'D'][idx] || 'A';
+            currentQuestion.correctAnswer = String.fromCharCode(65 + idx);
           }
         }
         continue;
@@ -227,7 +227,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
             opt.toLowerCase().trim() === q.rawCorrectText.toLowerCase().trim()
           );
           if (matchedIdx !== -1) {
-            q.correctAnswer = ['A', 'B', 'C', 'D'][matchedIdx];
+            q.correctAnswer = String.fromCharCode(65 + matchedIdx);
           }
           delete q.rawCorrectText;
         }

@@ -644,7 +644,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                       <div>
                         <strong>Correct Answer: {currentQuestion.correctAnswer}</strong>
                         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                          {currentQuestion.options[['A','B','C','D'].indexOf(currentQuestion.correctAnswer)]}
+                          {currentQuestion.options[currentQuestion.correctAnswer.charCodeAt(0) - 65] || currentQuestion.options[0]}
                         </p>
                       </div>
                       <Star size={32} fill="var(--color-warning)" style={{ color: 'var(--color-warning)' }} />

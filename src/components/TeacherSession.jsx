@@ -30,6 +30,26 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const [shortAnswerViewMode, setShortAnswerViewMode] = useState('grid'); // 'grid' or 'danmaku'
   const [wordCloudViewMode, setWordCloudViewMode] = useState('cloud'); // 'cloud', 'ranking', 'raw'
   
+  // Helper for smart default duration per question type
+  const getDefaultDurationForQuestion = (q) => {
+    if (!q) return 90;
+    if (q.timeLimit && q.timeLimit > 0) return q.timeLimit;
+    switch (q.type) {
+      case 'wordcloud': return 180; // 3 min for typing keywords
+      case 'short': return 180;     // 3 min for typing sentences
+      case 'ordering': return 180;  // 3 min for ordering
+      case 'ccq': return 90;        // 1.5 min for CCQ
+      case 'poll': return 60;       // 1 min for Poll
+      case 'game': return 20;       // 20s for Game
+      default: return 90;
+    }
+  };
+
+  // Configurable pre-start duration (teacher can adjust anytime before starting)
+  const [configuredDuration, setConfiguredDuration] = useState(() => 
+    getDefaultDurationForQuestion(activity.questions[0])
+  );
+
   // Lobby idle timeout (5 minutes = 300 seconds)
   const [lobbyTimeLeft, setLobbyTimeLeft] = useState(300);
   const lobbyTimerRef = useRef(null);
@@ -254,17 +274,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     setSessionStatus('active');
     setQuestionStartTime(Date.now());
 
-    // Determine duration: custom timeLimit or smart defaults (ccq: 90s, poll: 60s, ordering/short: 180s, game: 20s)
+    // Determine duration: configuredDuration set by teacher, or smart default
     const q = activity.questions[currentQIndex];
-    let duration = q.timeLimit;
-    if (!duration || duration <= 0) {
-      if (q.type === 'ccq') duration = 90;
-      else if (q.type === 'poll') duration = 60;
-      else if (q.type === 'ordering') duration = 180;
-      else if (q.type === 'short') duration = 180;
-      else if (q.type === 'game') duration = 20;
-      else duration = 90;
-    }
+    const duration = configuredDuration || getDefaultDurationForQuestion(q);
 
     setTimeLeft(duration);
     timeLeftRef.current = duration;
@@ -300,15 +312,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     const q = act.questions[idx];
     if (!q) return;
 
-    let duration = explicitDuration || timeLeftRef.current;
-    if (!duration || duration <= 0) {
-      if (q.type === 'ccq') duration = 90;
-      else if (q.type === 'poll') duration = 60;
-      else if (q.type === 'ordering') duration = 180;
-      else if (q.type === 'short') duration = 180;
-      else if (q.type === 'game') duration = 20;
-      else duration = 90;
-    }
+    let duration = explicitDuration || timeLeftRef.current || getDefaultDurationForQuestion(q);
 
     if (q.type === 'ordering') {
       broadcastState({
@@ -337,6 +341,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
     const q = activity.questions[currentQIndex];
     const statsObj = getMultipleChoiceStats();
+    const wordCloudData = (q && q.type === 'wordcloud') ? getWordCloudFrequencies() : null;
+
     broadcastState({ 
       event: 'question_stop', 
       questionIndex: currentQIndex,
@@ -344,7 +350,12 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       stats: statsObj.stats,
       totalSubmissions: statsObj.total,
       totalStudents: joinedStudents.length,
-      shortAnswers: getShortAnswers()
+      shortAnswers: getShortAnswers(),
+      wordCloud: wordCloudData ? {
+        freqMap: wordCloudData.freqMap,
+        sortedList: wordCloudData.sortedList,
+        totalWords: wordCloudData.totalWords
+      } : null
     });
 
     // Calculate game scores if type is Game
@@ -355,12 +366,19 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
   const nextQuestion = () => {
     if (currentQIndex < activity.questions.length - 1) {
-      setCurrentQIndex(currentQIndex + 1);
+      const nextIdx = currentQIndex + 1;
+      setCurrentQIndex(nextIdx);
       setSessionStatus('lobby'); // Go back to lobbying / ready state for next question
       setAnswers({});
       setShortAnswerViewMode('grid');
+      setWordCloudViewMode('cloud');
+      
+      // Update configured duration for next question based on its type
+      const nextQ = activity.questions[nextIdx];
+      setConfiguredDuration(getDefaultDurationForQuestion(nextQ));
+
       // Alert students that we are moving to next question
-      broadcastState({ event: 'next_question_waiting', questionIndex: currentQIndex + 1 });
+      broadcastState({ event: 'next_question_waiting', questionIndex: nextIdx });
     } else {
       setSessionStatus('finished');
       broadcastState({ event: 'session_finished' });
@@ -544,13 +562,93 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 <QRCodeSVG value={studentUrl} size={180} bgColor="#ffffff" fgColor="#080B11" includeMargin={false} />
               </div>
               
-              <p style={{ marginTop: '1.5rem', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+              <p style={{ marginTop: '1.25rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                 Direct Link: <a href={studentUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-indigo)', textDecoration: 'underline' }}>{studentUrl}</a>
               </p>
               
-              <div style={{ marginTop: '2rem', width: '100%' }}>
-                <button className="btn btn-primary" style={{ width: '100%', padding: '1rem' }} onClick={startQuestion}>
-                  <Play size={18} fill="white" /> Start Activity
+              {/* Pre-start Timer Duration Setting Panel */}
+              <div className="glass-card" style={{ width: '100%', marginTop: '1.25rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-light)', borderRadius: '14px', textAlign: 'left' }}>
+                <div className="flex-between" style={{ marginBottom: '0.6rem', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
+                  <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
+                    <Hourglass size={15} style={{ color: 'var(--color-indigo)' }} />
+                    作答倒數時間 (Timer Duration)：
+                  </span>
+                  <span className="badge badge-indigo" style={{ fontSize: '0.95rem', padding: '0.25rem 0.65rem', fontFamily: 'monospace' }}>
+                    ⏱️ {formatTime(configuredDuration)} ({configuredDuration}s)
+                  </span>
+                </div>
+
+                {/* Quick Presets */}
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.6rem', justifyContent: 'center' }}>
+                  {[
+                    { label: '30s', secs: 30 },
+                    { label: '60s (1分)', secs: 60 },
+                    { label: '90s (1.5分)', secs: 90 },
+                    { label: '120s (2分)', secs: 120 },
+                    { label: '180s (3分)', secs: 180 },
+                    { label: '300s (5分)', secs: 300 }
+                  ].map(p => (
+                    <button
+                      key={p.secs}
+                      type="button"
+                      className={`btn ${configuredDuration === p.secs ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ padding: '0.25rem 0.55rem', fontSize: '0.78rem', borderRadius: '8px' }}
+                      onClick={() => setConfiguredDuration(p.secs)}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Stepper Fine-tuning */}
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                    onClick={() => setConfiguredDuration(prev => Math.max(10, prev - 30))}
+                  >
+                    -30s
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                    onClick={() => setConfiguredDuration(prev => Math.max(10, prev - 15))}
+                  >
+                    -15s
+                  </button>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>微調</span>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                    onClick={() => setConfiguredDuration(prev => prev + 15)}
+                  >
+                    +15s
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                    onClick={() => setConfiguredDuration(prev => prev + 30)}
+                  >
+                    +30s
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                    onClick={() => setConfiguredDuration(prev => prev + 60)}
+                  >
+                    +1分
+                  </button>
+                </div>
+              </div>
+              
+              <div style={{ marginTop: '1.5rem', width: '100%' }}>
+                <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.05rem' }} onClick={startQuestion}>
+                  <Play size={18} fill="white" /> Start Activity ({formatTime(configuredDuration)})
                 </button>
               </div>
             </div>

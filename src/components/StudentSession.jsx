@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Wifi, WifiOff, Hourglass, CheckCircle2, 
+  Wifi, WifiOff, Hourglass, CheckCircle2, AlertCircle, 
   ChevronUp, ChevronDown, CornerDownRight, ArrowRight
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 
 export default function StudentSession({ roomCode, onLeave }) {
+  const formatTime = (secs) => {
+    const s = Math.max(0, Math.floor(secs));
+    const m = Math.floor(s / 60);
+    const rem = s % 60;
+    return ;
+  };
+
   const [nickname, setNickname] = useState(() => localStorage.getItem('nickpocket_student_name') || '');
   const [isJoined, setIsJoined] = useState(false);
   const [connStatus, setConnStatus] = useState('disconnected');
@@ -30,6 +37,7 @@ export default function StudentSession({ roomCode, onLeave }) {
   // Time tracker for game timer display
   const [timeLeft, setTimeLeft] = useState(0);
   const [questionStartMs, setQuestionStartMs] = useState(0);
+  const [lobbyTimeLeft, setLobbyTimeLeft] = useState(300);
 
   // Student Nickname and Join status (managed locally)
   const handleJoin = (e) => {
@@ -78,6 +86,9 @@ export default function StudentSession({ roomCode, onLeave }) {
     
     if (payload.event === 'lobby') {
       setRoomState('waiting');
+      if (payload.lobbyTimeLeft) {
+        setLobbyTimeLeft(payload.lobbyTimeLeft);
+      }
       setActiveQuestion(null);
       setHasSubmitted(false);
       setSelectedOption(null);
@@ -132,20 +143,73 @@ export default function StudentSession({ roomCode, onLeave }) {
       setSelectedOption(null);
       setOrderingItems([]);
     }
+    else if (payload.event === 'timer_extend') {
+      setTimeLeft(prev => prev + (payload.addSeconds || 30));
+    }
+    else if (payload.event === 'session_timeout') {
+      setRoomState('timeout');
+      setActiveQuestion(null);
+    }
     else if (payload.event === 'session_finished') {
       setRoomState('finished');
       setActiveQuestion(null);
     }
   };
 
-  // Countdown timer local tick
+  // Auto-submit current answer on timeout
+  const autoSubmitCurrent = () => {
+    if (hasSubmitted || roomState !== 'answering' || !activeQuestion) return;
+    const now = Date.now();
+    setSubmitTime(now);
+
+    try {
+      if (activeQuestion.type === 'ordering') {
+        const orderValues = orderingItems.map(item => item.text);
+        mqttService.publishResponse({
+          event: 'submit_answer',
+          studentName: nickname,
+          answer: orderValues,
+          timestamp: now,
+          questionIndex: activeQuestion.index
+        });
+        setHasSubmitted(true);
+      } else if (activeQuestion.type === 'short') {
+        if (textAnswer.trim()) {
+          mqttService.publishResponse({
+            event: 'submit_answer',
+            studentName: nickname,
+            answer: textAnswer.trim(),
+            timestamp: now,
+            questionIndex: activeQuestion.index
+          });
+          setHasSubmitted(true);
+        }
+      } else {
+        if (selectedOption) {
+          mqttService.publishResponse({
+            event: 'submit_answer',
+            studentName: nickname,
+            answer: selectedOption,
+            timestamp: now,
+            questionIndex: activeQuestion.index
+          });
+          setHasSubmitted(true);
+        }
+      }
+    } catch (e) {
+      console.error('[MQTT] Auto-submit error:', e);
+    }
+  };
+
+  // Answering Countdown timer with auto-submit
   useEffect(() => {
-    if (roomState !== 'answering' || !activeQuestion || activeQuestion.timeLimit <= 0) return;
+    if (roomState !== 'answering' || !activeQuestion || timeLeft <= 0) return;
     
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer);
+          autoSubmitCurrent();
           return 0;
         }
         return prev - 1;
@@ -153,7 +217,16 @@ export default function StudentSession({ roomCode, onLeave }) {
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [roomState, activeQuestion]);
+  }, [roomState, activeQuestion, timeLeft, selectedOption, textAnswer, orderingItems, hasSubmitted]);
+
+  // Lobby countdown timer
+  useEffect(() => {
+    if (roomState !== 'waiting') return;
+    const timer = setInterval(() => {
+      setLobbyTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [roomState]);
 
   // 3. Option choice submission
   const selectOptionValue = (letter) => {
@@ -452,12 +525,15 @@ export default function StudentSession({ roomCode, onLeave }) {
           <div className="glass-card flex-center animate-pop" style={{ flex: 1, flexDirection: 'column', textAlign: 'center', padding: '3rem 1.5rem' }}>
             <div className="animate-float" style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎮</div>
             <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>You're In, {nickname}!</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '300px' }}>
-              Wait here. The questions will appear on this screen once the teacher clicks start on the projector.
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '300px', marginBottom: '1.5rem' }}>
+              Wait here. Questions will appear on this screen once the teacher clicks start on the projector.
             </p>
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '2rem', alignItems: 'center', color: 'var(--text-muted)' }}>
-              <Hourglass size={16} className="animate-spin" />
-              <span style={{ fontSize: '0.85rem' }}>Waiting for teacher...</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
+              <span className="badge badge-warning" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Hourglass size={14} className="animate-spin" />
+                Room auto-closes in: <strong style={{ fontFamily: 'monospace' }}>{formatTime(lobbyTimeLeft)}</strong>
+              </span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Waiting for instructor to start...</span>
             </div>
           </div>
         )}
@@ -467,11 +543,14 @@ export default function StudentSession({ roomCode, onLeave }) {
           <div className="glass-card animate-slide-up" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '1.5rem' }}>
             <div>
               {/* Question Header */}
-              <div className="flex-between" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem' }}>
-                <span className="badge badge-indigo">Active Question</span>
-                {activeQuestion.timeLimit > 0 && (
-                  <span className="badge badge-warning" style={{ fontSize: '0.9rem' }}>
-                    <Hourglass size={14} className="animate-spin" /> {timeLeft}s
+              <div className="flex-between" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <span className="badge badge-indigo">
+                  {activeQuestion.type === 'ccq' ? 'Concept Check' : activeQuestion.type.toUpperCase()}
+                </span>
+                {timeLeft > 0 && (
+                  <span className={`badge ${timeLeft <= 15 ? 'badge-danger animate-pulse-glow' : 'badge-warning'}`} style={{ fontSize: '0.9rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Hourglass size={14} className="animate-spin" />
+                    Time Left: <strong style={{ fontFamily: 'monospace' }}>{formatTime(timeLeft)}</strong>
                   </span>
                 )}
               </div>
@@ -692,6 +771,20 @@ export default function StudentSession({ roomCode, onLeave }) {
             <div className="badge badge-indigo" style={{ marginTop: '2rem' }}>
               Waiting for next question...
             </div>
+          </div>
+        )}
+
+                {/* TIMEOUT SESSION STATE */}
+        {roomState === 'timeout' && (
+          <div className="glass-card flex-center animate-pop" style={{ flex: 1, flexDirection: 'column', textAlign: 'center', padding: '3rem 1.5rem' }}>
+            <AlertCircle size={64} style={{ color: 'var(--color-warning)', marginBottom: '1.5rem' }} />
+            <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>Room Timed Out</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '300px', marginBottom: '2rem' }}>
+              This interactive session has automatically closed due to 5 minutes of inactivity.
+            </p>
+            <button className="btn btn-primary" onClick={onLeave} style={{ width: '100%', padding: '1rem' }}>
+              Back to Home
+            </button>
           </div>
         )}
 

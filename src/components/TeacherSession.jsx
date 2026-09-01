@@ -7,6 +7,13 @@ import {
 import mqttService from '../utils/mqtt';
 
 export default function TeacherSession({ activity, roomCode, onBack }) {
+  const formatTime = (secs) => {
+    const s = Math.max(0, Math.floor(secs));
+    const m = Math.floor(s / 60);
+    const rem = s % 60;
+    return ;
+  };
+
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const [connectionError, setConnectionError] = useState('');
   const [joinedStudents, setJoinedStudents] = useState([]);
@@ -22,8 +29,13 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   // View mode for short answers
   const [shortAnswerViewMode, setShortAnswerViewMode] = useState('grid'); // 'grid' or 'danmaku'
   
-  // Timer for Game
-  // Timer for Game
+  // Lobby idle timeout (5 minutes = 300 seconds)
+  const [lobbyTimeLeft, setLobbyTimeLeft] = useState(300);
+  const lobbyTimerRef = useRef(null);
+  const lobbyTimeLeftRef = useRef(300);
+  lobbyTimeLeftRef.current = lobbyTimeLeft;
+
+  // Question answering countdown timer
   const [timeLeft, setTimeLeft] = useState(0);
   const [questionStartTime, setQuestionStartTime] = useState(0);
   const timerRef = useRef(null);
@@ -43,6 +55,32 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   
   const currentQuestion = activity.questions[currentQIndex];
   const studentUrl = `${window.location.origin}${window.location.pathname}#/student/${roomCode}`;
+
+
+  // Lobby countdown timer (auto-close after 5 min of inactivity)
+  useEffect(() => {
+    if (sessionStatus === 'lobby') {
+      if (lobbyTimerRef.current) clearInterval(lobbyTimerRef.current);
+      lobbyTimerRef.current = setInterval(() => {
+        setLobbyTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(lobbyTimerRef.current);
+            broadcastState({ event: 'session_timeout', reason: 'lobby_timeout' });
+            alert('大廳等待超過 5 分鐘未啟動，已自動關閉房間。');
+            onBack();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (lobbyTimerRef.current) clearInterval(lobbyTimerRef.current);
+    }
+
+    return () => {
+      if (lobbyTimerRef.current) clearInterval(lobbyTimerRef.current);
+    };
+  }, [sessionStatus]);
 
   // 1. MQTT Connection Lifecycle
   useEffect(() => {
@@ -115,42 +153,75 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
   // 3. Question Flow Controls
   const startQuestion = () => {
-    setAnswers({}); // Clear old answers
+    if (lobbyTimerRef.current) clearInterval(lobbyTimerRef.current);
+    setAnswers({});
     setSessionStatus('active');
     setQuestionStartTime(Date.now());
-    
-    // Broadcast active question to students
-    broadcastActiveQuestion(currentQIndex);
 
-    // Set timer if Game type
-    if (currentQuestion.type === 'game' && currentQuestion.timeLimit) {
-      setTimeLeft(currentQuestion.timeLimit);
-      if (timerRef.current) clearInterval(timerRef.current);
-      
-      timerRef.current = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current);
-            stopQuestion(); // Trigger auto-stop
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    // Determine duration: custom timeLimit or smart defaults (ccq: 90s, poll: 60s, ordering/short: 180s, game: 20s)
+    const q = activity.questions[currentQIndex];
+    let duration = q.timeLimit;
+    if (!duration || duration <= 0) {
+      if (q.type === 'ccq') duration = 90;
+      else if (q.type === 'poll') duration = 60;
+      else if (q.type === 'ordering') duration = 180;
+      else if (q.type === 'short') duration = 180;
+      else if (q.type === 'game') duration = 20;
+      else duration = 90;
     }
+
+    setTimeLeft(duration);
+    timeLeftRef.current = duration;
+
+    // Broadcast active question with calculated duration to students
+    broadcastActiveQuestion(currentQIndex, duration);
+
+    // Start answering countdown timer with auto-stop
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          stopQuestion(); // Auto-stop when time is up!
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
-  const broadcastActiveQuestion = (idx) => {
+  const extendTime = (addSecs = 30) => {
+    setTimeLeft(prev => {
+      const next = prev + addSecs;
+      timeLeftRef.current = next;
+      broadcastState({ event: 'timer_extend', addSeconds: addSecs, timeLeft: next });
+      return next;
+    });
+  };
+
+  const broadcastActiveQuestion = (idx, explicitDuration) => {
     const act = activityRef.current;
     const q = act.questions[idx];
     if (!q) return;
+
+    let duration = explicitDuration || timeLeftRef.current;
+    if (!duration || duration <= 0) {
+      if (q.type === 'ccq') duration = 90;
+      else if (q.type === 'poll') duration = 60;
+      else if (q.type === 'ordering') duration = 180;
+      else if (q.type === 'short') duration = 180;
+      else if (q.type === 'game') duration = 20;
+      else duration = 90;
+    }
+
     if (q.type === 'ordering') {
       broadcastState({
         event: 'question_start',
         type: 'ordering',
         questionIndex: idx,
         questionText: q.questionText,
-        items: q.items
+        items: q.items,
+        timeLimit: duration
       });
     } else {
       broadcastState({
@@ -159,7 +230,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         questionIndex: idx,
         questionText: q.questionText,
         options: q.options,
-        timeLimit: q.type === 'game' ? timeLeftRef.current : (q.timeLimit || 0)
+        timeLimit: duration
       });
     }
   };
@@ -354,7 +425,12 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
           <div className="grid-2" style={{ flex: 1 }}>
             {/* Left card: QR and Join Info */}
             <div className="glass-card flex-center" style={{ flexDirection: 'column', padding: '2rem', textAlign: 'center' }}>
-              <span className="badge badge-indigo" style={{ marginBottom: '1rem' }}>Join the Interaction</span>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
+                <span className="badge badge-indigo">Join the Interaction</span>
+                <span className="badge badge-warning" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Hourglass size={14} className="animate-spin" /> Lobby Timeout: <strong style={{ fontFamily: 'monospace' }}>{formatTime(lobbyTimeLeft)}</strong>
+                </span>
+              </div>
               <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Scan QR Code or Enter URL to Join</h2>
               
               <div className="glass-card" style={{ padding: '1rem', background: 'white', borderRadius: '16px', display: 'inline-block', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
@@ -401,13 +477,21 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         {sessionStatus === 'active' && (
           <div className="glass-card animate-slide-up" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '2rem' }}>
             <div>
-              <div className="flex-between" style={{ marginBottom: '1rem' }}>
+              <div className="flex-between" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <span className="badge badge-indigo">Question {currentQIndex + 1} of {activity.questions.length} ({currentQuestion.type.toUpperCase()})</span>
-                {currentQuestion.type === 'game' && (
-                  <span className="badge badge-warning" style={{ fontSize: '1rem', padding: '0.4rem 0.8rem' }}>
-                    <Hourglass size={16} className="animate-spin" /> {timeLeft}s Left
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <span className={`badge ${timeLeft <= 15 ? "badge-danger animate-pulse-glow" : "badge-warning"}`} style={{ fontSize: '1rem', padding: '0.45rem 0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Hourglass size={16} className="animate-spin" />
+                    Time Left: <strong style={{ fontFamily: 'monospace', fontSize: '1.1rem' }}>{formatTime(timeLeft)}</strong>
                   </span>
-                )}
+                  <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }} onClick={() => extendTime(30)} title="Add 30 seconds to countdown">
+                    +30s
+                  </button>
+                  <button className="btn btn-danger" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={stopQuestion} title="Immediately stop answering">
+                    <Square size={14} fill="white" /> Stop Answering
+                  </button>
+                </div>
               </div>
               
               <h1 style={{ fontSize: '2rem', lineHeight: '1.4', marginBottom: '2rem' }}>

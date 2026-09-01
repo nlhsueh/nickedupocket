@@ -76,6 +76,11 @@
 - 驗收測試 (Acceptance Testing)
 - 靜態程式碼檢視 (Code Review)
 
+### [Activity: sqa-ch03-ccq4] Chapter 3 CCQ 4
+#### [CCQ] 1. **變質測試 (Metamorphic Testing)**： * 利用領域對稱性質：例如 sin(x) = cos(90° - x) = -sin(-x)。 * 對 AI 影像辨識系統：將一張貓的照片旋轉 10 度或調整亮度 5%，辨識結果**依然必須是貓（不變量關係）**！ 2. **差分測試 (Differential Testing)**： * 將相同輸入餵給兩種獨立實作（例如 Claude vs GPT、舊版演算法 vs 新版微服務）進行交叉比對。 3. **LLM-as-a-Judge 與防護欄 (Guardrails)**： * 使用經過專門微調的評估模型，針對輸出進行忠實度（Faithfulness）、安全性與不變量檢驗。
+- 正確 (True)
+- 錯誤 (False)
+
 ## Chapter 4: 軟體檢視
 
 ### [Activity: sqa-ch04-ccq1] Chapter 4 CCQ 1

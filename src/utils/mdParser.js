@@ -63,14 +63,21 @@ export function parseMarkdownCourse(mdText, fileId = '') {
         currentChapter.activities.push(currentActivity);
         currentQuestion = null;
       } else {
-        // Legacy Support: Treating "### [Type] Question" as an activity containing a single question
-        const typeMatch = rawText.match(/^\[(CCQ|Poll|Ordering|Game|Short|QA)\]/i);
+        // Legacy Support: Treating "### [Type] Question" or "### 🎯 CCQ: Question" as an activity containing a single question
+        const cleanHeading = rawText.replace(/^[🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
+        const typeMatch = cleanHeading.match(/^\[?(CCQ|Poll|Ordering|Game|Short|QA|WordCloud|投票|搶答|文字雲|排序|簡答|觀念檢核)\]?[:：\s]?(.*)/i);
+        
         if (typeMatch) {
           const rawType = typeMatch[1].toLowerCase();
-          const qType = (rawType === 'qa') ? 'short' : rawType;
-          const qText = rawText.substring(typeMatch[0].length).trim();
-          
-          // Generate an Activity ID from the title/text slug
+          let qType = rawType;
+          if (['qa', 'short', '簡答', '簡答題'].includes(rawType)) qType = 'short';
+          else if (['poll', '投票'].includes(rawType)) qType = 'poll';
+          else if (['game', '搶答', '搶答題'].includes(rawType)) qType = 'game';
+          else if (['wordcloud', '文字雲'].includes(rawType)) qType = 'wordcloud';
+          else if (['ordering', '排序', '排序題'].includes(rawType)) qType = 'ordering';
+          else qType = 'ccq';
+
+          const qText = typeMatch[2].trim() || cleanHeading;
           const actId = `act_${fileId}_${qType}_${Date.now()}_${currentChapter.activities.length}`;
           
           currentActivity = {
@@ -86,7 +93,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
             options: qType === 'ccq' ? ['True', 'False', '50-50'] : [],
             correctAnswer: '',
             items: [],
-            timeLimit: qType === 'game' ? 15 : 0
+            timeLimit: qType === 'game' ? 15 : (qType === 'wordcloud' ? 60 : 0)
           };
           
           currentActivity.questions.push(currentQuestion);
@@ -122,12 +129,20 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       }
 
       const qTextRaw = line.substring(5).trim();
-      const typeMatch = qTextRaw.match(/^\[(CCQ|Poll|Ordering|Game|Short|QA)\]/i);
+      const cleanLine = qTextRaw.replace(/^[🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
+      const typeMatch = cleanLine.match(/^\[?(CCQ|Poll|Ordering|Game|Short|QA|WordCloud|投票|搶答|文字雲|排序|簡答|觀念檢核)\]?[:：\s]?(.*)/i);
 
       if (typeMatch) {
         const rawType = typeMatch[1].toLowerCase();
-        const qType = (rawType === 'qa') ? 'short' : rawType;
-        const qText = qTextRaw.substring(typeMatch[0].length).trim();
+        let qType = rawType;
+        if (['qa', 'short', '簡答', '簡答題'].includes(rawType)) qType = 'short';
+        else if (['poll', '投票'].includes(rawType)) qType = 'poll';
+        else if (['game', '搶答', '搶答題'].includes(rawType)) qType = 'game';
+        else if (['wordcloud', '文字雲'].includes(rawType)) qType = 'wordcloud';
+        else if (['ordering', '排序', '排序題'].includes(rawType)) qType = 'ordering';
+        else qType = 'ccq';
+
+        const qText = typeMatch[2].trim() || cleanLine;
 
         currentQuestion = {
           id: `q_${Date.now()}_${currentActivity.questions.length}`,
@@ -136,7 +151,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
           options: qType === 'ccq' ? ['True', 'False', '50-50'] : [],
           correctAnswer: '',
           items: [],
-          timeLimit: qType === 'game' ? 15 : 0
+          timeLimit: qType === 'game' ? 15 : (qType === 'wordcloud' ? 60 : 0)
         };
 
         currentActivity.questions.push(currentQuestion);

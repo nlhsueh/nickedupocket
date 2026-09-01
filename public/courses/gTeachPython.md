@@ -63,39 +63,58 @@
 ## 放一群人的姓名，型態都是字串
 
 ### [Activity: python-ch04-ccq1] 放一群人的姓名，型態都是字串 CCQ 1
+#### [CCQ] ```python d = [1,4,5,2,9,8,7,7,2,6] dc = d.copy() print ('original data d=\t', d)
+- sort()
+- sort(reverse = True)
+
+### [Activity: python-ch04-ccq2] 放一群人的姓名，型態都是字串 CCQ 2
+#### [CCQ] 當我們對一個二維陣列做排序，會依據每一個的`第一個元素`來做排序。例如在下列的程式中，會依據 `11, 90, 77, 44` 來排序。 ```python grade = [[11, 22, 33], [90, 91, 92], [77, 88, 99], [44, 55, 66]] g1 = sorted(grade) print (g1) # Result: [[11, 22, 33], [44, 55, 66], [77, 88, 99], [90, 91, 92]] ``` 如果我們想用分數的總合來排序呢？這時候可以用 lambda 的運算： ```python # 依據每一個人的成績加總排序 grade = [[11, 22, 33], [90, 91, 92], [77, 88, 99], [44, 55, 66]] g2 = sorted(grade, key=lambda x: sum(x)) print (g2) ``` 結果如下： ``` [[11, 22, 33], [44, 55, 66], [77, 88, 99], [90, 91, 92]] ``` lambda 表示一個簡潔的運算，其指定的 `sum()` 會把陣列內的元素加總，所以分別是 `66 (11+22+33)`,  `273(90+91+92)`, `264(77+88+99)`, `165(44+55+66)`，所代表的索引值為 `0,1,2,3`，但依據總和後的排序應該是 `0,3,2,1`。 又或者我們想依據最後一筆資料來排序，可以用 `x[-1]` 來做排序，結果如下： ```python # 依據物理成績（最後一科) 排序 g3 = sorted(grade, key=lambda x: x[-1]) print (g3) ``` Result: ``` [[11, 22, 33], [44, 55, 66], [90, 91, 92], [77, 88, 99]] ```
+- 正確 (True)
+- 錯誤 (False)
+
+### [Activity: python-ch04-ccq3] 放一群人的姓名，型態都是字串 CCQ 3
+#### [CCQ] > `sort()` 會改變本身的資料; `sorted()` 不會，但會回傳一個已排序的。 以下我們自己寫一個氣泡排序法，藉此更認識 List 的應用。 ```python """ Bubble Sort """ import random # 隨機建立一個100 元素的列表，裡面的數介於1-100之間。 a = [] for i in range(100):
+- append(random.randint(1,100))
+
+### [Activity: python-ch04-ccq1] 放一群人的姓名，型態都是字串 CCQ 4
 #### [CCQ] 給定兩個串列 `a = [1, 2]` 與 `b = [3, 4]`。請問執行 `a.append(b)` 與 `a.extend(b)` 兩者運作的結果有何不同？
 - 兩者結果皆為 `[1, 2, 3, 4]`。
 - 兩者結果皆為 `[1, 2, [3, 4]]`。
 - `a.append(b)` 結果為 `[1, 2, [3, 4]]`，而 `a.extend(b)` 結果為 `[1, 2, 3, 4]`。 (Correct)
 - `a.append(b)` 結果為 `[1, 2, 3, 4]`，而 `a.extend(b)` 結果為 `[1, 2, [3, 4]]`。
 
-### [Activity: python-ch04-ccq2] 放一群人的姓名，型態都是字串 CCQ 2
+### [Activity: python-ch04-ccq2] 放一群人的姓名，型態都是字串 CCQ 5
 #### [CCQ] 下列程式碼執行後，螢幕上會印出什麼結果？ ```python x = [1, 2, 3, 4, 5] x[1:3] = [9, 9] print(x) ```
 - `[1, 9, 9, 4, 5]` (Correct)
 - `[1, 9, 9, 3, 4, 5]`
 - `[1, 2, 9, 9, 5]`
 - `[1, 9, 9, 9, 5]`
 
-### [Activity: python-ch04-ccq3] 放一群人的姓名，型態都是字串 CCQ 3
+### [Activity: python-ch04-ccq3] 放一群人的姓名，型態都是字串 CCQ 6
 #### [CCQ] Tuple 內部的元素是否絕對不可變動？下列程式碼執行後的輸出結果為何？ ```python t = (1, 2, [3, 4]) t[2].append(5) print(t) ```
 - `TypeError: 'tuple' object does not support item assignment`
 - `(1, 2, [3, 4, 5])` (Correct)
 - `(1, 2, [3, 4], 5)`
 - `(1, 2, [3, 4])`
 
-### [Activity: python-ch04-ccq4] 放一群人的姓名，型態都是字串 CCQ 4
+### [Activity: python-ch04-ccq4] 放一群人的姓名，型態都是字串 CCQ 7
 #### [CCQ] 下列布林運算表達式執行後的結果為何？ ```python print(set([1, 2, 2, 3]) == set([3, 2, 1])) ```
 - `True` (Correct)
 - `False`
 - `TypeError`
 - `None`
 
-### [Activity: python-ch04-ccq5] 放一群人的姓名，型態都是字串 CCQ 5
+### [Activity: python-ch04-ccq5] 放一群人的姓名，型態都是字串 CCQ 8
 #### [CCQ] 在 Python 的字典（Dict）物件中，下列哪一種資料型態**不能**被用來當作字典的鍵（Key）？
 - 整數 (如 `123`)
 - 字串 (如 `"name"`)
 - 元組 (如 `(1, 2)`)
 - 串列 (如 `[1, 2]`) (Correct)
+
+### [Activity: python-ch04-ccq9] 放一群人的姓名，型態都是字串 CCQ 9
+#### [CCQ] 因為欄位很多，我們挑選站名，位址，緯度就好。之後進行排序，排序的依據是第三個欄位，也就是 `line11` 的 `x[2]`。 ```python station=[] for st in d: # 站名，位址，緯度 name, addr, lat = st['sna'], st['ar'], st['lat'] item = (name, addr, lat) station.append(item) pprint(station) # 排序 station.sort(key=lambda x: x[2], reverse=True) pprint(station) with open('data/ibikeSorted.txt', 'w') as f: for i in station: f.write(str(i)+'\n') ```
+- 正確 (True)
+- 錯誤 (False)
 
 ## hello2(msg = 'Good morning', 'Nick')  # ERROR
 
@@ -152,6 +171,11 @@
 - `df[Age > 30]`
 
 ### [Activity: python-ch06-ccq4] 資料處理 CCQ 4
+#### [CCQ] 資料排序也是經常使用的處理方法，我們可以使用 `df.sort_values(by=c1)` 的方式，也就是依據 c1 欄位排序。 假設我們有一筆資料如下： ```python df = pd.DataFrame({ 'c1': ['A', 'A', 'B', 'Z', 'D', 'C'], 'c2': [2, 1, 9, 8, 7, 4], 'c3': [0, 1, 9, 4, 2, 3], 'c4': ['a', 'B', 'c', 'D', 'e', 'F']}) print (df.sort_valaues(by='c1')) print ('---') df2 = df.sort_values(by=['c1','c2']) print(df2) ``` ``` c1  c2  c3 c4 0  A   2   0  a 1  A   1   1  B 2  B   9   9  c 3  Z   8   4  D 4  D   7   2  e 5  C   4   3  F
+- 正確 (True)
+- 錯誤 (False)
+
+### [Activity: python-ch06-ccq4] 資料處理 CCQ 5
 #### [CCQ] 給定一個 DataFrame `df`，包含 `"Department"`（部門）與 `"Salary"`（薪水）兩個欄位。若要計算每個部門的平均薪水，下列哪一個指令是正確的？
 - `df.groupby("Department")["Salary"].mean()` (Correct)
 - `df.groupby("Department").mean("Salary")`
@@ -180,6 +204,11 @@
 - `20` (Correct)
 - 引發 `AttributeError`
 - `None`
+
+### [Activity: python-ch07-ccq4] 類別的宣告 CCQ 4
+#### [CCQ] 下面的例子中，`GuessGame` 宣告為抽象類別，裡面有抽象方法。透過 `metaclass=ABCMeta` 來宣告為抽象類別。`guess` 上面的 `@abstractmethod` 表示這個方法是一個抽象的。 ```plantuml abstract class GuessGame { +message() {abstract} +guess() {abstract} +go() } ``` ```python import random from abc import ABCMeta, abstractmethod class GuessGame(metaclass=ABCMeta): '設定 metaclass=ABCMeta, GuessGame 才能成為抽象類別' @abstractmethod def message(self, msg): pass @abstractmethod def guess(self): pass def go(self): ' Game 的大部流程，其中 guess 和 message 留給子類別實踐' self.message(self.welcome) number = int(random.random() * 10) while True: guess = self.guess(); if guess > number: self.message(self.bigger) elif guess < number: self.message(self.smaller) else: break self.message(self.correct) ``` 下方的 `ConsoleGame` 繼承了 `GuessGame`，因為它不是抽象的，所以必須實作上方抽象的方法。 ```plantuml GuessGame <|- ConsoleGame ``` `ConsoleGame` 不是以視窗的方式呈現，是命令列的互動方式，所以印出訊息是用 `print()` 的方式。下方第九行 `message()` 的實作說明了 `ConsoleGame` 印出訊息的方法。注意 `GuessGame` 中已經定義 `message()` 是一個抽象方法，`ConsoleGame` 既然已經繼承了，就必須將之實做出來。同理 `guess()` 也是在基礎類別中的抽象方法，`ConsoleGame` 也必須將之時做。下方第13行的實作表明 `guess()` 的運作是留給使用者輸入，系統會給予一個提示字：`輸入數字：`。 ```python class ConsoleGame(GuessGame): def __init__(self): self.welcome = "歡迎" self.prompt = "輸入數字：" self.correct = "猜中了" self.bigger = "太大，猜小一點" self.smaller = "太小，猜大一點" def message(self, msg): print(msg) def guess(self): return int(input(self.prompt)) # g = GuessGame()       # 會產生錯誤 game = ConsoleGame()    # 這樣才對 game.go() ``` 上述最後的程式碼表明了抽象類別不能生成物件。
+- 正確 (True)
+- 錯誤 (False)
 
 ## Python 工程與資電應用
 
@@ -300,13 +329,18 @@
 - 自動執行物理碰撞演算法。
 
 ### [Activity: python-ch11-ccq4] Python 視窗遊戲設計 (Pygame) CCQ 4
+#### [CCQ] `Sprite` 是 2D 遊戲中所有活動實體的基類。一個自訂的精靈子類別，內部必須包含兩個最核心的屬性： 1. `self.image`：代表該精靈的畫布或外觀（可以是一張圖片，或是一個自定義形狀畫布）。 2. `self.rect`：一個 `pygame.Rect` 物件，代表該精靈在螢幕上的位置、寬度與高度。
+- 正確 (True)
+- 錯誤 (False)
+
+### [Activity: python-ch11-ccq4] Python 視窗遊戲設計 (Pygame) CCQ 5
 #### [CCQ] 在 Pygame 中，一個自訂的精靈類別（繼承自 `pygame.sprite.Sprite`）在初始化時，**必須**設定哪兩個變數屬性，才能被精靈群組 (Sprite Group) 正確管理與繪製？
 - `self.x` 與 `self.y`
 - `self.image`（外觀 Surface）與 `self.rect`（邊框位置 Rect） (Correct)
 - `self.speed` 與 `self.direction`
 - `self.width` 與 `self.height`
 
-### [Activity: python-ch11-ccq5] Python 視窗遊戲設計 (Pygame) CCQ 5
+### [Activity: python-ch11-ccq5] Python 視窗遊戲設計 (Pygame) CCQ 6
 #### [CCQ] 在太空射擊遊戲中，若要檢測「所有的子彈群組 (bullets)」與「所有的隕石群組 (meteors)」之間的多對多碰撞，並讓相撞的子彈與隕石同時消失，下列哪一個內建函數是最佳且最有效率的選擇？
 - `pygame.Rect.colliderect()`
 - `pygame.sprite.spritecollide()`

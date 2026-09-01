@@ -213,7 +213,7 @@ export default function StudentSession({ roomCode, onLeave }) {
           questionIndex: activeQuestion.index
         });
         setHasSubmitted(true);
-      } else if (activeQuestion.type === 'short') {
+      } else if ((activeQuestion.type === 'short' || activeQuestion.type === 'wordcloud')) {
         if (textAnswer.trim()) {
           mqttService.publishResponse({
             event: 'submit_answer',
@@ -636,7 +636,7 @@ export default function StudentSession({ roomCode, onLeave }) {
                             ) : null}
                           </div>
                         )}
-                        {textAnswer && activeQuestion.type === 'short' && (
+                        {textAnswer && (activeQuestion.type === 'short' || activeQuestion.type === 'wordcloud') && (
                           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
                             你的回答：<strong style={{ color: 'var(--text-primary)' }}>"{textAnswer}"</strong>
                           </div>
@@ -730,7 +730,7 @@ export default function StudentSession({ roomCode, onLeave }) {
                   )}
 
                   {/* Short Answer Responses List */}
-                  {activeQuestion.type === 'short' && (
+                  {(activeQuestion.type === 'short' || activeQuestion.type === 'wordcloud') && (
                     <div style={{ marginBottom: '1.5rem' }}>
                       <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>全班回答列表 (Class Responses)：</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.25rem' }}>
@@ -863,7 +863,7 @@ export default function StudentSession({ roomCode, onLeave }) {
                     Submit Order <CornerDownRight size={18} />
                   </button>
                 </div>
-              ) : activeQuestion.type === 'short' ? (
+              ) : (activeQuestion.type === 'short' || activeQuestion.type === 'wordcloud') ? (
                 /* Short Answer Text Input UI */
                 <div>
                   <div style={{ marginBottom: '1.5rem' }}>

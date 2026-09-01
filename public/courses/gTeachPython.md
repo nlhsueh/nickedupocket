@@ -97,14 +97,14 @@
 - `(1, 2, [3, 4], 5)`
 - `(1, 2, [3, 4])`
 
-### [Activity: python-ch04-ccq4] 放一群人的姓名，型態都是字串 CCQ 7
+### [Activity: python-ch04-ccq1] 放一群人的姓名，型態都是字串 CCQ 7
 #### [CCQ] 下列布林運算表達式執行後的結果為何？ ```python print(set([1, 2, 2, 3]) == set([3, 2, 1])) ```
 - `True` (Correct)
 - `False`
 - `TypeError`
 - `None`
 
-### [Activity: python-ch04-ccq5] 放一群人的姓名，型態都是字串 CCQ 8
+### [Activity: python-ch04-ccq2] 放一群人的姓名，型態都是字串 CCQ 8
 #### [CCQ] 在 Python 的字典（Dict）物件中，下列哪一種資料型態**不能**被用來當作字典的鍵（Key）？
 - 整數 (如 `123`)
 - 字串 (如 `"name"`)
@@ -340,7 +340,7 @@
 - `self.speed` 與 `self.direction`
 - `self.width` 與 `self.height`
 
-### [Activity: python-ch11-ccq5] Python 視窗遊戲設計 (Pygame) CCQ 6
+### [Activity: python-ch11-ccq4] Python 視窗遊戲設計 (Pygame) CCQ 6
 #### [CCQ] 在太空射擊遊戲中，若要檢測「所有的子彈群組 (bullets)」與「所有的隕石群組 (meteors)」之間的多對多碰撞，並讓相撞的子彈與隕石同時消失，下列哪一個內建函數是最佳且最有效率的選擇？
 - `pygame.Rect.colliderect()`
 - `pygame.sprite.spritecollide()`

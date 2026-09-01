@@ -560,7 +560,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               </h1>
 
               {/* Render Question Choices (static visual display for students/teacher screen) */}
-              {currentQuestion.type !== 'ordering' && currentQuestion.type !== 'short' && currentQuestion.options && (
+              {currentQuestion.type !== 'ordering' && currentQuestion.type !== 'short' && currentQuestion.type !== 'wordcloud' && currentQuestion.options && (
                 <div className="grid-2" style={{ gap: '1rem' }}>
                   {currentQuestion.options.map((opt, idx) => {
                     const letters = ['A', 'B', 'C', 'D'];
@@ -665,7 +665,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 })()}
 
                 {/* Short Answer Stats & View Mode Toggle */}
-                {currentQuestion.type === 'short' && (() => {
+                {(currentQuestion.type === 'short' || currentQuestion.type === 'wordcloud') && (() => {
                   const items = getShortAnswers();
                   const colors = [
                     'linear-gradient(135deg, #fef08a 0%, #fde047 100%)', // yellow
@@ -849,7 +849,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                         const isCorrect = Array.isArray(submission.answer) && submission.answer.every((val, index) => val === currentQuestion.items[index]);
                         statusLabel = isCorrect ? 'Sorted Correctly' : 'Sorted Incorrectly';
                         badgeClass = isCorrect ? 'badge-success' : 'badge-danger';
-                      } else if (currentQuestion.type === 'short') {
+                      } else if ((currentQuestion.type === 'short' || currentQuestion.type === 'wordcloud')) {
                         statusLabel = submission.answer ? 'Submitted' : 'No Answer';
                         badgeClass = submission.answer ? 'badge-indigo' : 'badge-danger';
                       }

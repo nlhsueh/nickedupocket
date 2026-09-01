@@ -1,0 +1,320 @@
+# Python Programming (Python 程式設計)
+
+## why 變數的型態?
+
+### [Activity: python-ch02-ccq1] why 變數的型態? CCQ 1
+#### [CCQ] 下列程式碼執行後，螢幕上會印出什麼結果？ ```python print(bool(None), bool('False')) ```
+- `False False`
+- `False True` (Correct)
+- `True False`
+- `True True`
+
+### [Activity: python-ch02-ccq2] why 變數的型態? CCQ 2
+#### [CCQ] 下列程式碼執行後，其輸出結果為何？ ```python print(10 // 4, round(3.5)) ```
+- `2.5 4`
+- `2 3`
+- `2 4` (Correct)
+- `2.5 3`
+
+### [Activity: python-ch02-ccq3] why 變數的型態? CCQ 3
+#### [CCQ] 給定字串 `s = "Python"`，執行 `print(s[1:4])` 會印出什麼結果？
+- `"yth"` (Correct)
+- `"pyth"`
+- `"ytho"`
+- `"y"`
+
+### [Activity: python-ch02-ccq4] why 變數的型態? CCQ 4
+#### [CCQ] 下列邏輯表達式運算後的結果為何？ ```python is_student = True is_kid = False print(is_student or is_kid and not is_student) ```
+- `False`
+- `True` (Correct)
+- `None`
+- `TypeError`
+
+### [Activity: python-ch02-ccq5] why 變數的型態? CCQ 5
+#### [CCQ] 在 Python 中進行檔案讀寫時，使用 `with open(...)` 的主要優點是什麼？
+- 檔案的寫入速度會比傳統 `open()` 快速很多。
+- 能自動將寫入的資料進行壓縮，節省硬碟空間。
+- 無論程式區塊是否正常執行完畢或發生異常，都會自動安全地關閉檔案。 (Correct)
+- 能夠自動修正程式碼中的語法錯誤。
+
+## 放一群人的姓名，型態都是字串
+
+### [Activity: python-ch04-ccq1] 放一群人的姓名，型態都是字串 CCQ 1
+#### [CCQ] 給定兩個串列 `a = [1, 2]` 與 `b = [3, 4]`。請問執行 `a.append(b)` 與 `a.extend(b)` 兩者運作的結果有何不同？
+- 兩者結果皆為 `[1, 2, 3, 4]`。
+- 兩者結果皆為 `[1, 2, [3, 4]]`。
+- `a.append(b)` 結果為 `[1, 2, [3, 4]]`，而 `a.extend(b)` 結果為 `[1, 2, 3, 4]`。 (Correct)
+- `a.append(b)` 結果為 `[1, 2, 3, 4]`，而 `a.extend(b)` 結果為 `[1, 2, [3, 4]]`。
+
+### [Activity: python-ch04-ccq2] 放一群人的姓名，型態都是字串 CCQ 2
+#### [CCQ] 下列程式碼執行後，螢幕上會印出什麼結果？ ```python x = [1, 2, 3, 4, 5] x[1:3] = [9, 9] print(x) ```
+- `[1, 9, 9, 4, 5]` (Correct)
+- `[1, 9, 9, 3, 4, 5]`
+- `[1, 2, 9, 9, 5]`
+- `[1, 9, 9, 9, 5]`
+
+### [Activity: python-ch04-ccq3] 放一群人的姓名，型態都是字串 CCQ 3
+#### [CCQ] Tuple 內部的元素是否絕對不可變動？下列程式碼執行後的輸出結果為何？ ```python t = (1, 2, [3, 4]) t[2].append(5) print(t) ```
+- `TypeError: 'tuple' object does not support item assignment`
+- `(1, 2, [3, 4, 5])` (Correct)
+- `(1, 2, [3, 4], 5)`
+- `(1, 2, [3, 4])`
+
+### [Activity: python-ch04-ccq4] 放一群人的姓名，型態都是字串 CCQ 4
+#### [CCQ] 下列布林運算表達式執行後的結果為何？ ```python print(set([1, 2, 2, 3]) == set([3, 2, 1])) ```
+- `True` (Correct)
+- `False`
+- `TypeError`
+- `None`
+
+### [Activity: python-ch04-ccq5] 放一群人的姓名，型態都是字串 CCQ 5
+#### [CCQ] 在 Python 的字典（Dict）物件中，下列哪一種資料型態**不能**被用來當作字典的鍵（Key）？
+- 整數 (如 `123`)
+- 字串 (如 `"name"`)
+- 元組 (如 `(1, 2)`)
+- 串列 (如 `[1, 2]`) (Correct)
+
+## hello2(msg = 'Good morning', 'Nick')  # ERROR
+
+### [Activity: python-ch05-ccq1] hello2(msg = 'Good morning', 'Nick')  # ERROR CCQ 1
+#### [CCQ] 給定函式定義 `def func(a, b=5, c=10): print(a, b, c)`。下列哪一個呼叫方式在 Python 中是**無效的 (Invalid)**，會導致語法錯誤？
+- `func(1)`
+- `func(a=1, c=20)`
+- `func(b=20, 30)` (Correct)
+- `func(1, c=20, b=30)`
+
+### [Activity: python-ch05-ccq2] hello2(msg = 'Good morning', 'Nick')  # ERROR CCQ 2
+#### [CCQ] 下列程式碼執行後，螢幕上會印出什麼結果？ ```python def modify_values(a, b): a = a + 10 b.append(10) x = 5 y = [5] modify_values(x, y) print(x, y) ```
+- `5 [5]`
+- `15 [5, 10]`
+- `5 [5, 10]` (Correct)
+- `15 [5]`
+
+### [Activity: python-ch05-ccq3] hello2(msg = 'Good morning', 'Nick')  # ERROR CCQ 3
+#### [CCQ] 下列程式碼執行後，其輸出結果為何？ ```python nums = [1, 2, 3, 4] squared_evens = list(map(lambda x: x**2, filter(lambda x: x % 2 == 0, nums))) print(squared_evens) ```
+- `[1, 4, 9, 16]`
+- `[4, 16]` (Correct)
+- `[1, 9]`
+- `[2, 4]`
+
+### [Activity: python-ch05-ccq4] hello2(msg = 'Good morning', 'Nick')  # ERROR CCQ 4
+#### [CCQ] 下列程式碼執行後，最後在螢幕上會印出什麼結果？ ```python def test_div(a, b): try: return a / b except ZeroDivisionError: return "Cannot divide by zero" finally: return "Always executed" print(test_div(10, 2)) ```
+- `5.0`
+- `Cannot divide by zero`
+- `Always executed` (Correct)
+- `5.0` 且換行印出 `Always executed`
+
+## 資料處理
+
+### [Activity: python-ch06-ccq1] 資料處理 CCQ 1
+#### [CCQ] 在 Pandas 中，若我們建立了 Series `s = pd.Series([10, 20, 30], index=['a', 'b', 'c'])`，下列哪一種存取方式會回傳 `20`？
+- 只有 `s['b']` 與 `s.loc['b']`
+- 只有 `s[1]` 與 `s.iloc[1]`
+- 只有 `s['b']`、`s.loc['b']` 與 `s.iloc[1]`
+- 四種方式 `s['b']`、`s[1]`、`s.loc['b']`、`s.iloc[1]` 皆會回傳 `20`。 (Correct)
+
+### [Activity: python-ch06-ccq2] 資料處理 CCQ 2
+#### [CCQ] 已知有一個 DataFrame `df` 內容如下： |    |  A  |  B  | |:---|:----|:----| |  x |  1  |  2  | |  y |  3  |  4  | 請問執行 `df.loc['x', 'B']` 與 `df.iloc[0, 1]` 回傳的值分別為何？
+- 兩者皆回傳 `1`。
+- `df.loc` 回傳 `2`，`df.iloc` 回傳 `3`。
+- 兩者皆回傳 `2`。 (Correct)
+- `df.loc` 回傳 `1`，`df.iloc` 回傳 `4`。
+
+### [Activity: python-ch06-ccq3] 資料處理 CCQ 3
+#### [CCQ] 若要從 DataFrame `df` 中過濾出欄位 `"Age"` 大於 `30` 的所有資料列（Rows），下列哪一個指令是正確的？
+- `df[df["Age"] > 30]` (Correct)
+- `df.filter("Age > 30")`
+- `df.where("Age" > 30)`
+- `df[Age > 30]`
+
+### [Activity: python-ch06-ccq4] 資料處理 CCQ 4
+#### [CCQ] 給定一個 DataFrame `df`，包含 `"Department"`（部門）與 `"Salary"`（薪水）兩個欄位。若要計算每個部門的平均薪水，下列哪一個指令是正確的？
+- `df.groupby("Department")["Salary"].mean()` (Correct)
+- `df.groupby("Department").mean("Salary")`
+- `df.groupby("Department").average("Salary")`
+- `df["Department"].groupby("Salary").mean()`
+
+## 類別的宣告
+
+### [Activity: python-ch07-ccq1] 類別的宣告 CCQ 1
+#### [CCQ] 給定下列 Python 類別定義： ```python class Counter: count = 0  # 類別屬性 (Class Attribute) def __init__(self): self.count = 1  # 實例屬性 (Instance Attribute) c = Counter() print(Counter.count, c.count) ``` 請問程式執行的輸出結果為何？
+- `0 0`
+- `0 1` (Correct)
+- `1 1`
+- 引發 `AttributeError`
+
+### [Activity: python-ch07-ccq2] 類別的宣告 CCQ 2
+#### [CCQ] 下列程式碼執行時會發生什麼事？ ```python class Secretive: def __init__(self): self.__code = 42 s = Secretive() print(s.__code) ```
+- 正常執行，印出 `42`
+- 正常執行，印出 `None`
+- 引發 `AttributeError` (Correct)
+- 引發 `NameError`
+
+### [Activity: python-ch07-ccq3] 類別的宣告 CCQ 3
+#### [CCQ] 給定下列繼承關係程式碼： ```python class Parent: def __init__(self): self.val = 10 class Child(Parent): def __init__(self): self.val = 20 c = Child() print(c.val) ``` 請問程式執行的輸出結果為何？
+- `10`
+- `20` (Correct)
+- 引發 `AttributeError`
+- `None`
+
+## Python 工程與資電應用
+
+### [Activity: python-ch08-ccq1] Python 工程與資電應用 CCQ 1
+#### [CCQ] 給定下列電路方程組的 NumPy 方程求解程式碼片段： ```python import numpy as np R_matrix = np.array([[8, -3], [-3, 12]]) V_matrix = np.array([5, 0]) I = np.linalg.solve(R_matrix, V_matrix) ``` 下列關於 `I` 變數的敘述，何者正確？
+- `I` 是一個逆矩陣物件，可用 `I.apply()` 進行線性變換。
+- `I` 是一個含有兩個浮點數元素的一維 NumPy 陣列，儲存求解出來的電流數值。 (Correct)
+- `I` 包含了 `R_matrix` 的特徵值與特徵向量。
+- 若 `R_matrix` 是一個行列式值 (Determinant) 為 0 的矩陣，此程式仍可順利執行並回傳全 0 的電流。
+
+### [Activity: python-ch08-ccq2] Python 工程與資電應用 CCQ 2
+#### [CCQ] 在利用 `scipy.integrate.solve_ivp` 求解 RC 充電電路的暫態電壓隨時間變化時，我們需要傳入微分方程函數。下列哪一個微分方程函數的宣告與返回值設計是正確的？（已知 $dV_c/dt = (V_s - V_c)/(RC)$） A) ```python def rc_ode(Vc, t): return (Vs - Vc) / (R * C) ``` B) ```python def rc_ode(t, Vc): return (Vs - Vc) / (R * C) ``` C) ```python def rc_ode(t, y): return (Vs - y) * (R * C) ``` D) ```python def rc_ode(y, t): return (y - Vs) / (R * C) ```
+- 正確 (True)
+- 錯誤 (False) (Correct)
+
+### [Activity: python-ch08-ccq3] Python 工程與資電應用 CCQ 3
+#### [CCQ] 在 PID 控制器的實作中，**積分項 (Integral Term, Ki)** 主要用來解決系統的什麼問題？
+- 減少系統在初期的大幅過沖 (Overshoot)。
+- 預測系統誤差的未來趨勢。
+- 消除系統因摩擦力或熱損失所導致的「穩態誤差/靜態誤差 (Steady-State Error)」。 (Correct)
+- 加快系統在初始階段的響應速度。
+
+### [Activity: python-ch08-ccq4] Python 工程與資電應用 CCQ 4
+#### [CCQ] 在實體硬體控制中，若微控制器以每 10 毫秒 (10ms) 的速度高頻發送序列埠數據，而 Python 端每 100 毫秒 (100ms) 才讀取一次，在沒有加入硬體流控制（Flow Control）的情況下，通常會發生什麼現象？
+- Python 程式會自動提高讀取執行緒的 CPU 運算時脈，維持資料同步。
+- 序列埠通訊晶片的硬體或軟體接收緩衝區 (Buffer) 會溢位 (Overflow)，導致舊的數據遺失或接收到的資料出現嚴重滯後與亂碼。 (Correct)
+- 由於 Python 的直譯特性，程式會主動要求微控制器降低傳送頻率。
+- 電壓訊號會在傳輸線上自動做均值濾波，變成平滑數值。
+
+### [Activity: python-ch08-ccq5] Python 工程與資電應用 CCQ 5
+#### [CCQ] 在建立 TCP 網路連線程式設計時，常會使用到 `socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)`。這行設定的主要作用為何？
+- 限制同一個 IP 在同一時間內的最大連線次數。
+- 將 TCP 連線自動升級為更高傳輸頻寬的 UDP 模式。
+- 允許伺服器關閉重啟後，立即重新綁定 (bind) 相同的 Port，避免作業系統因處於 TIME_WAIT 狀態而拒絕綁定。 (Correct)
+- 加密傳輸的 Socket 內容以防止駭客竊聽。
+
+## Python 機器學習入門
+
+### [Activity: python-ch09-ccq1] Python 機器學習入門 CCQ 1
+#### [CCQ] 在機器學習中，使用 `GridSearchCV` 進行「超參數網格搜尋與交叉驗證」的主要目的為何？
+- 為了加速模型訓練的速度，避免使用 CPU。
+- 自動在各種參數組合中，透過交叉驗證找出最能防止過擬合且泛化能力最佳的參數設定。 (Correct)
+- 為了將無標籤的資料集進行自動分群。
+- 將特徵維度進行降維以利於繪圖。
+
+### [Activity: python-ch09-ccq2] Python 機器學習入門 CCQ 2
+#### [CCQ] 當決策樹（Decision Tree）的 `max_depth` (最大深度) 參數設定為 `None`（即不限制樹的深度）時，模型通常會面臨什麼風險？
+- 模型會因為結構過於簡單而產生欠擬合 (Underfitting)。
+- 決策樹會無法進行多類別分類。
+- 決策樹會不斷分裂直到葉節點完全純淨，極易產生過擬合 (Overfitting) 並喪失對新測試資料的預測能力。 (Correct)
+- 程式會因為死迴圈而當機。
+
+### [Activity: python-ch09-ccq3] Python 機器學習入門 CCQ 3
+#### [CCQ] 在評估房價預測模型的效能時，若我們算出模型的決定係數 $R^2$ 值為 `0.85`，這代表什麼工程含義？
+- 該模型只預測對了 85% 的資料，剩下的 15% 資料全部預測錯誤。
+- 該模型所預測的房價比真實房價平均貴了 85 萬元。
+- 模型中的自變數（坪數、屋齡等特徵）能夠解釋因變數（房價）中 85% 的變異量。 (Correct)
+- 模型有 85% 的機率會產生過擬合。
+
+### [Activity: python-ch09-ccq4] Python 機器學習入門 CCQ 4
+#### [CCQ] 在實施 K-Means 分群時，使用「肘部法 (Elbow Method)」繪製曲線圖，下列哪一個關於轉折點（手肘處）的說法是正確的？
+- 轉折點代表 Inertia (WCSS) 開始變為負值的地方。
+- 轉折點代表在此群數之後，增加群數所能降低的群內誤差和幅度明顯變小，是邊際效應的轉折點。 (Correct)
+- 轉折點代表分群準確度達到 100% 的臨界點。
+- 轉折點後的 $K$ 值代表模型開始欠擬合。
+
+### [Activity: python-ch09-ccq5] Python 機器學習入門 CCQ 5
+#### [CCQ] 在處理具有「類別特徵（如：科系、血型）」的資料時，為什麼通常不建議直接將它們編碼為簡單的整數值（如資工=1, 電機=2, 機械=3），而是使用 One-Hot Encoding？
+- 因為 Scikit-Learn 的模型只支援輸入 0 或 1。
+- 為了避免模型錯誤地假設這些類別特徵之間存在大小順序或倍數關係。 (Correct)
+- One-Hot Encoding 可以自動刪除重複的特徵。
+- 整數編碼會佔用十倍以上的記憶體。
+
+## Python 人工智慧與 LLM 應用
+
+### [Activity: python-ch10-ccq1] Python 人工智慧與 LLM 應用 CCQ 1
+#### [CCQ] 在設計一個用來進行「自動寫程式與編譯 Debug」的 AI 軟體工程師代理人時，你應該如何調整 Gemini API 的 `temperature` (溫度) 超參數，以確保程式碼生成的一致性與語法正確度？
+- 調高溫度至 1.0 或以上，以激發 AI 的無限創造力。
+- 調低溫度至 0.0 或接近 0，使模型生成最確定、最符合標準語法的答案。 (Correct)
+- 關閉 Top-P 與 Top-K，只使用 Temperature=1.5。
+- 將溫度設為 -1.0。
+
+### [Activity: python-ch10-ccq2] Python 人工智慧與 LLM 應用 CCQ 2
+#### [CCQ] 關於大型語言模型 (LLM) 的「Function Calling (工具調用)」機制，下列敘述何者是正確的？
+- 該機制允許 LLM 直接繞過作業系統權限，在你的電腦硬碟中自動下載、編譯並執行任何 Python 程式碼。
+- LLM 不會直接執行該函數；它僅負責閱讀函數的簽章與說明文檔，並根據使用者意圖輸出一個包含「欲調用之函數名稱與引數數值」的結構化指令，由開發者的本地程式碼負責實際執行。 (Correct)
+- Function Calling 是一種用來對 LLM 進行深度微調 (Fine-Tuning) 的演算法。
+- 這會將模型的運算速度提升 100 倍。
+
+### [Activity: python-ch10-ccq3] Python 人工智慧與 LLM 應用 CCQ 3
+#### [CCQ] 在實作 RAG (檢索增強生成) 系統時，將檢索出來的外部私人參考文件作為「上下文 (Context)」一同送入 LLM 提示詞中，主要是為了解決 LLM 的什麼重大痛點？
+- 網路頻寬太慢的問題。
+- 解決模型因為訓練資料截止或缺乏私人知識而產生的幻覺 (Hallucination) 問題，並提供有憑有據的回答。
+- 提高模型的推理硬體算力。
+- 自動將輸入的程式碼進行最佳化編譯。
+
+## Python 視窗遊戲設計 (Pygame)
+
+### [Activity: python-ch11-ccq1] Python 視窗遊戲設計 (Pygame) CCQ 1
+#### [CCQ] 在 Pygame 遊戲設計中，關於螢幕座標系的描述，下列何者正確？
+- 原點 $(0, 0)$ 位於螢幕的中心點，向右與向上為正數。
+- 原點 $(0, 0)$ 位於螢幕的左上角，向右為 X 軸正方向，向下為 Y 軸正方向。 (Correct)
+- 原點 $(0, 0)$ 位於螢幕的左下角，符合傳統數學笛卡爾座標系。
+- X 座標增加物體會往左移動，Y 座標增加物體會往上移動。
+
+### [Activity: python-ch11-ccq2] Python 視窗遊戲設計 (Pygame) CCQ 2
+#### [CCQ] 在遊戲迴圈的主程序中，`clock.tick(60)` 這行指令的核心功用為何？
+- 限制顯示卡每秒的運算功率，維持電腦處於低溫狀態。
+- 阻塞程式執行，直到系統精準經過 60 毫秒。
+- 控制遊戲迴圈的每秒幀數 (FPS) 最高為 60，確保遊戲邏輯的更新速度在不同性能的電腦上保持一致。 (Correct)
+- 設定遊戲中計時器的初始倒數時間為 60 秒。
+
+### [Activity: python-ch11-ccq3] Python 視窗遊戲設計 (Pygame) CCQ 3
+#### [CCQ] 在遊戲畫面繪製結束後，我們會呼叫 `pygame.display.flip()`。這項操作背後的圖學機制「雙重緩衝區 (Double Buffering)」主要為解決什麼問題？
+- 減少系統記憶體佔用。
+- 防止螢幕更新時畫面閃爍與撕裂，讓玩家看不到圖畫繪製的過程。 (Correct)
+- 將 2D 座標轉換為 3D 渲染。
+- 自動執行物理碰撞演算法。
+
+### [Activity: python-ch11-ccq4] Python 視窗遊戲設計 (Pygame) CCQ 4
+#### [CCQ] 在 Pygame 中，一個自訂的精靈類別（繼承自 `pygame.sprite.Sprite`）在初始化時，**必須**設定哪兩個變數屬性，才能被精靈群組 (Sprite Group) 正確管理與繪製？
+- `self.x` 與 `self.y`
+- `self.image`（外觀 Surface）與 `self.rect`（邊框位置 Rect） (Correct)
+- `self.speed` 與 `self.direction`
+- `self.width` 與 `self.height`
+
+### [Activity: python-ch11-ccq5] Python 視窗遊戲設計 (Pygame) CCQ 5
+#### [CCQ] 在太空射擊遊戲中，若要檢測「所有的子彈群組 (bullets)」與「所有的隕石群組 (meteors)」之間的多對多碰撞，並讓相撞的子彈與隕石同時消失，下列哪一個內建函數是最佳且最有效率的選擇？
+- `pygame.Rect.colliderect()`
+- `pygame.sprite.spritecollide()`
+- `pygame.sprite.groupcollide(bullets, meteors, True, True)` (Correct)
+- 寫雙重 `for` 迴圈手動計算每一個子彈與隕石的幾何距離。
+
+## Python Web 開發基礎 (Flask)
+
+### [Activity: python-ch12-ccq1] Python Web 開發基礎 (Flask) CCQ 1
+#### [CCQ] 當你在瀏覽器中登入網頁，輸入個人密碼並點擊提交時，網頁前端應該採用哪一種 HTTP 方法將資料傳送到後台 Python 伺服器，以符合資安實務？
+- GET 請求，因為 GET 能將密碼直接保存在網址中以便於書籤標記。
+- POST 請求，因為 POST 將資料封裝在 HTTP Body 中傳輸，密碼不會外洩在瀏覽器網址列與歷史紀錄中。 (Correct)
+- HEAD 請求，因為 HEAD 請求不需要回傳網頁內容。
+- DELETE 請求，因為登入後需要將密碼從網頁中銷毀。
+
+### [Activity: python-ch12-ccq2] Python Web 開發基礎 (Flask) CCQ 2
+#### [CCQ] 當你的 Python Flask 網頁伺服器在執行時，因為讀取了不存在的串列索引而導致程式崩潰當機，此時用戶端瀏覽器最有可能收到哪一個 HTTP 狀態碼？
+- 200 OK
+- 302 Redirect
+- 404 Not Found
+- 500 Internal Server Error (Correct)
+
+### [Activity: python-ch12-ccq3] Python Web 開發基礎 (Flask) CCQ 3
+#### [CCQ] 在 Flask 中，指令 `@app.route('/user/<username>')` 的作用為何？
+- 將使用者自動導向到特定的資料庫查詢頁面。
+- 定義一個路由路徑，並將網址中 `/user/` 後方的文字動態擷取出來，作為引數傳遞給下方對應的視圖處理函式。 (Correct)
+- 用來下載特定使用者的所有個人相片檔案。
+- 限定只有名為 `username` 的使用者才能訪問該網址。
+
+### [Activity: python-ch12-ccq4] Python Web 開發基礎 (Flask) CCQ 4
+#### [CCQ] 在 HTML 表單的屬性中，`<form action="/query" method="GET">` 這段宣告的意義為何？
+- 當使用者提交表單時，瀏覽器會使用 POST 協定將資料隱密地送到 `/query`。
+- 表單欄位中的資料會被編碼並附加在網址列（URL）後端，並跳轉至伺服器的 `/query` 路徑進行 GET 請求。 (Correct)
+- 這會強行關閉後端的 Python 伺服器以進行資料庫防護。
+- 這是一個錯誤宣告，HTML 表單不支援 GET 方法。

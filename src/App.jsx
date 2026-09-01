@@ -63,29 +63,31 @@ export default function App() {
   useEffect(() => {
     const loadDefaultCourses = async () => {
       const baseUrl = import.meta.env.BASE_URL || '/';
-      let seCourse, stCourse;
+      const courseFiles = [
+        { id: 'software_testing', file: 'software_testing.md', fallback: DEFAULT_ST_MD },
+        { id: 'software_eng', file: 'software_eng.md', fallback: DEFAULT_SE_MD },
+        { id: 'python', file: 'python.md', fallback: null },
+        { id: 'ux', file: 'ux.md', fallback: null },
+      ];
 
-      try {
-        const res = await fetch(`${baseUrl}courses/software_eng.md`);
-        if (!res.ok) throw new Error('Fetch status ' + res.status);
-        const text = await res.text();
-        seCourse = parseMarkdownCourse(text, 'software_eng');
-      } catch (e) {
-        console.warn('Failed to fetch software_eng.md, loading fallback...', e);
-        seCourse = parseMarkdownCourse(DEFAULT_SE_MD, 'software_eng');
+      const loaded = [];
+      for (const item of courseFiles) {
+        try {
+          const res = await fetch(`${baseUrl}courses/${item.file}`);
+          if (!res.ok) throw new Error('Fetch status ' + res.status);
+          const text = await res.text();
+          const parsed = parseMarkdownCourse(text, item.id);
+          if (parsed && parsed.chapters && parsed.chapters.length > 0) {
+            loaded.push(parsed);
+          }
+        } catch (e) {
+          if (item.fallback) {
+            loaded.push(parseMarkdownCourse(item.fallback, item.id));
+          }
+        }
       }
 
-      try {
-        const res = await fetch(`${baseUrl}courses/software_testing.md`);
-        if (!res.ok) throw new Error('Fetch status ' + res.status);
-        const text = await res.text();
-        stCourse = parseMarkdownCourse(text, 'software_testing');
-      } catch (e) {
-        console.warn('Failed to fetch software_testing.md, loading fallback...', e);
-        stCourse = parseMarkdownCourse(DEFAULT_ST_MD, 'software_testing');
-      }
-
-      setDefaultCourses([seCourse, stCourse]);
+      setDefaultCourses(loaded);
     };
 
     loadDefaultCourses();

@@ -63,8 +63,8 @@ export function parseMarkdownCourse(mdText, fileId = '') {
         currentChapter.activities.push(currentActivity);
         currentQuestion = null;
       } else {
-        // Legacy Support: Treating "### [Type] Question" or "### 🎯 CCQ: Question" as an activity containing a single question
-        const cleanHeading = rawText.replace(/^[🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
+        // Legacy Support: Treating "### [Type] Question" or "### 🙋 CCQ: Question" as an activity containing a single question
+        const cleanHeading = rawText.replace(/^[🙋🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
         const typeMatch = cleanHeading.match(/^\[?(CCQ|Poll|Ordering|Game|Short|QA|WordCloud|投票|搶答|文字雲|排序|簡答|觀念檢核)\]?[:：\s]?(.*)/i);
         
         if (typeMatch) {
@@ -129,7 +129,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       }
 
       const qTextRaw = line.substring(5).trim();
-      const cleanLine = qTextRaw.replace(/^[🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
+      const cleanLine = qTextRaw.replace(/^[🙋🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
       const typeMatch = cleanLine.match(/^\[?(CCQ|Poll|Ordering|Game|Short|QA|WordCloud|投票|搶答|文字雲|排序|簡答|觀念檢核)\]?[:：\s]?(.*)/i);
 
       if (typeMatch) {

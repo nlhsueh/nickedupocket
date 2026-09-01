@@ -23,9 +23,23 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const [shortAnswerViewMode, setShortAnswerViewMode] = useState('grid'); // 'grid' or 'danmaku'
   
   // Timer for Game
+  // Timer for Game
   const [timeLeft, setTimeLeft] = useState(0);
   const [questionStartTime, setQuestionStartTime] = useState(0);
   const timerRef = useRef(null);
+
+  // Synchronized refs to prevent stale closure in MQTT callback
+  const sessionStatusRef = useRef(sessionStatus);
+  sessionStatusRef.current = sessionStatus;
+
+  const currentQIndexRef = useRef(currentQIndex);
+  currentQIndexRef.current = currentQIndex;
+
+  const activityRef = useRef(activity);
+  activityRef.current = activity;
+
+  const timeLeftRef = useRef(timeLeft);
+  timeLeftRef.current = timeLeft;
   
   const currentQuestion = activity.questions[currentQIndex];
   const studentUrl = `${window.location.origin}${window.location.pathname}#/student/${roomCode}`;
@@ -84,15 +98,17 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   };
 
   const broadcastLobbyState = () => {
-    if (sessionStatus === 'lobby') {
-      broadcastState({ event: 'lobby', acknowledged: true });
-    } else if (sessionStatus === 'active') {
-      broadcastActiveQuestion(currentQIndex);
-    } else if (sessionStatus === 'stopped') {
+    const status = sessionStatusRef.current;
+    const qIndex = currentQIndexRef.current;
+    if (status === 'lobby') {
+      broadcastState({ event: 'lobby', acknowledged: true, activityTitle: activityRef.current.title });
+    } else if (status === 'active') {
+      broadcastActiveQuestion(qIndex);
+    } else if (status === 'stopped') {
       broadcastState({ event: 'question_stop' });
-    } else if (sessionStatus === 'results') {
+    } else if (status === 'results') {
       broadcastState({ event: 'results' });
-    } else if (sessionStatus === 'finished') {
+    } else if (status === 'finished') {
       broadcastState({ event: 'session_finished' });
     }
   };
@@ -125,7 +141,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   };
 
   const broadcastActiveQuestion = (idx) => {
-    const q = activity.questions[idx];
+    const act = activityRef.current;
+    const q = act.questions[idx];
+    if (!q) return;
     if (q.type === 'ordering') {
       broadcastState({
         event: 'question_start',
@@ -141,7 +159,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         questionIndex: idx,
         questionText: q.questionText,
         options: q.options,
-        timeLimit: q.type === 'game' ? timeLeft : (q.timeLimit || 0)
+        timeLimit: q.type === 'game' ? timeLeftRef.current : (q.timeLimit || 0)
       });
     }
   };

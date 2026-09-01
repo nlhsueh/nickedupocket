@@ -11,7 +11,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     const s = Math.max(0, Math.floor(secs));
     const m = Math.floor(s / 60);
     const rem = s % 60;
-    return ;
+    return `${m.toString().padStart(2, '0')}:${rem.toString().padStart(2, '0')}`;
   };
 
   const [connectionStatus, setConnectionStatus] = useState('disconnected');

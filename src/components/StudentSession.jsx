@@ -10,7 +10,7 @@ export default function StudentSession({ roomCode, onLeave }) {
     const s = Math.max(0, Math.floor(secs));
     const m = Math.floor(s / 60);
     const rem = s % 60;
-    return ;
+    return `${m.toString().padStart(2, '0')}:${rem.toString().padStart(2, '0')}`;
   };
 
   const [nickname, setNickname] = useState(() => localStorage.getItem('nickpocket_student_name') || '');

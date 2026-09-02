@@ -1,3 +1,5 @@
+import { formatChapterTitle, getActivityShortTitle } from './formatters';
+
 // Markdown Course Parser for NickPocket Edu supporting Course -> Chapter -> Activity -> Question hierarchy
 
 export function parseMarkdownCourse(mdText, fileId = '') {
@@ -22,7 +24,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
     if (line.startsWith('## ')) {
       currentChapter = {
         id: `chap_${fileId}_${Date.now()}_${chapters.length}`,
-        title: line.substring(3).trim(),
+        title: formatChapterTitle(line.substring(3).trim()),
         activities: []
       };
       chapters.push(currentChapter);
@@ -259,9 +261,12 @@ export function parseMarkdownCourse(mdText, fileId = '') {
     }
   }
 
-  // Post-processing for matching Game text correct answers
+  // Post-processing for matching Game text correct answers and refining activity titles
   chapters.forEach(chap => {
     chap.activities.forEach(act => {
+      // Ensure activity title is a concise question summary rather than full chapter title
+      act.title = getActivityShortTitle(act, chap);
+
       act.questions.forEach(q => {
         if (q.type === 'game' && q.rawCorrectText && !q.correctAnswer) {
           const matchedIdx = q.options.findIndex(opt => 

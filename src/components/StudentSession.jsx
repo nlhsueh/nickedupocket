@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
+import { getActivityShortTitle } from '../utils/formatters';
 
 export default function StudentSession({ roomCode, onLeave, activity, course, chapter }) {
   const formatTime = (secs) => {
@@ -15,7 +16,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   };
 
   const targetActivity = activity;
-  const activityTitle = targetActivity?.title || '';
+  const activityTitle = getActivityShortTitle(targetActivity, chapter) || targetActivity?.title || '';
   const firstQuestion = targetActivity?.questions?.[0];
   const questionSnippet = firstQuestion?.questionText || '';
   const questionType = firstQuestion?.type || '';

@@ -4,6 +4,7 @@ import {
   Upload, HelpCircle, BarChart2, ListOrdered, Gamepad2, AlertCircle, Copy, Check, QrCode, Users, Cloud, MessageSquare
 } from 'lucide-react';
 import { parseMarkdownCourse } from '../utils/mdParser';
+import { formatChapterTitle, getActivityShortTitle } from '../utils/formatters';
 import { QRCodeCanvas } from 'qrcode.react';
 import FormattedMarkdown from '../utils/formatMarkdown';
 
@@ -376,22 +377,26 @@ export default function TeacherDashboard({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                   {currentCourse.chapters.map((chapter) => {
                     const isSelected = selectedChapterId === chapter.id;
+                    const displayTitle = formatChapterTitle(chapter.title);
                     return (
                       <button
                         key={chapter.id}
                         className={`btn ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
                         style={{ 
-                          justifyContent: 'space-between', 
+                          justifyContent: 'flex-start', 
                           padding: '0.75rem 1rem', 
                           textAlign: 'left',
                           borderRadius: '10px',
                           border: isSelected ? 'none' : '1px solid var(--border-light)',
-                          fontSize: '0.9rem'
+                          fontSize: '0.9rem',
+                          width: '100%',
+                          boxSizing: 'border-box'
                         }}
                         onClick={() => selectChapter(chapter.id)}
+                        title={displayTitle}
                       >
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
-                          {chapter.title}
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
+                          {displayTitle}
                         </span>
                       </button>
                     );
@@ -409,12 +414,17 @@ export default function TeacherDashboard({
                     <button
                       className={`btn ${selectedActivityId === null ? 'btn-primary' : 'btn-secondary'}`}
                       style={{
-                        justifyContent: 'space-between',
+                        justifyContent: 'flex-start',
+                        gap: '0.5rem',
                         padding: '0.75rem 1rem',
                         textAlign: 'left',
                         borderRadius: '10px',
                         border: selectedActivityId === null ? 'none' : '1px solid var(--border-light)',
-                        fontSize: '0.85rem'
+                        fontSize: '0.85rem',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        display: 'flex',
+                        alignItems: 'center'
                       }}
                       onClick={() => setSelectedActivityId(null)}
                     >
@@ -423,22 +433,30 @@ export default function TeacherDashboard({
 
                     {currentChapter.activities?.map((act) => {
                       const isSelected = selectedActivityId === act.id;
+                      const shortTitle = getActivityShortTitle(act, currentChapter);
                       return (
                         <button
                           key={act.id}
                           className={`btn ${isSelected ? 'btn-success' : 'btn-secondary'}`}
                           style={{
-                            justifyContent: 'space-between',
+                            justifyContent: 'flex-start',
+                            gap: '0.5rem',
                             padding: '0.75rem 1rem',
                             textAlign: 'left',
                             borderRadius: '10px',
                             border: isSelected ? 'none' : '1px solid var(--border-light)',
-                            fontSize: '0.85rem'
+                            fontSize: '0.85rem',
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            display: 'flex',
+                            alignItems: 'center'
                           }}
                           onClick={() => setSelectedActivityId(act.id)}
+                          title={shortTitle}
                         >
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
-                            {act.title}
+                          {getQuestionIcon(act.questions?.[0]?.type)}
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                            {shortTitle}
                           </span>
                         </button>
                       );
@@ -459,7 +477,7 @@ export default function TeacherDashboard({
                 <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
                   <div>
                     <span className="badge badge-success">Activity Selected</span>
-                    <h3 style={{ fontSize: '1.4rem', marginTop: '0.2rem' }}>{currentActivity.title}</h3>
+                    <h3 style={{ fontSize: '1.4rem', marginTop: '0.2rem' }}>{getActivityShortTitle(currentActivity, currentChapter)}</h3>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ID: {currentActivity.id}</span>
                   </div>
                   <button 
@@ -624,7 +642,7 @@ export default function TeacherDashboard({
                 {/* Header row */}
                 <div style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
                   <span className="badge badge-indigo">Chapter Overview</span>
-                  <h3 style={{ fontSize: '1.55rem', marginTop: '0.25rem', marginBottom: '0.25rem' }}>{currentChapter.title}</h3>
+                  <h3 style={{ fontSize: '1.55rem', marginTop: '0.25rem', marginBottom: '0.25rem' }}>{formatChapterTitle(currentChapter.title)}</h3>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                     Total activities: {currentChapter.activities?.length || 0}
                   </p>
@@ -686,6 +704,7 @@ export default function TeacherDashboard({
                         const isQrCopied = qrCopiedId === act.id;
                         const roomCodeForAct = getRoomCode(act.id);
                         const shareUrlForAct = getShareUrl(act.id);
+                        const cardTitle = getActivityShortTitle(act, currentChapter);
 
                         return (
                           <div 
@@ -711,7 +730,7 @@ export default function TeacherDashboard({
                                 <span className="badge" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>
                                   {actType}
                                 </span>
-                                <h4 style={{ fontSize: '1.15rem', fontWeight: 600, marginTop: '0.2rem' }}>{act.title}</h4>
+                                <h4 style={{ fontSize: '1.15rem', fontWeight: 600, marginTop: '0.2rem' }}>{cardTitle}</h4>
                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Room: {roomCodeForAct}</span>
                               </div>
 

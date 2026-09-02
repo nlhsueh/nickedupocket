@@ -2,7 +2,7 @@
 
 export const DEFAULT_SE_MD = `# Software Engineering
 
-## Chapter 1: Software Process & Lifecycle
+## Ch 1: Software Process & Lifecycle
 
 ### [Activity: se-lifecycle-ccq] Waterfall Suitability CCQ
 #### [CCQ] The Waterfall model is highly suitable for projects with unstable, changing requirements.
@@ -32,7 +32,7 @@ Correct: False
 - Customer collaboration over contract negotiation
 Time: 15
 
-## Chapter 2: Design Patterns
+## Ch 2: Design Patterns
 
 ### [Activity: se-singleton-ccq] Singleton Design Pattern CCQ
 #### [CCQ] The Singleton pattern ensures a class has only one instance and provides a global point of access to it.
@@ -49,7 +49,7 @@ Time: 20
 
 export const DEFAULT_ST_MD = `# Software Testing
 
-## Chapter 1: Introduction to Testing
+## Ch 1: Introduction to Testing
 
 ### [Activity: test-intro-ccq] Bug Absence CCQ
 #### [CCQ] Software testing can prove the absence of bugs in a system.
@@ -64,7 +64,7 @@ Correct: False
 5. Test Execution
 6. Test Cycle Closure
 
-### [Activity: test-patriot-ccq] Patriot Missile Failure CCQ
+### [Activity: test-patriot-ccq] 愛國者飛彈攔截失效 (CCQ)
 #### [CCQ] 愛國者反導彈系統（1991）在達蘭基地攔截失效的根本軟體原因為何？
 - 通訊網路中斷導致雷達無法傳送指令給飛彈發射架
 - 24-bit 時鐘暫存器的浮點捨入誤差在連續運行 100 小時後累加達 0.33 秒 (Correct)
@@ -89,7 +89,7 @@ Time: 20
 - Debugging failing tests and locating root faults
 - Designing test plans and estimating test coverage
 
-## Chapter 2: Black Box vs. White Box Testing
+## Ch 2: Black Box vs. White Box Testing
 
 ### [Activity: test-blackwhite-ccq] Boundary Value Analysis CCQ
 #### [CCQ] Boundary Value Analysis is a white-box testing technique.

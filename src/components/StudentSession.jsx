@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wifi, WifiOff, Hourglass, CheckCircle2, AlertCircle, 
-  ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud, GripVertical
+  ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud, GripVertical, Users, MessageSquare
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
@@ -30,6 +30,8 @@ export default function StudentSession({ roomCode, onLeave }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [textAnswer, setTextAnswer] = useState('');
   const [orderingItems, setOrderingItems] = useState([]);
+  const [partnerName, setPartnerName] = useState('');
+  const [pairSummary, setPairSummary] = useState('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(null);
@@ -41,6 +43,7 @@ export default function StudentSession({ roomCode, onLeave }) {
     totalSubmissions: 0,
     totalStudents: 0,
     shortAnswers: [],
+    pairDiscussions: [],
     wordCloud: null
   });
   const [revealedCorrectAnswer, setRevealedCorrectAnswer] = useState(null);
@@ -104,9 +107,11 @@ export default function StudentSession({ roomCode, onLeave }) {
       setHasSubmitted(false);
       setSelectedOption(null);
       setTextAnswer('');
+      setPartnerName('');
+      setPairSummary('');
       setOrderingItems([]);
       setRevealedCorrectAnswer(null);
-      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [] });
+      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [], pairDiscussions: [] });
       // Announce presence only if the event is not a teacher acknowledgment broadcast (prevents loops)
       if (!payload.acknowledged) {
         mqttService.publishResponse({ event: 'join', studentName: nickname });
@@ -117,16 +122,19 @@ export default function StudentSession({ roomCode, onLeave }) {
       setHasSubmitted(false);
       setSelectedOption(null);
       setTextAnswer('');
+      setPartnerName('');
+      setPairSummary('');
       setSubmitting(false);
       setSubmitTime(null);
       setQuestionStartMs(Date.now());
       setRevealedCorrectAnswer(null);
-      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [] });
+      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [], pairDiscussions: [] });
       
       const qData = {
         type: payload.type,
         index: payload.questionIndex,
         questionText: payload.questionText,
+        description: payload.description || '',
         options: payload.options || [],
         items: payload.items || [],
         timeLimit: payload.timeLimit || 0
@@ -156,6 +164,7 @@ export default function StudentSession({ roomCode, onLeave }) {
           totalSubmissions: payload.totalSubmissions !== undefined ? payload.totalSubmissions : prev.totalSubmissions,
           totalStudents: payload.totalStudents !== undefined ? payload.totalStudents : prev.totalStudents,
           shortAnswers: payload.shortAnswers || prev.shortAnswers,
+          pairDiscussions: payload.pairDiscussions || prev.pairDiscussions,
           wordCloud: payload.wordCloud || prev.wordCloud
         }));
         if (payload.correctAnswer) {
@@ -168,13 +177,14 @@ export default function StudentSession({ roomCode, onLeave }) {
       if (payload.correctAnswer) {
         setRevealedCorrectAnswer(payload.correctAnswer);
       }
-      if (payload.stats || payload.wordCloud || payload.shortAnswers) {
+      if (payload.stats || payload.wordCloud || payload.shortAnswers || payload.pairDiscussions) {
         setLiveStats(prev => ({
           ...prev,
           stats: payload.stats || prev.stats,
           totalSubmissions: payload.totalSubmissions !== undefined ? payload.totalSubmissions : prev.totalSubmissions,
           totalStudents: payload.totalStudents !== undefined ? payload.totalStudents : prev.totalStudents,
           shortAnswers: payload.shortAnswers || prev.shortAnswers,
+          pairDiscussions: payload.pairDiscussions || prev.pairDiscussions,
           wordCloud: payload.wordCloud || prev.wordCloud
         }));
       }
@@ -184,9 +194,12 @@ export default function StudentSession({ roomCode, onLeave }) {
       setActiveQuestion(null);
       setHasSubmitted(false);
       setSelectedOption(null);
+      setTextAnswer('');
+      setPartnerName('');
+      setPairSummary('');
       setOrderingItems([]);
       setRevealedCorrectAnswer(null);
-      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [], wordCloud: null });
+      setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [], pairDiscussions: [], wordCloud: null });
     }
     else if (payload.event === 'timer_extend') {
       setTimeLeft(prev => prev + (payload.addSeconds || 30));
@@ -218,6 +231,20 @@ export default function StudentSession({ roomCode, onLeave }) {
           questionIndex: activeQuestion.index
         });
         setHasSubmitted(true);
+      } else if (activeQuestion.type === 'pair') {
+        if (pairSummary.trim()) {
+          mqttService.publishResponse({
+            event: 'submit_answer',
+            studentName: nickname,
+            answer: {
+              summary: pairSummary.trim(),
+              partnerName: partnerName.trim()
+            },
+            timestamp: now,
+            questionIndex: activeQuestion.index
+          });
+          setHasSubmitted(true);
+        }
       } else if ((activeQuestion.type === 'short' || activeQuestion.type === 'wordcloud')) {
         if (textAnswer.trim()) {
           mqttService.publishResponse({
@@ -318,6 +345,37 @@ export default function StudentSession({ roomCode, onLeave }) {
         event: 'submit_answer',
         studentName: nickname,
         answer: textAnswer.trim(),
+        timestamp: now,
+        questionIndex: activeQuestion.index
+      });
+
+      if (success) {
+        setHasSubmitted(true);
+      } else {
+        alert('Failed to send answer. Check your connection.');
+      }
+    } catch (e) {
+      console.error('[MQTT] Publish error:', e);
+      alert('Connection error. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitPairValue = () => {
+    if (hasSubmitted || roomState !== 'answering' || !pairSummary.trim()) return;
+    setSubmitting(true);
+    const now = Date.now();
+    setSubmitTime(now);
+
+    try {
+      const success = mqttService.publishResponse({
+        event: 'submit_answer',
+        studentName: nickname,
+        answer: {
+          summary: pairSummary.trim(),
+          partnerName: partnerName.trim()
+        },
         timestamp: now,
         questionIndex: activeQuestion.index
       });
@@ -749,6 +807,12 @@ export default function StudentSession({ roomCode, onLeave }) {
                             ) : null}
                           </div>
                         )}
+                        {activeQuestion.type === 'pair' && (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
+                            <div>夥伴：<strong style={{ color: 'var(--color-indigo)' }}>{partnerName.trim() || '未填寫'}</strong></div>
+                            <div style={{ marginTop: '0.2rem' }}>討論結論：<strong style={{ color: 'var(--text-primary)' }}>"{pairSummary}"</strong></div>
+                          </div>
+                        )}
                         {textAnswer && activeQuestion.type === 'short' && (
                           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
                             你的回答：<strong style={{ color: 'var(--text-primary)' }}>"{textAnswer}"</strong>
@@ -922,6 +986,40 @@ export default function StudentSession({ roomCode, onLeave }) {
                             );
                           });
                         })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pair Discussion Responses List */}
+                  {activeQuestion.type === 'pair' && (
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Users size={16} style={{ color: '#06b6d4' }} /> 全班雙人討論成果 (Class Pair Insights)：
+                      </h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '280px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                        {liveStats.pairDiscussions && liveStats.pairDiscussions.length > 0 ? (
+                          liveStats.pairDiscussions.map((item, idx) => (
+                            <div key={idx} className="glass-card" style={{ padding: '0.85rem 1rem', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', borderLeft: '3px solid #06b6d4' }}>
+                              <div className="flex-between">
+                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: item.studentName === nickname ? 'var(--color-indigo)' : 'var(--text-secondary)' }}>
+                                  👥 {item.studentName}{item.partnerName ? ` & ${item.partnerName}` : ''}{item.studentName === nickname ? ' (你們)' : ''}
+                                </span>
+                              </div>
+                              <div style={{ color: 'var(--text-primary)', lineHeight: '1.5' }}>
+                                <FormattedMarkdown text={item.summary} />
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="glass-card" style={{ padding: '0.85rem 1rem', fontSize: '0.85rem' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-indigo)' }}>
+                              👥 {nickname} {partnerName ? `& ${partnerName}` : ''} (你們)
+                            </span>
+                            <div style={{ color: 'var(--text-primary)', marginTop: '0.3rem' }}>
+                              <FormattedMarkdown text={pairSummary} />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1136,6 +1234,87 @@ export default function StudentSession({ roomCode, onLeave }) {
                     disabled={submitting || !textAnswer.trim()}
                   >
                     送出詞彙 Submit Words <CornerDownRight size={18} />
+                  </button>
+                </div>
+              ) : activeQuestion.type === 'pair' ? (
+                /* Pair Discussion Form */
+                <div>
+                  {activeQuestion.description && (
+                    <div className="glass-card" style={{ padding: '0.85rem 1rem', marginBottom: '1.25rem', background: 'rgba(6, 182, 212, 0.05)', borderColor: 'rgba(6, 182, 212, 0.25)', borderRadius: '10px' }}>
+                      <h4 style={{ color: '#22d3ee', fontSize: '0.85rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Users size={14} /> 討論引導與任務：
+                      </h4>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.55' }}>
+                        <FormattedMarkdown text={activeQuestion.description} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                      <Users size={14} style={{ color: '#06b6d4' }} />
+                      同組夥伴姓名 / 暱稱：
+                    </label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      style={{ 
+                        width: '100%', 
+                        padding: '0.7rem 0.9rem', 
+                        fontSize: '0.92rem',
+                        borderRadius: '10px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-primary)'
+                      }}
+                      value={partnerName}
+                      onChange={(e) => setPartnerName(e.target.value)}
+                      placeholder="例如：王大同 / 隔壁同學 (選填)"
+                      maxLength={30}
+                      disabled={submitting}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                      <MessageSquare size={14} style={{ color: '#06b6d4' }} />
+                      雙人討論重點簡述 (Discussion Summary)：
+                    </label>
+                    <textarea
+                      className="input-field"
+                      style={{ 
+                        width: '100%', 
+                        minHeight: '115px', 
+                        padding: '0.85rem', 
+                        fontSize: '0.95rem',
+                        resize: 'none',
+                        fontFamily: 'inherit',
+                        borderRadius: '10px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-primary)',
+                        lineHeight: '1.5',
+                        margin: '0 0 0.35rem 0'
+                      }}
+                      value={pairSummary}
+                      onChange={(e) => setPairSummary(e.target.value)}
+                      placeholder="簡述你們這組討論出的主要觀點、案例成因或關鍵結論..."
+                      maxLength={300}
+                      disabled={submitting}
+                    />
+                    <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      {pairSummary.length}/300 字
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '0.95rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, #06b6d4, #3b82f6)' }}
+                    onClick={submitPairValue}
+                    disabled={submitting || !pairSummary.trim()}
+                  >
+                    送出討論結果 Submit Discussion <CornerDownRight size={18} />
                   </button>
                 </div>
               ) : activeQuestion.type === 'short' ? (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Play, Book, FileText, ChevronRight, ChevronLeft, Trash2, 
-  Upload, HelpCircle, BarChart2, ListOrdered, Gamepad2, AlertCircle, Copy, Check, QrCode
+  Upload, HelpCircle, BarChart2, ListOrdered, Gamepad2, AlertCircle, Copy, Check, QrCode, Users, Cloud, MessageSquare
 } from 'lucide-react';
 import { parseMarkdownCourse } from '../utils/mdParser';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -147,6 +147,8 @@ export default function TeacherDashboard({
       case 'poll': return <BarChart2 size={16} style={{ color: 'var(--color-success)' }} />;
       case 'ordering': return <ListOrdered size={16} style={{ color: 'var(--color-pink)' }} />;
       case 'game': return <Gamepad2 size={16} style={{ color: 'var(--color-warning)' }} />;
+      case 'wordcloud': return <Cloud size={16} style={{ color: 'var(--color-indigo)' }} />;
+      case 'pair': return <Users size={16} style={{ color: '#06b6d4' }} />;
       default: return <FileText size={16} />;
     }
   };
@@ -634,7 +636,7 @@ export default function TeacherDashboard({
                     Filter Activities by Type:
                   </h4>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    {['all', 'ccq', 'poll', 'ordering', 'game', 'short'].map((type) => {
+                    {['all', 'ccq', 'poll', 'ordering', 'game', 'wordcloud', 'pair', 'short'].map((type) => {
                       const isActive = activityTypeFilter === type;
                       return (
                         <button
@@ -643,11 +645,13 @@ export default function TeacherDashboard({
                           style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textTransform: 'capitalize' }}
                           onClick={() => setActivityTypeFilter(type)}
                         >
-                          {type === 'all' ? '📁 Show All' : 
+                          {type === 'all' ? '📁 All' : 
                            type === 'ccq' ? '❓ CCQ' : 
                            type === 'poll' ? '📊 Poll' : 
                            type === 'ordering' ? '🔢 Ordering' : 
-                           type === 'game' ? '🎮 Game' : '📝 Short Answer'}
+                           type === 'game' ? '🎮 Game' :
+                           type === 'wordcloud' ? '☁️ WordCloud' :
+                           type === 'pair' ? '👥 Pair Discussion' : '📝 Short Answer'}
                         </button>
                       );
                     })}
@@ -694,7 +698,8 @@ export default function TeacherDashboard({
                                 actType === 'ccq' ? 'var(--color-indigo)' : 
                                 actType === 'poll' ? 'var(--color-success)' : 
                                 actType === 'ordering' ? 'var(--color-pink)' : 
-                                actType === 'game' ? 'var(--color-warning)' : 'var(--color-violet)'
+                                actType === 'game' ? 'var(--color-warning)' : 
+                                actType === 'pair' ? '#06b6d4' : 'var(--color-violet)'
                               }`,
                               display: 'flex',
                               flexDirection: 'column',
@@ -747,7 +752,7 @@ export default function TeacherDashboard({
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, margin: '0 0 0.5rem 0' }}>
                                   Question: <FormattedMarkdown text={act.questions[0].questionText} />
                                 </p>
-                                {actType !== 'ordering' && actType !== 'short' && act.questions[0].options && (
+                                {actType !== 'ordering' && actType !== 'short' && actType !== 'pair' && act.questions[0].options && (
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                                     {act.questions[0].options.map((opt, oIdx) => (
                                       <span key={oIdx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.03)' }}>
@@ -763,6 +768,11 @@ export default function TeacherDashboard({
                                         {oIdx + 1}. <FormattedMarkdown text={item} />
                                       </span>
                                     ))}
+                                  </div>
+                                )}
+                                {actType === 'pair' && act.questions[0].description && (
+                                  <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', color: 'var(--text-muted)', borderLeft: '2px solid rgba(6, 182, 212, 0.4)', paddingLeft: '0.5rem' }}>
+                                    <FormattedMarkdown text={act.questions[0].description} />
                                   </div>
                                 )}
                               </div>

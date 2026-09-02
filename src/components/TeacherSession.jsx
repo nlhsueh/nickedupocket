@@ -27,15 +27,18 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   // Game scores state
   const [studentScores, setStudentScores] = useState({}); // { studentName: score }
   
-  // View modes
+  // View modes & Spotlight
   const [shortAnswerViewMode, setShortAnswerViewMode] = useState('grid'); // 'grid' or 'danmaku'
   const [wordCloudViewMode, setWordCloudViewMode] = useState('cloud'); // 'cloud', 'ranking', 'raw'
+  const [spotlightPair, setSpotlightPair] = useState(null);
+  const [pairSearchQuery, setPairSearchQuery] = useState('');
   
   // Helper for smart default duration per question type
   const getDefaultDurationForQuestion = (q) => {
     if (!q) return 90;
     if (q.timeLimit && q.timeLimit > 0) return q.timeLimit;
     switch (q.type) {
+      case 'pair': return 300;      // 5 min for Pair Discussion
       case 'wordcloud': return 180; // 3 min for typing keywords
       case 'short': return 180;     // 3 min for typing sentences
       case 'ordering': return 180;  // 3 min for ordering
@@ -186,6 +189,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     const shortList = [];
 
     const ansMap = nextAnswers || answers;
+    const pairList = [];
+
     Object.keys(ansMap).forEach(stName => {
       const item = ansMap[stName];
       if (item && item.questionIndex === qIndex && item.answer !== undefined) {
@@ -194,7 +199,24 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         }
         total++;
         if (q.type === 'short' || q.type === 'wordcloud') {
-          shortList.push({ studentName: stName, text: item.answer, timestamp: item.timestamp });
+          shortList.push({ studentName: stName, text: typeof item.answer === 'string' ? item.answer : JSON.stringify(item.answer), timestamp: item.timestamp });
+        }
+        if (q.type === 'pair') {
+          let summary = '';
+          let partnerName = '';
+          if (typeof item.answer === 'object' && item.answer !== null) {
+            summary = item.answer.summary || item.answer.text || '';
+            partnerName = item.answer.partnerName || '';
+          } else if (typeof item.answer === 'string') {
+            try {
+              const p = JSON.parse(item.answer);
+              summary = p.summary || p.text || item.answer;
+              partnerName = p.partnerName || '';
+            } catch (e) {
+              summary = item.answer;
+            }
+          }
+          pairList.push({ studentName: stName, partnerName, summary, timestamp: item.timestamp });
         }
       }
     });
@@ -208,6 +230,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       totalSubmissions: total,
       totalStudents: joinedStudents.length,
       shortAnswers: shortList,
+      pairDiscussions: pairList,
       wordCloud: wordCloudData ? {
         freqMap: wordCloudData.freqMap,
         sortedList: wordCloudData.sortedList,
@@ -321,6 +344,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         type: 'ordering',
         questionIndex: idx,
         questionText: q.questionText,
+        description: q.description || '',
         items: q.items,
         timeLimit: duration
       });
@@ -330,7 +354,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         type: q.type,
         questionIndex: idx,
         questionText: q.questionText,
-        options: q.options,
+        description: q.description || '',
+        options: q.options || [],
         timeLimit: duration
       });
     }
@@ -352,6 +377,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       totalSubmissions: statsObj.total,
       totalStudents: joinedStudents.length,
       shortAnswers: getShortAnswers(),
+      pairDiscussions: getPairDiscussions(),
       wordCloud: wordCloudData ? {
         freqMap: wordCloudData.freqMap,
         sortedList: wordCloudData.sortedList,
@@ -450,7 +476,38 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       if (ans.questionIndex === currentQIndex && ans.answer) {
         list.push({
           studentName,
-          text: ans.answer,
+          text: typeof ans.answer === 'string' ? ans.answer : JSON.stringify(ans.answer),
+          timestamp: ans.timestamp
+        });
+      }
+    });
+    return list;
+  };
+
+  // Extract all pair discussion responses
+  const getPairDiscussions = () => {
+    const list = [];
+    Object.keys(answers).forEach((studentName) => {
+      const ans = answers[studentName];
+      if (ans.questionIndex === currentQIndex && ans.answer) {
+        let summary = '';
+        let partnerName = '';
+        if (typeof ans.answer === 'object' && ans.answer !== null) {
+          summary = ans.answer.summary || ans.answer.text || '';
+          partnerName = ans.answer.partnerName || '';
+        } else if (typeof ans.answer === 'string') {
+          try {
+            const parsed = JSON.parse(ans.answer);
+            summary = parsed.summary || parsed.text || ans.answer;
+            partnerName = parsed.partnerName || '';
+          } catch (e) {
+            summary = ans.answer;
+          }
+        }
+        list.push({
+          studentName,
+          partnerName,
+          summary,
           timestamp: ans.timestamp
         });
       }
@@ -821,6 +878,78 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   ))}
                 </div>
               )}
+
+              {/* Pair Discussion Live Board during answering */}
+              {currentQuestion.type === 'pair' && (() => {
+                const pairs = getPairDiscussions();
+                return (
+                  <div>
+                    {currentQuestion.description && (
+                      <div className="glass-card" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.5rem', background: 'rgba(6, 182, 212, 0.05)', borderColor: 'rgba(6, 182, 212, 0.25)', borderRadius: '12px' }}>
+                        <h4 style={{ color: '#22d3ee', fontSize: '1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <Users size={18} /> 雙人討論引導與任務：
+                        </h4>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                          <FormattedMarkdown text={currentQuestion.description} />
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: '1.25rem' }}>
+                      <div className="flex-between" style={{ marginBottom: '1rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Users size={18} style={{ color: '#06b6d4' }} /> 即時雙人討論成果牆 ({pairs.length} 組已繳交)：
+                        </h3>
+                      </div>
+
+                      {pairs.length === 0 ? (
+                        <div className="glass-card flex-center" style={{ padding: '3rem 2rem', flexDirection: 'column', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          <Users size={48} style={{ opacity: 0.35, marginBottom: '0.75rem' }} className="animate-pulse" />
+                          <p style={{ margin: 0, fontSize: '1rem' }}>請與同組夥伴交流討論，並在學生端簡述討論結論後送出...</p>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem', maxHeight: '450px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                          {pairs.map((item, idx) => (
+                            <div 
+                              key={idx}
+                              className="glass-card animate-pop"
+                              style={{ 
+                                padding: '1.25rem',
+                                background: 'rgba(255, 255, 255, 0.03)',
+                                border: '1px solid rgba(6, 182, 212, 0.3)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                borderRadius: '12px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onClick={() => setSpotlightPair(item)}
+                              title="點擊全螢幕放大討論"
+                            >
+                              <div>
+                                <div className="flex-between" style={{ marginBottom: '0.65rem' }}>
+                                  <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <Users size={12} />
+                                    <strong>{item.studentName}</strong> {item.partnerName ? `& ${item.partnerName}` : ''}
+                                  </span>
+                                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>#{idx + 1}</span>
+                                </div>
+                                <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.55', wordBreak: 'break-word' }}>
+                                  <FormattedMarkdown text={item.summary} />
+                                </div>
+                              </div>
+                              <div style={{ marginTop: '0.75rem', textAlign: 'right' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#22d3ee', opacity: 0.85 }}>🔍 點擊聚焦放大</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="flex-between" style={{ marginTop: '2rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem' }}>
@@ -1165,6 +1294,92 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   );
                 })()}
 
+                {/* Pair Discussion Results Review */}
+                {currentQuestion.type === 'pair' && (() => {
+                  const pairs = getPairDiscussions();
+                  const filtered = pairSearchQuery.trim()
+                    ? pairs.filter(p => 
+                        p.studentName.toLowerCase().includes(pairSearchQuery.toLowerCase()) ||
+                        p.partnerName.toLowerCase().includes(pairSearchQuery.toLowerCase()) ||
+                        p.summary.toLowerCase().includes(pairSearchQuery.toLowerCase())
+                      )
+                    : pairs;
+
+                  return (
+                    <div>
+                      {currentQuestion.description && (
+                        <div className="glass-card" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.5rem', background: 'rgba(6, 182, 212, 0.05)', borderColor: 'rgba(6, 182, 212, 0.25)', borderRadius: '12px' }}>
+                          <h4 style={{ color: '#22d3ee', fontSize: '1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Users size={18} /> 雙人討論題目與引導任務：
+                          </h4>
+                          <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                            <FormattedMarkdown text={currentQuestion.description} />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex-between" style={{ marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Users size={20} style={{ color: '#06b6d4' }} />
+                          <h3 style={{ fontSize: '1.15rem', margin: 0 }}>
+                            全班雙人討論成果彙整 ({pairs.length} 組繳交)
+                          </h3>
+                        </div>
+                        <input 
+                          type="text"
+                          placeholder="搜尋學生/夥伴/關鍵字..."
+                          className="input-field"
+                          style={{ maxWidth: '240px', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                          value={pairSearchQuery}
+                          onChange={(e) => setPairSearchQuery(e.target.value)}
+                        />
+                      </div>
+
+                      {filtered.length === 0 ? (
+                        <div className="glass-card" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          未找到符合的雙人討論紀錄。
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
+                          {filtered.map((item, idx) => (
+                            <div 
+                              key={idx}
+                              className="glass-card animate-pop"
+                              style={{ 
+                                padding: '1.25rem',
+                                background: 'rgba(255, 255, 255, 0.03)',
+                                border: '1px solid rgba(6, 182, 212, 0.3)',
+                                borderRadius: '12px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                cursor: 'pointer'
+                              }}
+                              onClick={() => setSpotlightPair(item)}
+                              title="點擊全螢幕放大"
+                            >
+                              <div>
+                                <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
+                                  <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', fontSize: '0.85rem' }}>
+                                    👥 {item.studentName} {item.partnerName ? `& ${item.partnerName}` : ''}
+                                  </span>
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>#{idx + 1}</span>
+                                </div>
+                                <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.6', wordBreak: 'break-word' }}>
+                                  <FormattedMarkdown text={item.summary} />
+                                </div>
+                              </div>
+                              <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#22d3ee', opacity: 0.85 }}>🔍 點擊聚焦放大</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* Ordering Stats */}
                 {currentQuestion.type === 'ordering' && (() => {
                   const { correctCount, total, averages } = getOrderingStats();
@@ -1244,7 +1459,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                         const isCorrect = Array.isArray(submission.answer) && submission.answer.every((val, index) => val === currentQuestion.items[index]);
                         statusLabel = isCorrect ? 'Sorted Correctly' : 'Sorted Incorrectly';
                         badgeClass = isCorrect ? 'badge-success' : 'badge-danger';
-                      } else if ((currentQuestion.type === 'short' || currentQuestion.type === 'wordcloud')) {
+                      } else if ((currentQuestion.type === 'short' || currentQuestion.type === 'wordcloud' || currentQuestion.type === 'pair')) {
                         statusLabel = submission.answer ? 'Submitted' : 'No Answer';
                         badgeClass = submission.answer ? 'badge-indigo' : 'badge-danger';
                       }
@@ -1281,43 +1496,35 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   const bronze = sorted[2];
 
                   return (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      {/* Podium Visuals */}
+                    <div>
                       <div className="podium-container">
-                        {/* 2nd place (Silver) */}
+                        {/* 2nd Place */}
                         {silver && (
-                          <div className="podium-column silver animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                            <span className="player-avatar">🥈</span>
-                            <span className="player-name">{silver.name}</span>
-                            <div className="podium-pedestal">
-                              2
-                              <span className="podium-score">{silver.score}</span>
-                            </div>
+                          <div className="podium-pillar podium-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                            <div className="podium-avatar">🥈</div>
+                            <div className="podium-rank">2</div>
+                            <div className="podium-name">{silver.name}</div>
+                            <div className="podium-score">{silver.score} pts</div>
                           </div>
                         )}
-                        
-                        {/* 1st place (Gold) */}
+
+                        {/* 1st Place */}
                         {gold && (
-                          <div className="podium-column gold animate-slide-up">
-                            <span className="podium-crown">👑</span>
-                            <span className="player-avatar">🥇</span>
-                            <span className="player-name">{gold.name}</span>
-                            <div className="podium-pedestal">
-                              1
-                              <span className="podium-score">{gold.score}</span>
-                            </div>
+                          <div className="podium-pillar podium-1 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                            <div className="podium-avatar">👑 🥇</div>
+                            <div className="podium-rank">1</div>
+                            <div className="podium-name">{gold.name}</div>
+                            <div className="podium-score">{gold.score} pts</div>
                           </div>
                         )}
-                        
-                        {/* 3rd place (Bronze) */}
+
+                        {/* 3rd Place */}
                         {bronze && (
-                          <div className="podium-column bronze animate-slide-up" style={{ animationDelay: '0.4s' }}>
-                            <span className="player-avatar">🥉</span>
-                            <span className="player-name">{bronze.name}</span>
-                            <div className="podium-pedestal">
-                              3
-                              <span className="podium-score">{bronze.score}</span>
-                            </div>
+                          <div className="podium-pillar podium-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                            <div className="podium-avatar">🥉</div>
+                            <div className="podium-rank">3</div>
+                            <div className="podium-name">{bronze.name}</div>
+                            <div className="podium-score">{bronze.score} pts</div>
                           </div>
                         )}
                       </div>
@@ -1360,6 +1567,72 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         )}
 
       </div>
+
+      {/* Spotlight Pop-up Modal for Pair Discussion */}
+      {spotlightPair && (
+        <div 
+          className="animate-fade-in"
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.78)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1.5rem'
+          }}
+          onClick={() => setSpotlightPair(null)}
+        >
+          <div 
+            className="glass-card animate-pop"
+            style={{
+              maxWidth: '750px',
+              width: '100%',
+              padding: '2.5rem',
+              background: 'rgba(15, 23, 42, 0.95)',
+              border: '1px solid rgba(6, 182, 212, 0.5)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+              borderRadius: '20px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex-between" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.2)', color: '#22d3ee', fontSize: '0.9rem', padding: '0.4rem 0.8rem' }}>
+                  <Users size={16} /> 雙人討論重點聚焦
+                </span>
+                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>
+                  {spotlightPair.studentName} {spotlightPair.partnerName ? `& ${spotlightPair.partnerName}` : ''}
+                </h3>
+              </div>
+              <button 
+                className="btn btn-secondary" 
+                style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
+                onClick={() => setSpotlightPair(null)}
+              >
+                ✕ 關閉
+              </button>
+            </div>
+
+            <div style={{ fontSize: '1.35rem', lineHeight: '1.7', color: '#f8fafc', whiteSpace: 'pre-wrap', marginBottom: '2rem' }}>
+              <FormattedMarkdown text={spotlightPair.summary} />
+            </div>
+
+            <div style={{ textAlign: 'right' }}>
+              <button 
+                className="btn btn-primary" 
+                style={{ padding: '0.65rem 1.75rem', fontSize: '0.95rem' }}
+                onClick={() => setSpotlightPair(null)}
+              >
+                返回討論成果牆
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer Branding */}
       <footer className="footer-branding" style={{ marginTop: '3rem' }}>

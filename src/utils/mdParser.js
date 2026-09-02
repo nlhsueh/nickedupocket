@@ -65,7 +65,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       } else {
         // Legacy Support: Treating "### [Type] Question" or "### 🙋 CCQ: Question" as an activity containing a single question
         const cleanHeading = rawText.replace(/^[🙋🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
-        const typeMatch = cleanHeading.match(/^\[?(CCQ|Poll|Ordering|Game|Short|QA|WordCloud|投票|搶答|文字雲|排序|簡答|觀念檢核)\]?[:：\s]?(.*)/i);
+        const typeMatch = cleanHeading.match(/^\[?(CCQ|Poll|Ordering|Game|Short|QA|WordCloud|Pair|Discussion|PairDiscussion|Pair-Discussion|投票|搶答|文字雲|排序|簡答|觀念檢核|雙人討論|分組討論|小組討論|討論|討論題)\]?[:：\s]?(.*)/i);
         
         if (typeMatch) {
           const rawType = typeMatch[1].toLowerCase();
@@ -75,6 +75,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
           else if (['game', '搶答', '搶答題'].includes(rawType)) qType = 'game';
           else if (['wordcloud', '文字雲'].includes(rawType)) qType = 'wordcloud';
           else if (['ordering', '排序', '排序題'].includes(rawType)) qType = 'ordering';
+          else if (['pair', 'discussion', 'pairdiscussion', 'pair-discussion', '雙人討論', '分組討論', '小組討論', '討論', '討論題'].includes(rawType)) qType = 'pair';
           else qType = 'ccq';
 
           const qText = typeMatch[2].trim() || cleanHeading;
@@ -93,7 +94,8 @@ export function parseMarkdownCourse(mdText, fileId = '') {
             options: qType === 'ccq' ? ['True', 'False', '50-50'] : [],
             correctAnswer: '',
             items: [],
-            timeLimit: qType === 'game' ? 15 : (qType === 'wordcloud' ? 60 : 0)
+            timeLimit: qType === 'game' ? 15 : (qType === 'pair' ? 300 : (qType === 'wordcloud' ? 60 : 0)),
+            description: ''
           };
           
           currentActivity.questions.push(currentQuestion);
@@ -130,7 +132,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
 
       const qTextRaw = line.substring(5).trim();
       const cleanLine = qTextRaw.replace(/^[🙋🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
-      const typeMatch = cleanLine.match(/^\[?(CCQ|Poll|Ordering|Game|Short|QA|WordCloud|投票|搶答|文字雲|排序|簡答|觀念檢核)\]?[:：\s]?(.*)/i);
+      const typeMatch = cleanLine.match(/^\[?(CCQ|Poll|Ordering|Game|Short|QA|WordCloud|Pair|Discussion|PairDiscussion|Pair-Discussion|投票|搶答|文字雲|排序|簡答|觀念檢核|雙人討論|分組討論|小組討論|討論|討論題)\]?[:：\s]?(.*)/i);
 
       if (typeMatch) {
         const rawType = typeMatch[1].toLowerCase();
@@ -140,6 +142,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
         else if (['game', '搶答', '搶答題'].includes(rawType)) qType = 'game';
         else if (['wordcloud', '文字雲'].includes(rawType)) qType = 'wordcloud';
         else if (['ordering', '排序', '排序題'].includes(rawType)) qType = 'ordering';
+        else if (['pair', 'discussion', 'pairdiscussion', 'pair-discussion', '雙人討論', '分組討論', '小組討論', '討論', '討論題'].includes(rawType)) qType = 'pair';
         else qType = 'ccq';
 
         const qText = typeMatch[2].trim() || cleanLine;
@@ -151,7 +154,8 @@ export function parseMarkdownCourse(mdText, fileId = '') {
           options: qType === 'ccq' ? ['True', 'False', '50-50'] : [],
           correctAnswer: '',
           items: [],
-          timeLimit: qType === 'game' ? 15 : (qType === 'wordcloud' ? 60 : 0)
+          timeLimit: qType === 'game' ? 15 : (qType === 'pair' ? 300 : (qType === 'wordcloud' ? 60 : 0)),
+          description: ''
         };
 
         currentActivity.questions.push(currentQuestion);
@@ -229,6 +233,28 @@ export function parseMarkdownCourse(mdText, fileId = '') {
           currentQuestion.items.push(itemText);
         }
         continue;
+      }
+
+      // Collect multiline discussion / question prompt descriptions
+      if (currentQuestion && (currentQuestion.type === 'pair' || currentQuestion.type === 'short')) {
+        const trimmed = line.trim();
+        if (
+          trimmed && 
+          !trimmed.startsWith('#') && 
+          !trimmed.startsWith('<!--') && 
+          !trimmed.startsWith('[線上作答]') && 
+          !trimmed.startsWith('[課堂互動]') && 
+          !trimmed.startsWith('<details') && 
+          !trimmed.startsWith('</details') && 
+          !trimmed.startsWith('<summary') &&
+          !trimmed.startsWith('---')
+        ) {
+          const cleanLineText = line.replace(/^>\s*/, '');
+          currentQuestion.description = currentQuestion.description
+            ? `${currentQuestion.description}\n${cleanLineText}`
+            : cleanLineText;
+          continue;
+        }
       }
     }
   }

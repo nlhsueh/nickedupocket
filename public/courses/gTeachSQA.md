@@ -9,31 +9,34 @@
 - 程式碼發生記憶體洩漏（Memory Leak）導致作業系統當機
 - 雷達演算法誤將美軍戰機辨識為敵方飛毛腿飛彈
 
-### [Activity: sqa-ch01-ccq2] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 2
+### [Activity: sqa-ch01-pair1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 PAIR 2
+#### [Pair] > * **討論任務**：請與鄰近同學組成雙人小組，分享一件你曾遇過、聽過，或透過網路搜尋找到的真實軟體失敗/事故案例（例如：2024 年 CrowdStrike 全球藍屏事件、Knight Capital 交易系統 45 分鐘虧損 4.6 億美元、熱門售票系統或遊戲上線當機等）。 > * **引導思考與討論**： >   1. **事件情境與影響**：該系統發生了什麼異常？對使用者、企業營運或整體社會帶來了哪些具體的衝擊與損失？ >   2. **根本原因（Root Cause）**：為什麼會發生這個錯誤？（是需求誤解、邏輯缺陷、數值捨入誤差、並行競爭、缺乏程式碼審查，還是部署流程漏洞？） >   3. **預防策略（Prevention）**：若站在軟體品質保證（SQA）與軟體測試的角度，團隊應採取哪些防護機制或工程實踐（例如：單元測試、自動化回歸測試、靜態分析、金絲雀發布、容錯設計等）來避免類似問題發生？
+
+### [Activity: sqa-ch01-ccq2] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 3
 #### [CCQ] 在評估生成式 AI（如 GitHub Copilot、ChatGPT）對軟體專案品質的影響時，軟體工程度量研究（如 GitClear）常使用 **「程式碼流失率（Code Churn）」** 作為關鍵指標。關於 Code Churn 的定義及其在 AI 時代所反映的品質現象，下列敘述何者最為精準？
 - 指專案從一個程式語言遷移至另一個語言時，因語法不相容而遺失的程式碼行數比例
 - 指新寫入並 Commit 的程式碼在極短時間內（如兩週內）就被刪除、修改或替換的比例；高 Code Churn 反映出 AI 生成程式碼看似快速但本質脆弱、未經深思熟慮與充分驗證 (Correct)
 - 指編譯器與建置工具在優化打包過程中，自動剔除未引用死代碼（Dead Code）的效率
 - 指自動化測試案例因系統版本迭代而自然失效無法執行的比率
 
-### [Activity: sqa-ch01-wordcloud1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 WORDCLOUD 3
-#### [WordCloud] **互動提問** 你覺得哪一個觀點是最重要的品質指標？請寫下來。
+### [Activity: sqa-ch01-wordcloud1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 WORDCLOUD 4
+#### [WordCloud] 你覺得哪一個觀點是最重要的品質指標？請寫下來。
 
-### [Activity: sqa-ch01-ccq3] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 4
+### [Activity: sqa-ch01-ccq3] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 5
 #### [CCQ] 某專案團隊開發的電商 App 完全符合合約規格書上的每一條需求（製造觀點合格），但因為底層架構高度耦合且完全沒有寫單元測試，半年後客戶想新增一個促銷功能時，工程團隊發現必須重寫整個系統。這代表該軟體在 Garvin 的哪一個品質觀點上嚴重不及格？
 - 產品觀點 (Product View) (Correct)
 - 製造觀點 (Manufacturing View)
 - 法律合約觀點 (Legal Contract View)
 - 超自然觀點 (Transcendental View)
 
-### [Activity: sqa-ch01-ccq4] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 5
+### [Activity: sqa-ch01-ccq4] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 6
 #### [CCQ] 某軟體團隊為醫院開發一套急診掛號分流系統。開發團隊嚴格按照原先簽訂的「系統需求規格書」完成所有功能實作，且單元測試與程式碼審查（Code Review）皆 100% 通過、完全無錯誤（Bug）。但實際上線在急診室臨床試用時，醫護人員發現分流操作流程完全不符合急救現場的真實節奏與急迫需求，導致無法在實務中使用。根據軟體工程定義，此系統在下列哪一項做得很好，但在哪一項嚴重失敗？
 - Verification（驗證）做得很好，但 Validation（確認）嚴重失敗 (Correct)
 - Validation（確認）做得很好，但 Verification（驗證）嚴重失敗
 - Verification 與 Validation 兩者皆成功，純屬醫護人員操作習慣問題
 - Verification 與 Validation 兩者皆失敗，因為使用者無法順利使用就代表底層邏輯有語法錯誤
 
-### [Activity: sqa-ch01-ordering1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 ORDERING 6
+### [Activity: sqa-ch01-ordering1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 ORDERING 7
 #### [Ordering] 在傳統 V 模型（V-Model）中，軟體的「左側開發階段（規格制定與分解）」與「右側測試層級（組裝與驗證）」具有嚴密的對稱與依賴關係。請將下列 8 項軟體工程活動，依照**「實際執行生命週期順序（從最初需求分析到最終驗收）」**由先至後排列出正確順序：
 1. 需求分析與規格定義 (Requirements Analysis)
 2. 系統架構設計 (System Architecture Design)
@@ -245,3 +248,27 @@
 #### [CCQ] 在 Cucumber (Gherkin 語法) 中，若要使用同一套測試步驟來測試多組不同的輸入值與預期輸出值，應該使用 `Scenario` (情境) 搭配 `Background` (背景) 來撰寫。
 - 是 (True)
 - 否 (False) (Correct)
+
+## Unit 1: IntelliJ IDEA 介紹與專案設定指南
+
+### [Activity: sqa-u01-game1] Unit 1: IntelliJ IDEA 介紹與專案設定指南 GAME 1
+#### [Game] **第 1 題：專案目錄與 Git 版本控制規範** 當你在團隊協作中使用 Git 管理 IntelliJ IDEA + Maven 專案時，下列哪一個目錄或檔案**絕對不應該**被 Commit 提交到 Git 儲存庫中？
+- `pom.xml`（定義專案相依套件與建置外掛的核心檔案）
+- `src/test/java`（存放單元測試與整合測試程式碼的目錄）
+- `target/`（Maven 執行編譯與打包所輸出的二進位產物目錄） (Correct)
+- `.gitignore`（定義專案排除追蹤清單的設定檔）
+#### [Game] **第 2 題：JDK 版本對齊與編譯錯誤排除** 在 IntelliJ IDEA 中載入別人的 Maven 專案時，若編譯器回報 `java: error: release version 21 not supported` 或類別版本不相容的錯誤，最可能的原因與標準排除步驟為何？
+- 電腦硬碟空間不足，需刪除作業系統暫存檔後重啟電腦
+- `pom.xml` 宣告使用了 Java 21，但 IntelliJ 的 Project SDK 或 Java Compiler Target Bytecode Version 仍設定在較舊版本的 JDK，需至 Project Structure 與 Settings 中對齊版本 (Correct)
+- 網路連線中斷導致 Maven 無法連線至中央儲存庫下載依賴
+- Java 21 不是 LTS（長期支援）版本，因此 IntelliJ 原生不支援其語法
+#### [Game] **第 3 題：安全重構（Refactoring）與最佳實踐** 在 IntelliJ IDEA 中進行程式碼重構時，若要修改一個核心類別（Class）或變數名稱，並確保整個專案所有引用該名稱的地方皆同步安全更新，應該採取哪一種做法？
+- 使用全域文字搜尋取代（Replace in Files）直接暴力更換字串
+- 在作業系統的檔案總管中手動修改 `.java` 檔名後重新編譯
+- 使用 IntelliJ 內建的 `Refactor -> Rename`（快捷鍵 `Shift + F6`），由 IDE 進行語法樹（AST）語意分析並自動同步更新所有引用點 (Correct)
+- 直接刪除原類別，重新撰寫一個新類別並手動修改報錯的地方
+
+## Unit 4: 實習 06：屬性基礎測試 (Property-Based Testing with jqwik)
+
+### [Activity: sqa-u04-ordering1] Unit 4: 實習 06：屬性基礎測試 (Property-Based Testing with jqwik) ORDERING 1
+#### [Ordering] > **法則**： > 1. 排序後的長度必須等於原始陣列長度。 > 2. 排序後的相鄰元素必須滿足 $arr[i] \le arr[i+1]$。 > 3. 排序後的元素多重集合 (Multiset) 必須與原始元素完全相同（不可憑空捏造或丟失數字）。 ```java package lab.sqa.pbt; import net.jqwik.api.*; import java.util.*; import static org.junit.jupiter.api.Assertions.*; public class SortProperties { @Property void sortedListMustBeOrderedAndSameSize(@ForAll List<Integer> originalList) { List<Integer> sortedList = new ArrayList<>(originalList); Collections.sort(sortedList); // 不變量 1：長度相等 assertEquals(originalList.size(), sortedList.size()); // 不變量 2：相鄰元素單調遞增 for (int i = 0; i < sortedList.size() - 1; i++) { assertTrue(sortedList.get(i) <= sortedList.get(i + 1), "排序未滿足遞增法則！"); } } } ```

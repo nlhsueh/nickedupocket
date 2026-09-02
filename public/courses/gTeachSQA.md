@@ -2,38 +2,15 @@
 
 ## Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程
 
-### [Activity: test-patriot-ccq] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 1
-#### [CCQ] 愛國者反導彈系統（1991）在達蘭基地攔截失效的根本軟體原因為何？
-- 通訊網路中斷導致雷達無法傳送指令給飛彈發射架
-- 24-bit 時鐘暫存器的浮點捨入誤差在連續運行 100 小時後累加達 0.33 秒 (Correct)
-- 程式碼發生記憶體洩漏（Memory Leak）導致作業系統當機
-- 雷達演算法誤將美軍戰機辨識為敵方飛毛腿飛彈
+### [Activity: sqa-ch01-pair1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 PAIR 1
+#### [Pair] 雙人課堂討論：真實世界的軟體失敗案例
+請與鄰近同學組成雙人小組，分享一件你曾遇過、聽過，或透過網路搜尋找到的真實軟體失敗/事故案例（例如：2024 年 CrowdStrike 全球藍屏事件、Knight Capital 交易系統 45 分鐘虧損 4.6 億美元、熱門售票系統或遊戲上線當機等）。
+請簡述：1. 該起軟體事故的主要成因是什麼？2. 如果從 Garvin 五大品質觀點或 V&V 角度分析，它在哪個環節出了問題？
 
-### [Activity: sqa-ch01-ccq1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 2
-#### [CCQ] 在評估生成式 AI（如 GitHub Copilot、ChatGPT）對軟體專案品質的影響時，軟體工程度量研究（如 GitClear）常使用 **「程式碼流失率（Code Churn）」** 作為關鍵指標。關於 Code Churn 的定義及其在 AI 時代所反映的品質現象，下列敘述何者最為精準？
-- 指專案從一個程式語言遷移至另一個語言時，因語法不相容而遺失的程式碼行數比例
-- 指新寫入並 Commit 的程式碼在極短時間內（如兩週內）就被刪除、修改或替換的比例；高 Code Churn 反映出 AI 生成程式碼看似快速但本質脆弱、未經深思熟慮與充分驗證 (Correct)
-- 指編譯器與建置工具在優化打包過程中，自動剔除未引用死代碼（Dead Code）的效率
-- 指自動化測試案例因系統版本迭代而自然失效無法執行的比率
+### [Activity: sqa-ch01-wordcloud1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 WORDCLOUD 2
+#### [WordCloud] **互動提問** 請大家回想自己日常生活中接觸過、使用過的所有產品（**不論是軟體或硬體**），**你覺得「品質很棒」的產品是什麼？** 請在線上輸入產品名稱（例如：iPhone、Notion筆記、IKEA 提袋等），並想一想它是因為具備了 Garvin 的哪一種品質觀點（超自然、使用者、製造、產品、價值）讓你留下深刻印象！
 
-### [Activity: sqa-ch01-wordcloud1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 WORDCLOUD 3
-#### [WordCloud] **互動提問** 你覺得哪一個觀點是最重要的品質指標？請寫下來。
-
-### [Activity: sqa-ch01-ccq2] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 4
-#### [CCQ] 某專案團隊開發的電商 App 完全符合合約規格書上的每一條需求（製造觀點合格），但因為底層架構高度耦合且完全沒有寫單元測試，半年後客戶想新增一個促銷功能時，工程團隊發現必須重寫整個系統。這代表該軟體在 Garvin 的哪一個品質觀點上嚴重不及格？
-- 產品觀點 (Product View) (Correct)
-- 製造觀點 (Manufacturing View)
-- 法律合約觀點 (Legal Contract View)
-- 超自然觀點 (Transcendental View)
-
-### [Activity: sqa-ch01-ccq3] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 5
-#### [CCQ] 某軟體團隊為醫院開發一套急診掛號分流系統。開發團隊嚴格按照原先簽訂的「系統需求規格書」完成所有功能實作，且單元測試與程式碼審查（Code Review）皆 100% 通過、完全無錯誤（Bug）。但實際上線在急診室臨床試用時，醫護人員發現分流操作流程完全不符合急救現場的真實節奏與急迫需求，導致無法在實務中使用。根據軟體工程定義，此系統在下列哪一項做得很好，但在哪一項嚴重失敗？
-- Verification（驗證）做得很好，但 Validation（確認）嚴重失敗 (Correct)
-- Validation（確認）做得很好，但 Verification（驗證）嚴重失敗
-- Verification 與 Validation 兩者皆成功，純屬醫護人員操作習慣問題
-- Verification 與 Validation 兩者皆失敗，因為使用者無法順利使用就代表底層邏輯有語法錯誤
-
-### [Activity: sqa-ch01-ordering1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 ORDERING 6
+### [Activity: sqa-ch01-ordering1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 ORDERING 3
 #### [Ordering] 在傳統 V 模型（V-Model）中，軟體的「左側開發階段（規格制定與分解）」與「右側測試層級（組裝與驗證）」具有嚴密的對稱與依賴關係。請將下列 8 項軟體工程活動，依照**「實際執行生命週期順序（從最初需求分析到最終驗收）」**由先至後排列出正確順序：
 1. 需求分析與規格定義 (Requirements Analysis)
 2. 系統架構設計 (System Architecture Design)

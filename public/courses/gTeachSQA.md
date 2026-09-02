@@ -107,9 +107,6 @@
 - 驗收測試 (Acceptance Testing)
 - 靜態程式碼檢視 (Code Review)
 
-### [Activity: sqa-ch03-short1] Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版) SHORT 4
-#### [Short] 1. **變質測試 (Metamorphic Testing)**： * 利用領域對稱性質：例如 sin(x) = cos(90° - x) = -sin(-x)。 * 對 AI 影像辨識系統：將一張貓的照片旋轉 10 度或調整亮度 5%，辨識結果**依然必須是貓（不變量關係）**！ 2. **差分測試 (Differential Testing)**： * 將相同輸入餵給兩種獨立實作（例如 Claude vs GPT、舊版演算法 vs 新版微服務）進行交叉比對。 3. **LLM-as-a-Judge 與防護欄 (Guardrails)**： * 使用經過專門微調的評估模型，針對輸出進行忠實度（Faithfulness）、安全性與不變量檢驗。
-
 ## Chapter 4: 軟體檢視
 
 ### [Activity: sqa-ch04-ccq1] Chapter 4: 軟體檢視 CCQ 1
@@ -267,8 +264,3 @@
 - 在作業系統的檔案總管中手動修改 `.java` 檔名後重新編譯
 - 使用 IntelliJ 內建的 `Refactor -> Rename`（快捷鍵 `Shift + F6`），由 IDE 進行語法樹（AST）語意分析並自動同步更新所有引用點 (Correct)
 - 直接刪除原類別，重新撰寫一個新類別並手動修改報錯的地方
-
-## Unit 4: 實習 06：屬性基礎測試 (Property-Based Testing with jqwik)
-
-### [Activity: sqa-u04-ordering1] Unit 4: 實習 06：屬性基礎測試 (Property-Based Testing with jqwik) ORDERING 1
-#### [Ordering] > **法則**： > 1. 排序後的長度必須等於原始陣列長度。 > 2. 排序後的相鄰元素必須滿足 $arr[i] \le arr[i+1]$。 > 3. 排序後的元素多重集合 (Multiset) 必須與原始元素完全相同（不可憑空捏造或丟失數字）。 ```java package lab.sqa.pbt; import net.jqwik.api.*; import java.util.*; import static org.junit.jupiter.api.Assertions.*; public class SortProperties { @Property void sortedListMustBeOrderedAndSameSize(@ForAll List<Integer> originalList) { List<Integer> sortedList = new ArrayList<>(originalList); Collections.sort(sortedList); // 不變量 1：長度相等 assertEquals(originalList.size(), sortedList.size()); // 不變量 2：相鄰元素單調遞增 for (int i = 0; i < sortedList.size() - 1; i++) { assertTrue(sortedList.get(i) <= sortedList.get(i + 1), "排序未滿足遞增法則！"); } } } ```

@@ -6,12 +6,39 @@ import {
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
 
-export default function StudentSession({ roomCode, onLeave }) {
+export default function StudentSession({ roomCode, onLeave, activity, course, chapter }) {
   const formatTime = (secs) => {
     const s = Math.max(0, Math.floor(secs));
     const m = Math.floor(s / 60);
     const rem = s % 60;
     return `${m.toString().padStart(2, '0')}:${rem.toString().padStart(2, '0')}`;
+  };
+
+  const targetActivity = activity;
+  const activityTitle = targetActivity?.title || '';
+  const firstQuestion = targetActivity?.questions?.[0];
+  const questionSnippet = firstQuestion?.questionText || '';
+  const questionType = firstQuestion?.type || '';
+
+  const renderTypeBadge = (type) => {
+    switch (type) {
+      case 'ccq':
+        return <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>❓ 觀念檢核 (CCQ)</span>;
+      case 'pair':
+        return <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.2)', color: '#22d3ee', fontSize: '0.72rem' }}>👥 雙人討論 (Pair)</span>;
+      case 'poll':
+        return <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>📊 即時投票 (Poll)</span>;
+      case 'game':
+        return <span className="badge badge-warning" style={{ fontSize: '0.72rem' }}>⚡ 限時搶答 (Game)</span>;
+      case 'wordcloud':
+        return <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>☁️ 文字雲 (WordCloud)</span>;
+      case 'ordering':
+        return <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>🔢 流程排序 (Ordering)</span>;
+      case 'short':
+        return <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>📝 問答討論 (QA)</span>;
+      default:
+        return <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>🎯 課堂互動</span>;
+    }
   };
 
   const [nickname, setNickname] = useState(() => localStorage.getItem('nickpocket_student_name') || '');
@@ -59,6 +86,7 @@ export default function StudentSession({ roomCode, onLeave }) {
     if (!nickname.trim()) return;
     localStorage.setItem('nickpocket_student_name', nickname.trim());
     setIsJoined(true);
+    mqttService.publishResponse({ event: 'join', studentName: nickname.trim() });
   };
 
   // 1. MQTT lifecycle for student connection
@@ -564,39 +592,62 @@ export default function StudentSession({ roomCode, onLeave }) {
   if (!isJoined) {
     return (
       <div className="mobile-container animate-slide-up flex-center" style={{ minHeight: '85vh' }}>
-        <form onSubmit={handleJoin} className="glass-card" style={{ width: '100%', padding: '2rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <form onSubmit={handleJoin} className="glass-card" style={{ width: '100%', padding: '1.75rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
             <span className="badge badge-indigo" style={{ marginBottom: '0.5rem' }}>Student Portal</span>
             <h1 className="text-gradient" style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Join Room</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Enter a nickname to participate</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>輸入暱稱即可加入互動</p>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Room Code</label>
-            <div className="glass-card" style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', textAlign: 'center', border: '1px dashed var(--border-glow)' }}>
-              <strong style={{ fontSize: '1.4rem', color: 'var(--color-indigo)', letterSpacing: '1px' }}>{roomCode}</strong>
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+            <label className="form-label" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+              題目與房間確認 (Activity Preview)
+            </label>
+            <div className="glass-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '0.85rem 1rem', border: '1px solid var(--border-glow)', borderRadius: '12px' }}>
+              <div className="flex-between" style={{ marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>ROOM CODE</span>
+                {renderTypeBadge(questionType)}
+              </div>
+              <div style={{ fontSize: '1.2rem', color: 'var(--color-indigo)', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '0.4rem', textAlign: 'left' }}>
+                {roomCode}
+              </div>
+
+              {(activityTitle || questionSnippet) ? (
+                <div style={{ textAlign: 'left', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.45rem' }}>
+                  {activityTitle && (
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '0.3rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {activityTitle}
+                    </div>
+                  )}
+                  {questionSnippet && (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: '1.4', background: 'rgba(0,0,0,0.2)', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <FormattedMarkdown text={questionSnippet} />
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Your Nickname</label>
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+            <label className="form-label">你的姓名 / 暱稱 (Your Nickname)</label>
             <input 
               type="text" 
               className="input-field" 
               value={nickname} 
               onChange={(e) => setNickname(e.target.value)} 
-              placeholder="e.g. CodeRider" 
+              placeholder="例如：王小明 / CodeRider" 
               maxLength={15}
               required 
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem', marginTop: '1rem' }} disabled={!nickname.trim()}>
-            Join Lobby <ArrowRight size={18} />
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.95rem', marginTop: '0.5rem', fontSize: '1rem' }} disabled={!nickname.trim()}>
+            進入教室 Join Room <ArrowRight size={18} />
           </button>
         </form>
 
-        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+        <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
           <button 
             type="button" 
             onClick={handleTeacherLaunch}
@@ -615,7 +666,7 @@ export default function StudentSession({ roomCode, onLeave }) {
           </button>
         </div>
 
-        <footer className="footer-branding" style={{ marginTop: '1.5rem', width: '100%' }}>
+        <footer className="footer-branding" style={{ marginTop: '1.25rem', width: '100%' }}>
           designed by <span>Nien-Lin Hsueh, Feng Chia University</span>
         </footer>
       </div>
@@ -627,37 +678,59 @@ export default function StudentSession({ roomCode, onLeave }) {
     const isConnecting = connStatus === 'connecting' || connStatus === 'disconnected';
     return (
       <div className="mobile-container animate-slide-up flex-center" style={{ minHeight: '85vh', flexDirection: 'column', textAlign: 'center' }}>
-        <div className="glass-card flex-center animate-pop" style={{ width: '100%', padding: '3rem 1.5rem', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="glass-card flex-center animate-pop" style={{ width: '100%', padding: '2.5rem 1.5rem', flexDirection: 'column', gap: '1.25rem' }}>
           
           {isConnecting ? (
-            <Hourglass size={48} className="animate-spin" style={{ color: 'var(--color-indigo)' }} />
+            <Hourglass size={44} className="animate-spin" style={{ color: 'var(--color-indigo)' }} />
           ) : (
             <div style={{ position: 'relative', display: 'inline-block' }}>
-              <div className="animate-pulse-glow" style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Wifi size={32} style={{ color: 'var(--color-indigo)' }} />
+              <div className="animate-pulse-glow" style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Wifi size={30} style={{ color: 'var(--color-indigo)' }} />
               </div>
             </div>
           )}
 
           <div>
-            <h2 style={{ fontSize: '1.35rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+            <h2 style={{ fontSize: '1.3rem', marginBottom: '0.4rem', fontWeight: 600 }}>
               {isConnecting ? 'Connecting to Room...' : 'Waiting for Instructor'}
             </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: '1.5', margin: 0 }}>
               {isConnecting ? (
                 `Connecting to real-time server for room ${roomCode}...`
               ) : (
                 <>
-                  Successfully connected as <strong style={{ color: 'var(--text-primary)' }}>{nickname}</strong>!<br />
-                  Waiting for the instructor to start the activity.
+                  已成功連線，歡迎 <strong style={{ color: 'var(--text-primary)' }}>{nickname}</strong>！<br />
+                  請等待老師在投影幕開始此題目互動。
                 </>
               )}
             </p>
           </div>
 
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.6rem 1.25rem', borderRadius: '10px', border: '1px solid var(--border-light)', fontSize: '0.85rem' }}>
-            Room Code: <strong style={{ color: 'var(--color-indigo)' }}>{roomCode}</strong>
-          </div>
+          {(activityTitle || questionSnippet) ? (
+            <div className="glass-card" style={{ width: '100%', background: 'rgba(255, 255, 255, 0.03)', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid var(--border-glow)', textAlign: 'left' }}>
+              <div className="flex-between" style={{ marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>即將進行的題目：</span>
+                {renderTypeBadge(questionType)}
+              </div>
+              <div style={{ fontSize: '1.1rem', color: 'var(--color-indigo)', fontWeight: 700, marginBottom: '0.3rem' }}>
+                {roomCode}
+              </div>
+              {activityTitle && (
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '0.3rem' }}>
+                  {activityTitle}
+                </div>
+              )}
+              {questionSnippet && (
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: '1.4', background: 'rgba(0,0,0,0.2)', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <FormattedMarkdown text={questionSnippet} />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.6rem 1.25rem', borderRadius: '10px', border: '1px solid var(--border-light)', fontSize: '0.85rem' }}>
+              Room Code: <strong style={{ color: 'var(--color-indigo)' }}>{roomCode}</strong>
+            </div>
+          )}
 
           <button 
             className="btn btn-secondary" 
@@ -670,7 +743,6 @@ export default function StudentSession({ roomCode, onLeave }) {
             Exit
           </button>
 
-          {/* Subtle teacher launch link */}
           <button 
             type="button" 
             onClick={handleTeacherLaunch}
@@ -680,12 +752,12 @@ export default function StudentSession({ roomCode, onLeave }) {
               color: 'var(--text-muted)', 
               fontSize: '0.75rem', 
               cursor: 'pointer', 
-              textDecoration: 'underline',
-              marginTop: '0.5rem',
-              opacity: 0.6
+              textDecoration: 'underline', 
+              opacity: 0.5 
             }}
+            title="Launch session as teacher"
           >
-            Instructor? Launch host session
+            Teacher Host Launch
           </button>
 
         </div>

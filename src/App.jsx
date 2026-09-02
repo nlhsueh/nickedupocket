@@ -147,10 +147,15 @@ export default function App() {
   }
 
   if (route.path === 'student') {
+    const match = findActivityByRoomCode(allCourses, route.roomCode);
     return (
       <StudentSession 
         roomCode={route.roomCode} 
         onLeave={handleBackToDashboard} 
+        activity={match ? match.activity : null}
+        course={match ? match.course : null}
+        chapter={match ? match.chapter : null}
+        courses={allCourses}
       />
     );
   }

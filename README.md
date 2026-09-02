@@ -108,20 +108,20 @@ NickPocket Edu 是一套專為大學課堂設計的輕量級互動教學系統�
 
 ## 🛠️ 同步工具操作指令 (Sync Guide)
 
-同步工具位於專案根目錄的 `scripts/sync_ccq.py`，支援自動掃描、QR Code 生成與 Markdown 嵌入。
+同步工具位於專案根目錄的 `scripts/sync_iActivity.py`，支援自動掃描、QR Code 生成與 Markdown 嵌入。
 
 ### 1. 同步單一課程
 ```bash
 # 在專案根目錄 (gTEACH) 下執行：
-python3 scripts/sync_ccq.py --course gTeachSQA
-python3 scripts/sync_ccq.py --course gTeachUX
-python3 scripts/sync_ccq.py --course gTeachPython
-python3 scripts/sync_ccq.py --course gTeachASE
+python3 scripts/sync_iActivity.py --course gTeachSQA
+python3 scripts/sync_iActivity.py --course gTeachUX
+python3 scripts/sync_iActivity.py --course gTeachPython
+python3 scripts/sync_iActivity.py --course gTeachASE
 ```
 
 ### 2. 一鍵同步所有課程
 ```bash
-python3 scripts/sync_ccq.py --all
+python3 scripts/sync_iActivity.py --all
 ```
 
 ### 3. 常用參數說明

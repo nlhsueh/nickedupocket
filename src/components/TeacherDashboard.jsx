@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { parseMarkdownCourse } from '../utils/mdParser';
 import { QRCodeCanvas } from 'qrcode.react';
+import FormattedMarkdown from '../utils/formatMarkdown';
 
 export default function TeacherDashboard({ 
   courses, customCourses, setCustomCourses, onLaunch,
@@ -573,14 +574,16 @@ export default function TeacherDashboard({
                           </span>
                         </div>
                         
-                        <h4 style={{ fontSize: '1.05rem', marginBottom: '0.75rem', fontWeight: 600 }}>{q.questionText}</h4>
+                        <h4 style={{ fontSize: '1.05rem', marginBottom: '0.75rem', fontWeight: 600 }}>
+                          <FormattedMarkdown text={q.questionText} />
+                        </h4>
 
                         {/* Display choices based on type */}
                         {q.type === 'ordering' ? (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                             {q.items.map((item, i) => (
                               <span key={i} className="badge" style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.04)' }}>
-                                <strong>{i + 1}.</strong> {item}
+                                <strong>{i + 1}.</strong> <FormattedMarkdown text={item} />
                               </span>
                             ))}
                           </div>
@@ -742,13 +745,13 @@ export default function TeacherDashboard({
                             {act.questions && act.questions.length > 0 && (
                               <div style={{ background: 'rgba(255,255,255,0.01)', padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, margin: '0 0 0.5rem 0' }}>
-                                  Question: "{act.questions[0].questionText}"
+                                  Question: <FormattedMarkdown text={act.questions[0].questionText} />
                                 </p>
                                 {actType !== 'ordering' && actType !== 'short' && act.questions[0].options && (
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                                     {act.questions[0].options.map((opt, oIdx) => (
                                       <span key={oIdx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.03)' }}>
-                                        {['A','B','C','D'][oIdx]}. {opt}
+                                        {['A','B','C','D'][oIdx]}. <FormattedMarkdown text={opt} />
                                       </span>
                                     ))}
                                   </div>
@@ -757,7 +760,7 @@ export default function TeacherDashboard({
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                                     {act.questions[0].items.map((item, oIdx) => (
                                       <span key={oIdx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.03)' }}>
-                                        {oIdx + 1}. {item}
+                                        {oIdx + 1}. <FormattedMarkdown text={item} />
                                       </span>
                                     ))}
                                   </div>

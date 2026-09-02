@@ -5,6 +5,7 @@ import {
   CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
+import FormattedMarkdown from '../utils/formatMarkdown';
 
 export default function TeacherSession({ activity, roomCode, onBack }) {
   const formatTime = (secs) => {
@@ -699,8 +700,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 </div>
               </div>
               
-              <h1 style={{ fontSize: '2rem', lineHeight: '1.4', marginBottom: '2rem' }}>
-                {currentQuestion.questionText}
+              <h1 style={{ fontSize: '1.85rem', lineHeight: '1.45', marginBottom: '2rem' }}>
+                <FormattedMarkdown text={currentQuestion.questionText} />
               </h1>
 
               {/* Render Question Choices (static visual display for students/teacher screen) */}
@@ -711,7 +712,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                     return (
                       <div key={idx} className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', border: '1px solid var(--border-light)' }}>
                         <span className="option-letter" style={{ background: 'rgba(255,255,255,0.05)' }}>{letters[idx]}</span>
-                        <span style={{ fontSize: '1.1rem' }}>{opt}</span>
+                        <span style={{ fontSize: '1.1rem' }}><FormattedMarkdown text={opt} /></span>
                       </div>
                     );
                   })}
@@ -811,11 +812,11 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
               {/* Ordering static visual list */}
               {currentQuestion.type === 'ordering' && currentQuestion.items && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '500px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '600px' }}>
                   {currentQuestion.items.map((item, idx) => (
                     <div key={idx} className="glass-card" style={{ padding: '0.75rem 1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                      <span className="badge badge-indigo" style={{ padding: '0.25rem 0.5rem' }}>Item</span>
-                      <span>{item}</span>
+                      <span className="badge badge-indigo" style={{ padding: '0.25rem 0.5rem' }}>Item {idx + 1}</span>
+                      <span style={{ fontSize: '1rem' }}><FormattedMarkdown text={item} /></span>
                     </div>
                   ))}
                 </div>

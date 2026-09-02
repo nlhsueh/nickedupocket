@@ -62,19 +62,14 @@
 
 ## 放一群人的姓名，型態都是字串
 
-### [Activity: python-ch04-ccq1] 放一群人的姓名，型態都是字串 CCQ 1
-#### [CCQ] ```python d = [1,4,5,2,9,8,7,7,2,6] dc = d.copy() print ('original data d=\t', d)
-- sort()
-- sort(reverse = True)
+### [Activity: python-ch04-ordering1] 放一群人的姓名，型態都是字串 ORDERING 1
+#### [Ordering] ```python d = [1,4,5,2,9,8,7,7,2,6] dc = d.copy() print ('original data d=\t', d) d.sort() print ('after sort d=\t\t', d) d = dc.copy() d.sort(reverse = True) print ('after sort (reverse) d=\t', d) d = dc.copy() r = sorted(d) print ('after sorted, d=\t', d) print ('after sorted, r=\t', r) ``` 輸出： ``` original data d=	 [1, 4, 5, 2, 9, 8, 7, 7, 2, 6] after sort d=		 [1, 2, 2, 4, 5, 6, 7, 7, 8, 9] after sort (reverse) d=	 [9, 8, 7, 7, 6, 5, 4, 2, 2, 1] after sorted, d=	 [1, 4, 5, 2, 9, 8, 7, 7, 2, 6] after sorted, r=	 [1, 2, 2, 4, 5, 6, 7, 7, 8, 9] ``` 排序是我們經常會使用到的一種資料修改，語法很簡單，我們只要用 `data.sort` 就可以把資料作由小到大的做排序。如果今天是想要由大到小的排序的話們可以加上一個參數，`reverse=True`。 另一個函式 `sorted(d)` 並**不會**改變 `d` 的內部資料排序，它會產生另一個 list 來儲存排序後的結果。如上述程式中的 r。
 
-### [Activity: python-ch04-ccq2] 放一群人的姓名，型態都是字串 CCQ 2
-#### [CCQ] 當我們對一個二維陣列做排序，會依據每一個的`第一個元素`來做排序。例如在下列的程式中，會依據 `11, 90, 77, 44` 來排序。 ```python grade = [[11, 22, 33], [90, 91, 92], [77, 88, 99], [44, 55, 66]] g1 = sorted(grade) print (g1) # Result: [[11, 22, 33], [44, 55, 66], [77, 88, 99], [90, 91, 92]] ``` 如果我們想用分數的總合來排序呢？這時候可以用 lambda 的運算： ```python # 依據每一個人的成績加總排序 grade = [[11, 22, 33], [90, 91, 92], [77, 88, 99], [44, 55, 66]] g2 = sorted(grade, key=lambda x: sum(x)) print (g2) ``` 結果如下： ``` [[11, 22, 33], [44, 55, 66], [77, 88, 99], [90, 91, 92]] ``` lambda 表示一個簡潔的運算，其指定的 `sum()` 會把陣列內的元素加總，所以分別是 `66 (11+22+33)`,  `273(90+91+92)`, `264(77+88+99)`, `165(44+55+66)`，所代表的索引值為 `0,1,2,3`，但依據總和後的排序應該是 `0,3,2,1`。 又或者我們想依據最後一筆資料來排序，可以用 `x[-1]` 來做排序，結果如下： ```python # 依據物理成績（最後一科) 排序 g3 = sorted(grade, key=lambda x: x[-1]) print (g3) ``` Result: ``` [[11, 22, 33], [44, 55, 66], [90, 91, 92], [77, 88, 99]] ```
-- 正確 (True)
-- 錯誤 (False)
+### [Activity: python-ch04-ordering2] 放一群人的姓名，型態都是字串 ORDERING 2
+#### [Ordering] 當我們對一個二維陣列做排序，會依據每一個的`第一個元素`來做排序。例如在下列的程式中，會依據 `11, 90, 77, 44` 來排序。 ```python grade = [[11, 22, 33], [90, 91, 92], [77, 88, 99], [44, 55, 66]] g1 = sorted(grade) print (g1) # Result: [[11, 22, 33], [44, 55, 66], [77, 88, 99], [90, 91, 92]] ``` 如果我們想用分數的總合來排序呢？這時候可以用 lambda 的運算： ```python # 依據每一個人的成績加總排序 grade = [[11, 22, 33], [90, 91, 92], [77, 88, 99], [44, 55, 66]] g2 = sorted(grade, key=lambda x: sum(x)) print (g2) ``` 結果如下： ``` [[11, 22, 33], [44, 55, 66], [77, 88, 99], [90, 91, 92]] ``` lambda 表示一個簡潔的運算，其指定的 `sum()` 會把陣列內的元素加總，所以分別是 `66 (11+22+33)`,  `273(90+91+92)`, `264(77+88+99)`, `165(44+55+66)`，所代表的索引值為 `0,1,2,3`，但依據總和後的排序應該是 `0,3,2,1`。 又或者我們想依據最後一筆資料來排序，可以用 `x[-1]` 來做排序，結果如下： ```python # 依據物理成績（最後一科) 排序 g3 = sorted(grade, key=lambda x: x[-1]) print (g3) ``` Result: ``` [[11, 22, 33], [44, 55, 66], [90, 91, 92], [77, 88, 99]] ```
 
-### [Activity: python-ch04-ccq3] 放一群人的姓名，型態都是字串 CCQ 3
-#### [CCQ] > `sort()` 會改變本身的資料; `sorted()` 不會，但會回傳一個已排序的。 以下我們自己寫一個氣泡排序法，藉此更認識 List 的應用。 ```python """ Bubble Sort """ import random # 隨機建立一個100 元素的列表，裡面的數介於1-100之間。 a = [] for i in range(100):
-- append(random.randint(1,100))
+### [Activity: python-ch04-ordering3] 放一群人的姓名，型態都是字串 ORDERING 3
+#### [Ordering] > `sort()` 會改變本身的資料; `sorted()` 不會，但會回傳一個已排序的。 以下我們自己寫一個氣泡排序法，藉此更認識 List 的應用。 ```python """ Bubble Sort """ import random # 隨機建立一個100 元素的列表，裡面的數介於1-100之間。 a = [] for i in range(100): a.append(random.randint(1,100)) print(a) s = len(a)   # 資料大小 r = s-1      # 回合 for i in range(1, r+1): print('Round', i) for j in range(0, s-i): if a[j] > a[j+1]: temp = a[j] a[j] = a[j+1] a[j+1] = temp print(a) ```
 
 ### [Activity: python-ch04-ccq1] 放一群人的姓名，型態都是字串 CCQ 4
 #### [CCQ] 給定兩個串列 `a = [1, 2]` 與 `b = [3, 4]`。請問執行 `a.append(b)` 與 `a.extend(b)` 兩者運作的結果有何不同？
@@ -111,10 +106,8 @@
 - 元組 (如 `(1, 2)`)
 - 串列 (如 `[1, 2]`) (Correct)
 
-### [Activity: python-ch04-ccq9] 放一群人的姓名，型態都是字串 CCQ 9
-#### [CCQ] 因為欄位很多，我們挑選站名，位址，緯度就好。之後進行排序，排序的依據是第三個欄位，也就是 `line11` 的 `x[2]`。 ```python station=[] for st in d: # 站名，位址，緯度 name, addr, lat = st['sna'], st['ar'], st['lat'] item = (name, addr, lat) station.append(item) pprint(station) # 排序 station.sort(key=lambda x: x[2], reverse=True) pprint(station) with open('data/ibikeSorted.txt', 'w') as f: for i in station: f.write(str(i)+'\n') ```
-- 正確 (True)
-- 錯誤 (False)
+### [Activity: python-ch04-ordering4] 放一群人的姓名，型態都是字串 ORDERING 9
+#### [Ordering] 因為欄位很多，我們挑選站名，位址，緯度就好。之後進行排序，排序的依據是第三個欄位，也就是 `line11` 的 `x[2]`。 ```python station=[] for st in d: # 站名，位址，緯度 name, addr, lat = st['sna'], st['ar'], st['lat'] item = (name, addr, lat) station.append(item) pprint(station) # 排序 station.sort(key=lambda x: x[2], reverse=True) pprint(station) with open('data/ibikeSorted.txt', 'w') as f: for i in station: f.write(str(i)+'\n') ```
 
 ## hello2(msg = 'Good morning', 'Nick')  # ERROR
 
@@ -126,8 +119,7 @@
 - `func(1, c=20, b=30)`
 
 ### [Activity: python-ch05-ccq2] hello2(msg = 'Good morning', 'Nick')  # ERROR CCQ 2
-#### [CCQ] 下列程式碼執行後，螢幕上會印出什麼結果？ ```python def modify_values(a, b): a = a + 10
-- append(10)
+#### [CCQ] 下列程式碼執行後，螢幕上會印出什麼結果？ ```python def modify_values(a, b): a = a + 10 b.append(10) x = 5 y = [5] modify_values(x, y) print(x, y) ```
 - `5 [5]`
 - `15 [5, 10]`
 - `5 [5, 10]` (Correct)
@@ -170,10 +162,8 @@
 - `df.where("Age" > 30)`
 - `df[Age > 30]`
 
-### [Activity: python-ch06-ccq4] 資料處理 CCQ 4
-#### [CCQ] 資料排序也是經常使用的處理方法，我們可以使用 `df.sort_values(by=c1)` 的方式，也就是依據 c1 欄位排序。 假設我們有一筆資料如下： ```python df = pd.DataFrame({ 'c1': ['A', 'A', 'B', 'Z', 'D', 'C'], 'c2': [2, 1, 9, 8, 7, 4], 'c3': [0, 1, 9, 4, 2, 3], 'c4': ['a', 'B', 'c', 'D', 'e', 'F']}) print (df.sort_valaues(by='c1')) print ('---') df2 = df.sort_values(by=['c1','c2']) print(df2) ``` ``` c1  c2  c3 c4 0  A   2   0  a 1  A   1   1  B 2  B   9   9  c 3  Z   8   4  D 4  D   7   2  e 5  C   4   3  F
-- 正確 (True)
-- 錯誤 (False)
+### [Activity: python-ch06-ordering1] 資料處理 ORDERING 4
+#### [Ordering] 資料排序也是經常使用的處理方法，我們可以使用 `df.sort_values(by=c1)` 的方式，也就是依據 c1 欄位排序。 假設我們有一筆資料如下： ```python df = pd.DataFrame({ 'c1': ['A', 'A', 'B', 'Z', 'D', 'C'], 'c2': [2, 1, 9, 8, 7, 4], 'c3': [0, 1, 9, 4, 2, 3], 'c4': ['a', 'B', 'c', 'D', 'e', 'F']}) print (df.sort_valaues(by='c1')) print ('---') df2 = df.sort_values(by=['c1','c2']) print(df2) ``` ``` c1  c2  c3 c4 0  A   2   0  a 1  A   1   1  B 2  B   9   9  c 3  Z   8   4  D 4  D   7   2  e 5  C   4   3  F
 
 ### [Activity: python-ch06-ccq4] 資料處理 CCQ 5
 #### [CCQ] 給定一個 DataFrame `df`，包含 `"Department"`（部門）與 `"Salary"`（薪水）兩個欄位。若要計算每個部門的平均薪水，下列哪一個指令是正確的？
@@ -205,10 +195,8 @@
 - 引發 `AttributeError`
 - `None`
 
-### [Activity: python-ch07-ccq4] 類別的宣告 CCQ 4
-#### [CCQ] 下面的例子中，`GuessGame` 宣告為抽象類別，裡面有抽象方法。透過 `metaclass=ABCMeta` 來宣告為抽象類別。`guess` 上面的 `@abstractmethod` 表示這個方法是一個抽象的。 ```plantuml abstract class GuessGame { +message() {abstract} +guess() {abstract} +go() } ``` ```python import random from abc import ABCMeta, abstractmethod class GuessGame(metaclass=ABCMeta): '設定 metaclass=ABCMeta, GuessGame 才能成為抽象類別' @abstractmethod def message(self, msg): pass @abstractmethod def guess(self): pass def go(self): ' Game 的大部流程，其中 guess 和 message 留給子類別實踐' self.message(self.welcome) number = int(random.random() * 10) while True: guess = self.guess(); if guess > number: self.message(self.bigger) elif guess < number: self.message(self.smaller) else: break self.message(self.correct) ``` 下方的 `ConsoleGame` 繼承了 `GuessGame`，因為它不是抽象的，所以必須實作上方抽象的方法。 ```plantuml GuessGame <|- ConsoleGame ``` `ConsoleGame` 不是以視窗的方式呈現，是命令列的互動方式，所以印出訊息是用 `print()` 的方式。下方第九行 `message()` 的實作說明了 `ConsoleGame` 印出訊息的方法。注意 `GuessGame` 中已經定義 `message()` 是一個抽象方法，`ConsoleGame` 既然已經繼承了，就必須將之實做出來。同理 `guess()` 也是在基礎類別中的抽象方法，`ConsoleGame` 也必須將之時做。下方第13行的實作表明 `guess()` 的運作是留給使用者輸入，系統會給予一個提示字：`輸入數字：`。 ```python class ConsoleGame(GuessGame): def __init__(self): self.welcome = "歡迎" self.prompt = "輸入數字：" self.correct = "猜中了" self.bigger = "太大，猜小一點" self.smaller = "太小，猜大一點" def message(self, msg): print(msg) def guess(self): return int(input(self.prompt)) # g = GuessGame()       # 會產生錯誤 game = ConsoleGame()    # 這樣才對 game.go() ``` 上述最後的程式碼表明了抽象類別不能生成物件。
-- 正確 (True)
-- 錯誤 (False)
+### [Activity: python-ch07-game1] 類別的宣告 GAME 4
+#### [Game] 下面的例子中，`GuessGame` 宣告為抽象類別，裡面有抽象方法。透過 `metaclass=ABCMeta` 來宣告為抽象類別。`guess` 上面的 `@abstractmethod` 表示這個方法是一個抽象的。 ```plantuml abstract class GuessGame { +message() {abstract} +guess() {abstract} +go() } ``` ```python import random from abc import ABCMeta, abstractmethod class GuessGame(metaclass=ABCMeta): '設定 metaclass=ABCMeta, GuessGame 才能成為抽象類別' @abstractmethod def message(self, msg): pass @abstractmethod def guess(self): pass def go(self): ' Game 的大部流程，其中 guess 和 message 留給子類別實踐' self.message(self.welcome) number = int(random.random() * 10) while True: guess = self.guess(); if guess > number: self.message(self.bigger) elif guess < number: self.message(self.smaller) else: break self.message(self.correct) ``` 下方的 `ConsoleGame` 繼承了 `GuessGame`，因為它不是抽象的，所以必須實作上方抽象的方法。 ```plantuml GuessGame <|- ConsoleGame ``` `ConsoleGame` 不是以視窗的方式呈現，是命令列的互動方式，所以印出訊息是用 `print()` 的方式。下方第九行 `message()` 的實作說明了 `ConsoleGame` 印出訊息的方法。注意 `GuessGame` 中已經定義 `message()` 是一個抽象方法，`ConsoleGame` 既然已經繼承了，就必須將之實做出來。同理 `guess()` 也是在基礎類別中的抽象方法，`ConsoleGame` 也必須將之時做。下方第13行的實作表明 `guess()` 的運作是留給使用者輸入，系統會給予一個提示字：`輸入數字：`。 ```python class ConsoleGame(GuessGame): def __init__(self): self.welcome = "歡迎" self.prompt = "輸入數字：" self.correct = "猜中了" self.bigger = "太大，猜小一點" self.smaller = "太小，猜大一點" def message(self, msg): print(msg) def guess(self): return int(input(self.prompt)) # g = GuessGame()       # 會產生錯誤 game = ConsoleGame()    # 這樣才對 game.go() ``` 上述最後的程式碼表明了抽象類別不能生成物件。
 
 ## Python 工程與資電應用
 
@@ -221,8 +209,6 @@
 
 ### [Activity: python-ch08-ccq2] Python 工程與資電應用 CCQ 2
 #### [CCQ] 在利用 `scipy.integrate.solve_ivp` 求解 RC 充電電路的暫態電壓隨時間變化時，我們需要傳入微分方程函數。下列哪一個微分方程函數的宣告與返回值設計是正確的？（已知 $dV_c/dt = (V_s - V_c)/(RC)$） A) ```python def rc_ode(Vc, t): return (Vs - Vc) / (R * C) ``` B) ```python def rc_ode(t, Vc): return (Vs - Vc) / (R * C) ``` C) ```python def rc_ode(t, y): return (Vs - y) * (R * C) ``` D) ```python def rc_ode(y, t): return (y - Vs) / (R * C) ```
-- 正確 (True)
-- 錯誤 (False) (Correct)
 
 ### [Activity: python-ch08-ccq3] Python 工程與資電應用 CCQ 3
 #### [CCQ] 在 PID 控制器的實作中，**積分項 (Integral Term, Ki)** 主要用來解決系統的什麼問題？
@@ -328,10 +314,8 @@
 - 將 2D 座標轉換為 3D 渲染。
 - 自動執行物理碰撞演算法。
 
-### [Activity: python-ch11-ccq4] Python 視窗遊戲設計 (Pygame) CCQ 4
-#### [CCQ] `Sprite` 是 2D 遊戲中所有活動實體的基類。一個自訂的精靈子類別，內部必須包含兩個最核心的屬性： 1. `self.image`：代表該精靈的畫布或外觀（可以是一張圖片，或是一個自定義形狀畫布）。 2. `self.rect`：一個 `pygame.Rect` 物件，代表該精靈在螢幕上的位置、寬度與高度。
-- 正確 (True)
-- 錯誤 (False)
+### [Activity: python-ch11-game1] Python 視窗遊戲設計 (Pygame) GAME 4
+#### [Game] `Sprite` 是 2D 遊戲中所有活動實體的基類。一個自訂的精靈子類別，內部必須包含兩個最核心的屬性： 1. `self.image`：代表該精靈的畫布或外觀（可以是一張圖片，或是一個自定義形狀畫布）。 2. `self.rect`：一個 `pygame.Rect` 物件，代表該精靈在螢幕上的位置、寬度與高度。
 
 ### [Activity: python-ch11-ccq4] Python 視窗遊戲設計 (Pygame) CCQ 5
 #### [CCQ] 在 Pygame 中，一個自訂的精靈類別（繼承自 `pygame.sprite.Sprite`）在初始化時，**必須**設定哪兩個變數屬性，才能被精靈群組 (Sprite Group) 正確管理與繪製？

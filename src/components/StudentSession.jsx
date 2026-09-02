@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wifi, WifiOff, Hourglass, CheckCircle2, AlertCircle, 
-  ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud
+  ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud, GripVertical
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
+import FormattedMarkdown from '../utils/formatMarkdown';
 
 export default function StudentSession({ roomCode, onLeave }) {
   const formatTime = (secs) => {
@@ -134,8 +135,9 @@ export default function StudentSession({ roomCode, onLeave }) {
       setActiveQuestion(qData);
       
       if (payload.type === 'ordering') {
-        // Shuffle items with correct number mappings
+        // Shuffle items with correct number mappings and unique IDs
         const itemsWithIndex = (payload.items || []).map((item, idx) => ({
+          id: `item-${idx}-${item}`,
           text: item,
           correctNum: idx + 1
         }));
@@ -333,7 +335,13 @@ export default function StudentSession({ roomCode, onLeave }) {
     }
   };
 
-  // 4. Ordering submission helpers
+  // 4. Ordering submission & Drag-and-Drop helpers
+  const [draggedIdx, setDraggedIdx] = useState(null);
+  const [dragOverIdx, setDragOverIdx] = useState(null);
+  const dragSourceIdxRef = useRef(null);
+  const touchStartYRef = useRef(0);
+  const touchItemIdxRef = useRef(null);
+
   const moveOrderItem = (index, dir) => {
     if (hasSubmitted || roomState !== 'answering') return;
     const targetIdx = dir === 'up' ? index - 1 : index + 1;
@@ -346,26 +354,112 @@ export default function StudentSession({ roomCode, onLeave }) {
     setOrderingItems(nextArr);
   };
 
-  // HTML5 Drag and Drop for Ordering (Desktop browser simulator)
+  // Desktop HTML5 Drag and Drop
   const handleDragStart = (e, index) => {
     if (hasSubmitted || roomState !== 'answering') return;
-    e.dataTransfer.setData('text/plain', index);
+    dragSourceIdxRef.current = index;
+    setDraggedIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+    try {
+      e.dataTransfer.setData('text/plain', String(index));
+    } catch (err) {}
+  };
+
+  const handleDragEnter = (e, index) => {
+    e.preventDefault();
+    if (dragSourceIdxRef.current === null) return;
+    setDragOverIdx(index);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIdx !== index) {
+      setDragOverIdx(index);
+    }
+  };
+
+  const handleDragEnd = () => {
+    dragSourceIdxRef.current = null;
+    setDraggedIdx(null);
+    setDragOverIdx(null);
   };
 
   const handleDrop = (e, targetIdx) => {
+    e.preventDefault();
     if (hasSubmitted || roomState !== 'answering') return;
-    const sourceIdx = parseInt(e.dataTransfer.getData('text/plain'));
-    if (isNaN(sourceIdx) || sourceIdx === targetIdx) return;
     
-    const nextArr = [...orderingItems];
-    const draggedItem = nextArr[sourceIdx];
-    nextArr.splice(sourceIdx, 1);
-    nextArr.splice(targetIdx, 0, draggedItem);
-    setOrderingItems(nextArr);
+    let sourceIdx = dragSourceIdxRef.current;
+    if (sourceIdx === null || sourceIdx === undefined) {
+      try {
+        const dataStr = e.dataTransfer.getData('text/plain');
+        sourceIdx = parseInt(dataStr, 10);
+      } catch (err) {}
+    }
+    
+    if (
+      typeof sourceIdx === 'number' &&
+      !isNaN(sourceIdx) &&
+      sourceIdx !== targetIdx &&
+      sourceIdx >= 0 &&
+      sourceIdx < orderingItems.length
+    ) {
+      const nextArr = [...orderingItems];
+      const [draggedItem] = nextArr.splice(sourceIdx, 1);
+      nextArr.splice(targetIdx, 0, draggedItem);
+      setOrderingItems(nextArr);
+    }
+    
+    handleDragEnd();
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
+  // Mobile Touch Drag handlers
+  const handleTouchStart = (e, index) => {
+    if (hasSubmitted || roomState !== 'answering') return;
+    touchStartYRef.current = e.touches[0].clientY;
+    touchItemIdxRef.current = index;
+    setDraggedIdx(index);
+  };
+
+  const handleTouchMove = (e) => {
+    if (touchItemIdxRef.current === null) return;
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const itemElement = element?.closest('[data-order-idx]');
+    if (itemElement) {
+      const targetIdx = parseInt(itemElement.getAttribute('data-order-idx'), 10);
+      if (!isNaN(targetIdx) && targetIdx !== touchItemIdxRef.current) {
+        setDragOverIdx(targetIdx);
+      }
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchItemIdxRef.current === null) return;
+    const sourceIdx = touchItemIdxRef.current;
+    
+    const touch = e.changedTouches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const itemElement = element?.closest('[data-order-idx]');
+    
+    if (itemElement) {
+      const targetIdx = parseInt(itemElement.getAttribute('data-order-idx'), 10);
+      if (
+        !isNaN(targetIdx) &&
+        targetIdx !== sourceIdx &&
+        targetIdx >= 0 &&
+        targetIdx < orderingItems.length
+      ) {
+        const nextArr = [...orderingItems];
+        const [draggedItem] = nextArr.splice(sourceIdx, 1);
+        nextArr.splice(targetIdx, 0, draggedItem);
+        setOrderingItems(nextArr);
+      }
+    }
+    
+    touchItemIdxRef.current = null;
+    setDraggedIdx(null);
+    setDragOverIdx(null);
   };
 
   const submitOrderValue = () => {
@@ -510,9 +604,12 @@ export default function StudentSession({ roomCode, onLeave }) {
           <button 
             className="btn btn-secondary" 
             style={{ width: '100%', padding: '0.85rem' }} 
-            onClick={() => setIsJoined(false)}
+            onClick={() => {
+              if (onLeave) onLeave();
+              else setIsJoined(false);
+            }}
           >
-            Exit / Change Room
+            Exit
           </button>
 
           {/* Subtle teacher launch link */}
@@ -555,8 +652,21 @@ export default function StudentSession({ roomCode, onLeave }) {
             </span>
           )}
         </div>
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          Room: <strong style={{ color: 'var(--text-primary)' }}>{roomCode}</strong> • Nick: <strong style={{ color: 'var(--color-indigo)' }}>{nickname}</strong>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            Room: <strong style={{ color: 'var(--text-primary)' }}>{roomCode}</strong> • Nick: <strong style={{ color: 'var(--color-indigo)' }}>{nickname}</strong>
+          </div>
+          {onLeave && (
+            <button 
+              type="button" 
+              onClick={onLeave}
+              className="btn btn-secondary" 
+              style={{ padding: '0.25rem 0.6rem', fontSize: '0.78rem', borderRadius: '6px' }}
+              title="離開房間"
+            >
+              Exit
+            </button>
+          )}
         </div>
       </div>
 
@@ -603,8 +713,8 @@ export default function StudentSession({ roomCode, onLeave }) {
               </div>
 
               {/* Question Text */}
-              <h2 style={{ fontSize: '1.25rem', lineHeight: '1.4', marginBottom: '1.5rem', fontWeight: 600 }}>
-                {activeQuestion.questionText}
+              <h2 className="student-question-text">
+                <FormattedMarkdown text={activeQuestion.questionText} />
               </h2>
 
               {/* Options or Post-Submission Live Statistics Screen */}
@@ -708,7 +818,7 @@ export default function StudentSession({ roomCode, onLeave }) {
                                   color: isRevealedCorrect ? 'var(--color-success)' : isMyChoice ? 'var(--text-primary)' : 'var(--text-secondary)', 
                                   fontWeight: isMyChoice || isRevealedCorrect ? 600 : 400 
                                 }}>
-                                  {opt}
+                                  <FormattedMarkdown text={opt} />
                                 </span>
                                 {isMyChoice && (
                                   <span className="badge badge-indigo" style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>
@@ -864,7 +974,9 @@ export default function StudentSession({ roomCode, onLeave }) {
                                 <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: isCorrect ? 'var(--color-success)' : '#ef4444' }}>
                                   #{idx + 1}
                                 </span>
-                                <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{item.text}</span>
+                                <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                                  <FormattedMarkdown text={item.text} />
+                                </span>
                               </div>
                               <span style={{ fontSize: '0.8rem', fontWeight: 500, color: isCorrect ? 'var(--color-success)' : 'var(--text-secondary)' }}>
                                 {isCorrect ? 'Correct ✅' : `Correct is #${item.correctNum}`}
@@ -879,7 +991,7 @@ export default function StudentSession({ roomCode, onLeave }) {
                         {[...orderingItems].sort((a, b) => a.correctNum - b.correctNum).map((item, idx) => (
                           <div key={idx} style={{ fontSize: '0.85rem', display: 'flex', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                             <strong>{item.correctNum}.</strong>
-                            <span>{item.text}</span>
+                            <span><FormattedMarkdown text={item.text} /></span>
                           </div>
                         ))}
                       </div>
@@ -900,54 +1012,77 @@ export default function StudentSession({ roomCode, onLeave }) {
                 /* Ordering Sorting UI */
                 <div>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                    Arrange items by dragging or tapping arrows, then submit:
+                    💡 可直接按住左側圖示拖曳項目，或點擊上下箭頭調整順序，完成後按送出：
                   </p>
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    {orderingItems.map((item, idx) => (
-                      <div 
-                        key={idx} 
-                        className="sortable-item"
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, idx)}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, idx)}
-                        style={{ padding: '0.75rem 1rem' }}
-                      >
-                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>{idx + 1}</span>
-                          <span style={{ fontSize: '0.95rem' }}>{item.text}</span>
+                  <div 
+                    style={{ marginBottom: '1.5rem' }}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {orderingItems.map((item, idx) => {
+                      const isDragging = draggedIdx === idx;
+                      const isDragOver = dragOverIdx === idx && draggedIdx !== idx;
+                      return (
+                        <div 
+                          key={item.id || idx} 
+                          data-order-idx={idx}
+                          className={`sortable-item ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+                          draggable={!hasSubmitted && roomState === 'answering'}
+                          onDragStart={(e) => handleDragStart(e, idx)}
+                          onDragEnter={(e) => handleDragEnter(e, idx)}
+                          onDragOver={(e) => handleDragOver(e, idx)}
+                          onDragEnd={handleDragEnd}
+                          onDrop={(e) => handleDrop(e, idx)}
+                        >
+                          <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flex: 1 }}>
+                            <div 
+                              className="sortable-handle"
+                              onTouchStart={(e) => handleTouchStart(e, idx)}
+                              title="按住拖曳"
+                            >
+                              <GripVertical size={18} />
+                            </div>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--color-indigo)', fontWeight: 'bold', minWidth: '18px' }}>
+                              {idx + 1}.
+                            </span>
+                            <span style={{ fontSize: '0.92rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>
+                              <FormattedMarkdown text={item.text} />
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.25rem', marginLeft: '0.5rem' }}>
+                            <button 
+                              type="button" 
+                              className="btn btn-secondary btn-icon" 
+                              style={{ padding: '0.3rem' }} 
+                              onClick={() => moveOrderItem(idx, 'up')}
+                              disabled={idx === 0 || hasSubmitted}
+                              title="上移"
+                            >
+                              <ChevronUp size={16} />
+                            </button>
+                            <button 
+                              type="button" 
+                              className="btn btn-secondary btn-icon" 
+                              style={{ padding: '0.3rem' }} 
+                              onClick={() => moveOrderItem(idx, 'down')}
+                              disabled={idx === orderingItems.length - 1 || hasSubmitted}
+                              title="下移"
+                            >
+                              <ChevronDown size={16} />
+                            </button>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                          <button 
-                            type="button" 
-                            className="btn btn-secondary btn-icon" 
-                            style={{ padding: '0.25rem' }} 
-                            onClick={() => moveOrderItem(idx, 'up')}
-                            disabled={idx === 0}
-                          >
-                            <ChevronUp size={16} />
-                          </button>
-                          <button 
-                            type="button" 
-                            className="btn btn-secondary btn-icon" 
-                            style={{ padding: '0.25rem' }} 
-                            onClick={() => moveOrderItem(idx, 'down')}
-                            disabled={idx === orderingItems.length - 1}
-                          >
-                            <ChevronDown size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <button 
                     className="btn btn-primary" 
-                    style={{ width: '100%', padding: '1rem' }} 
+                    style={{ width: '100%', padding: '0.95rem', fontSize: '1rem' }} 
                     onClick={submitOrderValue}
                     disabled={submitting}
                   >
-                    Submit Order <CornerDownRight size={18} />
+                    送出排序 Submit Order <CornerDownRight size={18} />
                   </button>
                 </div>
               ) : activeQuestion.type === 'wordcloud' ? (
@@ -1059,7 +1194,7 @@ export default function StudentSession({ roomCode, onLeave }) {
                            disabled={submitting}
                          >
                            <span className="option-letter">{letter}</span>
-                           <span style={{ fontSize: '1rem' }}>{opt}</span>
+                           <span style={{ fontSize: '0.95rem' }}><FormattedMarkdown text={opt} /></span>
                          </button>
                        );
                      })}

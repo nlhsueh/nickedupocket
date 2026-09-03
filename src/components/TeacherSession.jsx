@@ -8,8 +8,10 @@ import {
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
 import PieChart from './PieChart';
+import { useThemeLang, ThemeLangControls } from '../context/ThemeLangContext';
 
 export default function TeacherSession({ activity, roomCode, onBack }) {
+  const { t, lang } = useThemeLang();
   const formatTime = (secs) => {
     const s = Math.max(0, Math.floor(secs));
     const m = Math.floor(s / 60);
@@ -1067,6 +1069,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
           >
             <FlaskConical size={16} /> 模擬學生 (st01~st10)
           </button>
+
+          <ThemeLangControls />
 
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
             {connectionStatus === 'connected' ? (

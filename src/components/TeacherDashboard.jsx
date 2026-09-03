@@ -7,6 +7,7 @@ import { parseMarkdownCourse } from '../utils/mdParser';
 import { formatChapterTitle, getActivityShortTitle } from '../utils/formatters';
 import { QRCodeCanvas } from 'qrcode.react';
 import FormattedMarkdown from '../utils/formatMarkdown';
+import { useThemeLang, ThemeLangControls } from '../context/ThemeLangContext';
 
 export default function TeacherDashboard({ 
   courses, customCourses, setCustomCourses, onLaunch,
@@ -18,6 +19,7 @@ export default function TeacherDashboard({
   const [copied, setCopied] = useState(false);
   const [qrCopied, setQrCopied] = useState(false);
   const [activityTypeFilter, setActivityTypeFilter] = useState('all');
+  const { t, lang } = useThemeLang();
   const [copiedId, setCopiedId] = useState(null);
   const [qrCopiedId, setQrCopiedId] = useState(null);
   
@@ -244,24 +246,26 @@ export default function TeacherDashboard({
       <div className="glass-card" style={{ marginBottom: '2rem', padding: '1.5rem 2rem' }}>
         <div className="flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>NickPocket Edu</h1>
+            <h1 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>{t('appName')}</h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-              Interactive classroom interaction system from Markdown files.
+              {t('appSubtitle')}
             </p>
           </div>
           
-          {/* Teacher Identity Setup (collision prevention) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Teacher ID:</span>
-            <input 
-              type="text" 
-              className="input-field" 
-              style={{ width: '150px', padding: '0.5rem 0.75rem', fontSize: '0.85rem', margin: 0 }}
-              value={teacherPrefix}
-              onChange={(e) => handlePrefixChange(e.target.value)}
-              placeholder="e.g. nlh"
-              title="Avoid room conflicts with other teachers using the same activity"
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+            <ThemeLangControls />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Teacher ID:</span>
+              <input 
+                type="text" 
+                className="input-field" 
+                style={{ width: '130px', padding: '0.45rem 0.65rem', fontSize: '0.85rem', margin: 0 }}
+                value={teacherPrefix}
+                onChange={(e) => handlePrefixChange(e.target.value)}
+                placeholder="e.g. nlh"
+                title="Avoid room conflicts with other teachers using the same activity"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -356,14 +360,17 @@ export default function TeacherDashboard({
         /* VIEW 2: COURSE EXPANDED (Chapter Sidebar + Activity details + Static QR Code sharing) */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', flex: 1 }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button className="btn btn-secondary btn-icon" onClick={() => { setSelectedCourseId(null); setSelectedChapterId(null); setSelectedActivityId(null); }}>
-              <ChevronLeft size={20} /> Back
-            </button>
-            <div>
-              <span className="badge badge-indigo">{currentCourse.id.startsWith('custom_') ? 'Custom Markdown' : 'System Course'}</span>
-              <h2 style={{ fontSize: '1.5rem', marginTop: '0.2rem' }}>{currentCourse.courseTitle}</h2>
+          <div className="flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button className="btn btn-secondary btn-icon" onClick={() => { setSelectedCourseId(null); setSelectedChapterId(null); setSelectedActivityId(null); }}>
+                <ChevronLeft size={20} /> {t('back')}
+              </button>
+              <div>
+                <span className="badge badge-indigo">{currentCourse.id.startsWith('custom_') ? 'Custom Markdown' : 'System Course'}</span>
+                <h2 style={{ fontSize: '1.5rem', marginTop: '0.2rem' }}>{currentCourse.courseTitle}</h2>
+              </div>
             </div>
+            <ThemeLangControls />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.5rem', alignItems: 'start' }}>

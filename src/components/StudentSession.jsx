@@ -7,6 +7,7 @@ import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
 import { getActivityShortTitle } from '../utils/formatters';
 import PieChart from './PieChart';
+import { useThemeLang, ThemeLangControls } from '../context/ThemeLangContext';
 
 const FLORA_FAUNA_EMOJIS = [
   // Animals (可愛動物)
@@ -22,6 +23,7 @@ const FLORA_FAUNA_EMOJIS = [
 ];
 
 export default function StudentSession({ roomCode, onLeave, activity, course, chapter }) {
+  const { t, lang } = useThemeLang();
   const formatTime = (secs) => {
     const s = Math.max(0, Math.floor(secs));
     const m = Math.floor(s / 60);
@@ -680,7 +682,10 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   // Nickname entry screen
   if (!isJoined) {
     return (
-      <div className="mobile-container animate-slide-up flex-center" style={{ minHeight: '85vh' }}>
+      <div className="mobile-container animate-slide-up flex-center" style={{ minHeight: '85vh', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', marginBottom: '0.75rem' }}>
+          <ThemeLangControls />
+        </div>
         <form onSubmit={handleJoin} className="glass-card" style={{ width: '100%', padding: '1.75rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
             <span className="badge badge-indigo" style={{ marginBottom: '0.5rem' }}>Student Portal</span>
@@ -872,6 +877,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     const isConnecting = connStatus === 'connecting' || connStatus === 'disconnected';
     return (
       <div className="mobile-container animate-slide-up flex-center" style={{ minHeight: '85vh', flexDirection: 'column', textAlign: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', marginBottom: '0.75rem' }}>
+          <ThemeLangControls />
+        </div>
         <div className="glass-card flex-center animate-pop" style={{ width: '100%', padding: '2.5rem 1.5rem', flexDirection: 'column', gap: '1.25rem' }}>
           
           {isConnecting ? (
@@ -976,10 +984,11 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Room: <strong style={{ color: 'var(--text-primary)' }}>{roomCode}</strong> • Nick: <strong style={{ color: 'var(--color-indigo)' }}>{nickname}</strong>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+            <strong style={{ color: 'var(--color-indigo)' }}>{nickname}</strong>
           </div>
+          <ThemeLangControls />
           {onLeave && (
             <button 
               type="button" 

@@ -1343,17 +1343,12 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                         </div>
                         <div style={{ fontSize: '1.2rem', fontWeight: 800, color: isCorrect ? '#6ee7b7' : (hasAnswered ? '#fca5a5' : 'var(--text-secondary)') }}>
                           {isCorrect 
-                            ? `恭喜答對！本題 +${gained} 分` 
-                            : (hasAnswered ? '回答錯誤，本題扣 300 分 (-300 pts)' : '未在時間內作答 (0 pts)')
+                            ? (lang === 'zh' ? '回答正確！' : 'Correct!') 
+                            : (hasAnswered ? (lang === 'zh' ? '回答錯誤' : 'Incorrect') : (lang === 'zh' ? '時間到未作答' : "Time's Up"))
                           }
                         </div>
-                        {elapsed && (
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.25rem', opacity: 0.8 }}>
-                            作答耗時：{elapsed} 秒
-                          </div>
-                        )}
                         <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fbbf24', marginTop: '0.4rem' }}>
-                          目前排名：第 {myRank > 0 ? myRank : '-'} 名 / 總分 {myData?.score || 0} pts
+                          {lang === 'zh' ? '目前排名' : 'Current Rank'}：第 {myRank > 0 ? myRank : '-'} 名 / {lang === 'zh' ? '總積分' : 'Total Score'} {myData?.score || 0} pts
                         </div>
                       </div>
                     );
@@ -1990,9 +1985,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             </div>
 
             {!hasSubmitted && roomState === 'answering' && (
-              <div style={{ textAlign: 'center', marginTop: '2rem', borderTop: '1px solid var(--border-light)', paddingTop: '1rem' }}>
+              <div style={{ textAlign: 'center', marginTop: '1.5rem', borderTop: '1px solid var(--border-light)', paddingTop: '0.75rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  {activeQuestion.type === 'game' ? '⚠️ Speed scoring enabled! Answer quickly.' : 'Review your selection before submitting.'}
+                  {lang === 'zh' ? '請確認選項後點擊送出' : 'Review your selection before submitting.'}
                 </span>
               </div>
             )}

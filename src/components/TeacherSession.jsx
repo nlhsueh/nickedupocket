@@ -667,11 +667,10 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
             elapsedSec: elapsedSec
           };
         } else {
-          // 答錯：扣 300 分
-          const questionScore = -300;
-          newScores[studentName] = (newScores[studentName] || 0) + questionScore;
+          // 答錯：0 分（不倒扣）
+          newScores[studentName] = (newScores[studentName] || 0);
           currentRoundGains[studentName] = {
-            gained: questionScore,
+            gained: 0,
             isCorrect: false,
             hasAnswered: true,
             elapsedSec: elapsedSec
@@ -2603,16 +2602,6 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                       </div>
                       <Star size={32} fill="var(--color-warning)" style={{ color: 'var(--color-warning)' }} />
                     </div>
-
-                    <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Top Scores this Round:</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      {getSortedScoreboard().slice(0, 5).map((player, idx) => (
-                        <div key={idx} className="flex-between glass-card" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.02)' }}>
-                          <span><strong>#{idx + 1}</strong> {player.name}</span>
-                          <strong style={{ color: 'var(--color-warning)' }}>{player.score} pts</strong>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 )}
               </div>
@@ -2636,9 +2625,6 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                       <h3 style={{ fontSize: '1.25rem', margin: 0, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Award size={24} /> 🏆 即時積分排行榜 (Leaderboard)
                       </h3>
-                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        答對且越快得分越高！每題結束名次即時洗牌
-                      </p>
                     </div>
                     <span className="badge badge-warning" style={{ fontWeight: 800, fontSize: '0.85rem' }}>
                       第 {currentQIndex + 1} / {activity.questions.length} 題
@@ -2654,10 +2640,6 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                       return (
                         <>
                           {topScores.map((p, idx) => {
-                            const gainInfo = roundScores[p.name];
-                            const gained = gainInfo?.gained || 0;
-                            const isCorrect = gainInfo?.isCorrect || false;
-                            const elapsed = gainInfo?.elapsedSec;
                             const barWidth = Math.max(10, Math.min(100, (p.score / (topScore || 1)) * 100));
 
                             const isGold = idx === 0;
@@ -2669,7 +2651,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                                 key={idx} 
                                 className="glass-card animate-pop" 
                                 style={{ 
-                                  padding: '0.65rem 0.9rem', 
+                                  padding: '0.75rem 1rem', 
                                   borderRadius: '12px',
                                   background: isGold 
                                     ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.32) 100%)' 
@@ -2708,7 +2690,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                                 />
 
                                 <div className="flex-between" style={{ position: 'relative', zIndex: 1, alignItems: 'center' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                                     <span 
                                       style={{ 
                                         fontSize: isGold ? '1.2rem' : '0.95rem',
@@ -2727,32 +2709,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                                       {isGold ? '👑' : (isSilver ? '2' : (isBronze ? '3' : `#${idx + 1}`))}
                                     </span>
 
-                                    <div>
-                                      <div style={{ fontSize: '1.05rem', fontWeight: 700, color: isGold ? '#fef08a' : 'var(--text-primary)' }}>
-                                        {p.name}
-                                      </div>
-                                      <div style={{ fontSize: '0.78rem', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                                        {isCorrect ? (
-                                          <span style={{ color: '#10b981', fontWeight: 700 }}>
-                                            +{gained} pts
-                                          </span>
-                                        ) : gainInfo?.hasAnswered ? (
-                                          <span style={{ color: '#f87171', fontWeight: 700 }}>
-                                            -300 pts (答錯)
-                                          </span>
-                                        ) : (
-                                          <span style={{ color: 'var(--text-muted)' }}>
-                                            0 pts (未作答)
-                                          </span>
-                                        )}
-
-                                        {/* Subtly show response time */}
-                                        {elapsed && (
-                                          <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', opacity: 0.75 }}>
-                                            • ⏱️ {elapsed}s
-                                          </span>
-                                        )}
-                                      </div>
+                                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: isGold ? '#fef08a' : 'var(--text-primary)' }}>
+                                      {p.name}
                                     </div>
                                   </div>
 

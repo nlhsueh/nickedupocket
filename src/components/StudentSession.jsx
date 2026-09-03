@@ -697,11 +697,11 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
 
           <div className="form-group" style={{ marginBottom: '1.25rem' }}>
             <label className="form-label" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-              {lang === 'zh' ? '題型與房間確認' : 'Activity & Room Preview'}
+              {lang === 'zh' ? '課堂活動確認' : 'Activity Preview'}
             </label>
             <div className="glass-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '0.85rem 1rem', border: '1px solid var(--border-glow)', borderRadius: '12px' }}>
               <div className="flex-between" style={{ marginBottom: '0.35rem' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>ROOM CODE</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{lang === 'zh' ? '活動代碼' : 'ACTIVITY CODE'}</span>
                 {renderTypeBadge(questionType)}
               </div>
               <div style={{ fontSize: '1.2rem', color: 'var(--color-indigo)', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '0.4rem', textAlign: 'left' }}>
@@ -899,12 +899,12 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
           <div>
             <h2 style={{ fontSize: '1.3rem', marginBottom: '0.4rem', fontWeight: 600 }}>
               {isConnecting 
-                ? (lang === 'zh' ? '正在連線至房間...' : 'Connecting to Room...') 
+                ? (lang === 'zh' ? '正在連線至課堂活動...' : 'Connecting to Activity...') 
                 : (lang === 'zh' ? '已就緒，等待老師開始' : 'Waiting for Instructor')}
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: '1.5', margin: 0 }}>
               {isConnecting ? (
-                `Connecting to real-time server for room ${roomCode}...`
+                `Connecting to real-time server for ${roomCode}...`
               ) : lang === 'zh' ? (
                 <>
                   已成功連線，歡迎 <strong style={{ color: 'var(--text-primary)' }}>{nickname}</strong>！<br />
@@ -941,7 +941,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             </div>
           ) : (
             <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.6rem 1.25rem', borderRadius: '10px', border: '1px solid var(--border-light)', fontSize: '0.85rem' }}>
-              Room Code: <strong style={{ color: 'var(--color-indigo)' }}>{roomCode}</strong>
+              {lang === 'zh' ? '活動代碼：' : 'Activity Code: '}<strong style={{ color: 'var(--color-indigo)' }}>{roomCode}</strong>
             </div>
           )}
 
@@ -953,7 +953,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
               else setIsJoined(false);
             }}
           >
-            Exit
+            {lang === 'zh' ? '退出活動' : 'Exit'}
           </button>
 
           <button 
@@ -1006,9 +1006,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
               onClick={onLeave}
               className="btn btn-secondary" 
               style={{ padding: '0.25rem 0.6rem', fontSize: '0.78rem', borderRadius: '6px' }}
-              title="離開房間"
+              title={lang === 'zh' ? '離開活動' : 'Leave Activity'}
             >
-              Exit
+              {lang === 'zh' ? '離開' : 'Exit'}
             </button>
           )}
         </div>
@@ -1236,16 +1236,22 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
         {roomState === 'waiting' && (
           <div className="glass-card flex-center animate-pop" style={{ flex: 1, flexDirection: 'column', textAlign: 'center', padding: '3rem 1.5rem' }}>
             <div className="animate-float" style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎮</div>
-            <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>You're In, {nickname}!</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '300px', marginBottom: '1.5rem' }}>
-              Wait here. Questions will appear on this screen once the teacher clicks start on the projector.
+            <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>
+              {lang === 'zh' ? `已加入活動，${nickname}！` : `You're In, ${nickname}!`}
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '300px', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              {lang === 'zh' 
+                ? '請稍候，老師在前方投影幕按下開始後，題目將立即出現在此手機螢幕上。' 
+                : 'Wait here. Questions will appear on this screen once the teacher clicks start on the projector.'}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
               <span className="badge badge-warning" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Hourglass size={14} className="animate-spin" />
-                Room auto-closes in: <strong style={{ fontFamily: 'monospace' }}>{formatTime(lobbyTimeLeft)}</strong>
+                {lang === 'zh' ? '活動閒置關閉倒數：' : 'Activity auto-closes in: '}<strong style={{ fontFamily: 'monospace' }}>{formatTime(lobbyTimeLeft)}</strong>
               </span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Waiting for instructor to start...</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                {lang === 'zh' ? '等待老師開始課堂活動...' : 'Waiting for instructor to start...'}
+              </span>
             </div>
           </div>
         )}
@@ -1986,12 +1992,16 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
         {roomState === 'timeout' && (
           <div className="glass-card flex-center animate-pop" style={{ flex: 1, flexDirection: 'column', textAlign: 'center', padding: '3rem 1.5rem' }}>
             <AlertCircle size={64} style={{ color: 'var(--color-warning)', marginBottom: '1.5rem' }} />
-            <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>Room Timed Out</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '300px', marginBottom: '2rem' }}>
-              This interactive session has automatically closed due to 5 minutes of inactivity.
+            <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>
+              {lang === 'zh' ? '活動閒置已逾時' : 'Activity Timed Out'}
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '300px', marginBottom: '2rem', lineHeight: '1.5' }}>
+              {lang === 'zh' 
+                ? '因超過 5 分鐘無互動，本課堂活動已自動結束。' 
+                : 'This interactive session has automatically closed due to 5 minutes of inactivity.'}
             </p>
             <button className="btn btn-primary" onClick={onLeave} style={{ width: '100%', padding: '1rem' }}>
-              Back to Home
+              {lang === 'zh' ? '返回首頁' : 'Back to Home'}
             </button>
           </div>
         )}
@@ -2000,12 +2010,16 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
         {roomState === 'finished' && (
           <div className="glass-card flex-center animate-pop" style={{ flex: 1, flexDirection: 'column', textAlign: 'center', padding: '3rem 1.5rem' }}>
             <div style={{ fontSize: '4.5rem', marginBottom: '1rem' }}>🎓</div>
-            <h1 className="text-gradient" style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Activity Finished</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '280px', marginBottom: '2rem' }}>
-              Congratulations on completing the interactive quiz/game! Thank you for participating.
+            <h1 className="text-gradient" style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>
+              {lang === 'zh' ? '課堂活動圓滿結束' : 'Activity Finished'}
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '280px', marginBottom: '2rem', lineHeight: '1.5' }}>
+              {lang === 'zh' 
+                ? '恭喜完成本次課堂互動作答！感謝您的參與。' 
+                : 'Congratulations on completing the interactive quiz/game! Thank you for participating.'}
             </p>
             <button className="btn btn-secondary" onClick={onLeave} style={{ width: '100%', padding: '1rem' }}>
-              Exit Room
+              {lang === 'zh' ? '離開活動' : 'Exit Activity'}
             </button>
           </div>
         )}

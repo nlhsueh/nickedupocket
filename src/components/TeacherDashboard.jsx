@@ -263,7 +263,7 @@ export default function TeacherDashboard({
                 value={teacherPrefix}
                 onChange={(e) => handlePrefixChange(e.target.value)}
                 placeholder="e.g. nlh"
-                title="Avoid room conflicts with other teachers using the same activity"
+                title={lang === 'zh' ? '避免與其他教師使用相同活動代碼' : 'Avoid conflicts with other teachers using the same activity'}
               />
             </div>
           </div>
@@ -496,7 +496,7 @@ export default function TeacherDashboard({
                     style={{ padding: '1rem 2rem', fontSize: '1.05rem' }} 
                     onClick={() => onLaunch(getRoomCode(currentActivity.id))}
                   >
-                    <Play size={18} fill="white" /> {lang === 'zh' ? '啟動課堂互動房間 (Launch)' : 'Launch Activity Session'}
+                    <Play size={18} fill="white" /> {lang === 'zh' ? '啟動課堂活動 (Launch)' : 'Launch Activity'}
                   </button>
                 </div>
 
@@ -569,12 +569,12 @@ export default function TeacherDashboard({
                     </div>
 
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                      {lang === 'zh' ? '房間代碼：' : 'Room Code: '}<strong style={{ color: 'var(--color-indigo)' }}>{getRoomCode(currentActivity.id)}</strong>
+                      {lang === 'zh' ? '活動代碼：' : 'Activity Code: '}<strong style={{ color: 'var(--color-indigo)' }}>{getRoomCode(currentActivity.id)}</strong>
                     </p>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       {lang === 'zh' 
-                        ? '* 學生掃描 QR Code 或造訪上述網址，系統會自動導引至您啟動的對應房間！' 
-                        : '* Any student scanning the QR code or visiting the URL will automatically route to your active room!'}
+                        ? '* 學生掃描 QR Code 或造訪上述網址，系統會自動導引至您啟動的課堂活動！' 
+                        : '* Any student scanning the QR code or visiting the URL will automatically route to your active activity!'}
                     </span>
                   </div>
                 </div>
@@ -745,7 +745,7 @@ export default function TeacherDashboard({
                                   {actType}
                                 </span>
                                 <h4 style={{ fontSize: '1.15rem', fontWeight: 600, marginTop: '0.2rem' }}>{cardTitle}</h4>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Room: {roomCodeForAct}</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{lang === 'zh' ? '活動代碼：' : 'Activity: '}{roomCodeForAct}</span>
                               </div>
 
                               <div style={{ display: 'flex', gap: '0.5rem' }}>

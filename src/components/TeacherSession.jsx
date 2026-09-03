@@ -1065,9 +1065,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               boxShadow: '0 2px 10px rgba(236, 72, 153, 0.15)'
             }}
             onClick={handleSimulateStudents}
-            title="模擬 10 位學生 (st01~st10) 加入房間並自動作答"
+            title={lang === 'zh' ? '模擬 10 位學生 (st01~st10) 加入活動並自動作答' : 'Simulate 10 students joining and answering'}
           >
-            <FlaskConical size={16} /> 模擬學生 (st01~st10)
+            <FlaskConical size={16} /> {lang === 'zh' ? '模擬學生 (st01~st10)' : 'Simulate Students'}
           </button>
 
           <ThemeLangControls />
@@ -1083,7 +1083,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
           </div>
           <div className="glass-card" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginRight: '0.5rem' }}>{lang === 'zh' ? '房間代碼：' : 'Room Code:'}</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginRight: '0.5rem' }}>{lang === 'zh' ? '活動代碼：' : 'Activity Code:'}</span>
               <strong style={{ fontSize: '1.2rem', color: 'var(--color-indigo)', letterSpacing: '1px' }}>{roomCode}</strong>
             </div>
             
@@ -1093,7 +1093,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 <QRCodeSVG value={studentUrl} size={28} bgColor="#ffffff" fgColor="#080B11" />
               </div>
               <div className="qr-expanded-popover glass-card">
-                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>{lang === 'zh' ? '掃描加入房間' : 'Scan to Join Room'}</p>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>{lang === 'zh' ? '掃描加入活動' : 'Scan to Join Activity'}</p>
                 <div style={{ background: 'white', padding: '8px', borderRadius: '8px', display: 'inline-block' }}>
                   <QRCodeSVG value={studentUrl} size={150} bgColor="#ffffff" fgColor="#080B11" />
                 </div>
@@ -1340,7 +1340,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 <div style={{ flex: 1, overflowY: 'auto', maxHeight: '220px', display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignContent: 'flex-start' }}>
                   {joinedStudents.length === 0 ? (
                     <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      尚無學生加入房間
+                      {lang === 'zh' ? '尚無學生加入活動' : 'No students have joined yet'}
                     </div>
                   ) : (
                     joinedStudents.map((st, idx) => {
@@ -1611,7 +1611,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                     {Object.keys(answers).length}
                   </span>
                   <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginLeft: '0.3rem' }}>
-                    out of {joinedStudents.length} students answered
+                    {lang === 'zh' 
+                      ? ` / ${joinedStudents.length} 位學生已作答` 
+                      : `out of ${joinedStudents.length} students answered`}
                   </span>
                 </div>
               </div>
@@ -1864,7 +1866,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               <div style={{ borderBottom: '2px solid #0f172a', paddingBottom: '1rem', marginBottom: '2rem' }}>
                 <h1 style={{ fontSize: '1.8rem', color: '#0f172a', margin: '0 0 0.5rem 0' }}>{activity.title}</h1>
                 <div style={{ display: 'flex', gap: '2rem', fontSize: '0.95rem', color: '#475569' }}>
-                  <span><strong>房間代碼：</strong>{roomCode}</span>
+                  <span><strong>{lang === 'zh' ? '活動代碼：' : 'Activity Code: '}</strong>{roomCode}</span>
                   <span><strong>回收問卷：</strong>{Object.keys(surveySubmissions).length} 份</span>
                   <span><strong>在線人數：</strong>{joinedStudents.length} 人</span>
                   <span><strong>產生時間：</strong>{new Date().toLocaleString()}</span>

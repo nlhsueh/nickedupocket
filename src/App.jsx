@@ -68,6 +68,7 @@ export default function App() {
         { id: 'gTeachASE', file: 'gTeachASE.md', fallback: DEFAULT_SE_MD },
         { id: 'gTeachPython', file: 'gTeachPython.md', fallback: null },
         { id: 'gTeachUX', file: 'gTeachUX.md', fallback: null },
+        { id: 'gJustTest', file: 'gJustTest.md', fallback: null },
       ];
 
       const loaded = [];

@@ -1,0 +1,82 @@
+# JustTest 互動題型完整測試課程 (Interactive Test Suite)
+
+## Chapter 1: 基礎互動題型 (CCQ, Pair, Poll, Game)
+
+### [Activity: test-ch01-ccq] Chapter 1: 概念檢核 CCQ 題型測試
+#### [CCQ] 依據軟體工程標準定義，軟體測試最核心的目標為何？
+- 證明程式碼已經 100% 完美且毫無任何缺陷
+- 儘早發現缺陷、評估品質風險並提供品質決策依據 (Correct)
+- 提高程式碼編譯與封裝打包的執行速度
+- 完全取代人工程式碼審查（Code Review）工作
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：Edsger Dijkstra 指出：「測試只能證明缺陷的存在，無法證明完全沒有缺陷。」因此測試的核心在於暴露風險與評估品質。
+</details>
+
+### [Activity: test-ch01-pair] Chapter 1: 雙人討論 Pair Discussion 題型測試
+#### [Pair] 雙人討論：微服務架構與單體架構的測試挑戰
+請與鄰近夥伴組成雙人小組，討論並簡述：
+1. 微服務架構相比於傳統單體架構，在進行「整合測試（Integration Testing）」與「端對端測試（E2E Testing）」時面臨哪些最棘手的痛點？
+2. 你們會建議團隊導入哪些測試策略或工具（例如：契約測試 Contract Testing、Service Virtualization 等）來降低測試成本？
+
+### [Activity: test-ch01-poll] Chapter 1: 即時投票 Poll 題型測試
+#### [Poll] 在你目前的日常開發或專案中，最常使用的主要程式語言是？
+- A. Python (包含數據分析、AI、後端)
+- B. Java / Kotlin (Spring Boot、Android)
+- C. JavaScript / TypeScript (Node.js、React、Vue)
+- D. Go (微服務、雲原生系統)
+- E. C / C++ / Rust (底層系統、高效能運算)
+
+### [Activity: test-ch01-game] Chapter 1: 限時搶答 Game 錦標賽 (多題連續競速)
+#### [Game] 第 1 題：下列何者「不是」白箱測試（White-box Testing）技術？
+- 敘述涵蓋 (Statement Coverage)
+- 邊界值分析 (Boundary Value Analysis) (Correct)
+- 分支涵蓋 (Branch Coverage)
+- 條件路徑涵蓋 (Path Coverage)
+
+<details>
+<summary>答案</summary>
+**正確答案**：B
+</details>
+
+#### [Game] 第 2 題：測試發現了 10 個缺陷並全數修復，代表軟體中已不存在任何潛在缺陷？
+- 正確 (True)
+- 錯誤 (False) (Correct)
+
+<details>
+<summary>答案</summary>
+**正確答案**：B
+</details>
+
+#### [Game] 第 3 題：將品質保證活動儘早移至軟體生命週期前端執行的實踐稱作什麼？
+- Shift-Right Testing
+- Shift-Left Testing (Correct)
+- Big-Bang Testing
+- Monkey Testing
+
+<details>
+<summary>答案</summary>
+**正確答案**：B
+</details>
+
+---
+
+## Chapter 2: 文字與流程題型 (WordCloud, Ordering, Short)
+
+### [Activity: test-ch02-wordcloud] Chapter 2: 文字雲 WordCloud 題型測試
+#### [WordCloud] 請輸入 1~3 個詞彙，形容你心目中「卓越軟體工程師」最重要的特質？
+
+### [Activity: test-ch02-ordering] Chapter 2: 流程排序 Ordering 題型測試
+#### [Ordering] 請將軟體測試生命週期（STLC）依標準執行先後順序排列：
+1. 需求分析 (Requirement Analysis)
+2. 測試計畫擬定 (Test Planning)
+3. 測試案例設計 (Test Case Design)
+4. 測試環境建置 (Test Environment Setup)
+5. 測試執行與缺陷報告 (Test Execution & Reporting)
+6. 測試結案與總結評估 (Test Cycle Closure)
+
+### [Activity: test-ch02-short] Chapter 2: 簡答問答 Short QA 題型測試
+#### [Short] 請簡述你對測試驅動開發（TDD）「紅燈-綠燈-重構」循環的核心理解與價值？

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
   Play, Square, ChevronRight, ArrowLeft, Users, Wifi, WifiOff, 
-  CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud
+  CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud, FlaskConical
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
@@ -32,6 +32,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const [wordCloudViewMode, setWordCloudViewMode] = useState('cloud'); // 'cloud', 'ranking', 'raw'
   const [spotlightPair, setSpotlightPair] = useState(null);
   const [pairSearchQuery, setPairSearchQuery] = useState('');
+  const [simulationToast, setSimulationToast] = useState('');
   
   // Helper for smart default duration per question type
   const getDefaultDurationForQuestion = (q) => {
@@ -560,6 +561,159 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       .sort((a, b) => b.score - a.score);
   };
 
+  // Helper to simulate 3 students (st01, st02, st03) joining and answering
+  const handleSimulateStudents = () => {
+    const simStudents = ['st01', 'st02', 'st03'];
+    const now = Date.now();
+    const q = activity.questions[currentQIndex];
+
+    // 1. Ensure students are in joinedStudents
+    setJoinedStudents(prev => {
+      const next = [...prev];
+      simStudents.forEach(st => {
+        if (!next.includes(st)) next.push(st);
+      });
+      return next;
+    });
+
+    // Broadcast presence via MQTT
+    simStudents.forEach(st => {
+      mqttService.publishResponse({ event: 'join', studentName: st });
+    });
+
+    // 2. If question is active or results, simulate realistic submissions
+    if (sessionStatus === 'active' || sessionStatus === 'results') {
+      const mockAnswers = {};
+
+      if (q.type === 'ccq' || q.type === 'poll' || q.type === 'game') {
+        const opts = (q.options && q.options.length > 0)
+          ? q.options.map((_, i) => String.fromCharCode(65 + i))
+          : ['A', 'B', 'C', 'D'];
+        const correctOpt = q.correctAnswer || opts[0];
+        const otherOpts = opts.filter(o => o !== correctOpt);
+        const opt2 = otherOpts[0] || opts[1] || 'B';
+        const opt3 = otherOpts[1] || opts[0] || 'C';
+
+        mockAnswers['st01'] = {
+          answer: correctOpt,
+          timestamp: (questionStartTime || (now - 8000)) + 2150,
+          questionIndex: currentQIndex
+        };
+        mockAnswers['st02'] = {
+          answer: q.type === 'poll' ? opt2 : (Math.random() > 0.3 ? correctOpt : opt2),
+          timestamp: (questionStartTime || (now - 8000)) + 4300,
+          questionIndex: currentQIndex
+        };
+        mockAnswers['st03'] = {
+          answer: q.type === 'poll' ? opt3 : (Math.random() > 0.5 ? correctOpt : opt3),
+          timestamp: (questionStartTime || (now - 8000)) + 6800,
+          questionIndex: currentQIndex
+        };
+      } else if (q.type === 'pair') {
+        mockAnswers['st01'] = {
+          answer: {
+            summary: '我們這組討論認為微服務的痛點在於服務依賴深與網路延遲，建議引入契約測試（Pact）與 Docker 容器化隔離。',
+            partnerName: 'st02'
+          },
+          timestamp: now - 3000,
+          questionIndex: currentQIndex
+        };
+        mockAnswers['st03'] = {
+          answer: {
+            summary: '單體架構重構為微服務時最容易忽略資料一致性，需配合事件驅動架構與分散式追蹤（OpenTelemetry）提高可觀測性。',
+            partnerName: 'st04'
+          },
+          timestamp: now - 1200,
+          questionIndex: currentQIndex
+        };
+      } else if (q.type === 'wordcloud') {
+        mockAnswers['st01'] = {
+          answer: '敏捷開發, 自動化測試, CI/CD',
+          timestamp: now - 3500,
+          questionIndex: currentQIndex
+        };
+        mockAnswers['st02'] = {
+          answer: '單元測試, 敏捷開發, 程式碼審查',
+          timestamp: now - 2000,
+          questionIndex: currentQIndex
+        };
+        mockAnswers['st03'] = {
+          answer: '持續重構, 自動化測試, 乾淨架構',
+          timestamp: now - 800,
+          questionIndex: currentQIndex
+        };
+      } else if (q.type === 'ordering') {
+        const items = q.items || [];
+        const swapped = [...items];
+        if (swapped.length >= 2) {
+          const tmp = swapped[0];
+          swapped[0] = swapped[1];
+          swapped[1] = tmp;
+        }
+        mockAnswers['st01'] = {
+          answer: items,
+          timestamp: now - 4000,
+          questionIndex: currentQIndex
+        };
+        mockAnswers['st02'] = {
+          answer: swapped,
+          timestamp: now - 2500,
+          questionIndex: currentQIndex
+        };
+        mockAnswers['st03'] = {
+          answer: items,
+          timestamp: now - 1200,
+          questionIndex: currentQIndex
+        };
+      } else if (q.type === 'short') {
+        mockAnswers['st01'] = {
+          answer: '先寫失敗的測試確認規格邊界，再用最簡程式碼使其通過，最後重構優化架構。',
+          timestamp: now - 3000,
+          questionIndex: currentQIndex
+        };
+        mockAnswers['st02'] = {
+          answer: '紅綠燈循環能建立回歸防護網，及時消除壞味道並維持系統高品質與可維護性。',
+          timestamp: now - 2000,
+          questionIndex: currentQIndex
+        };
+        mockAnswers['st03'] = {
+          answer: 'TDD 能驅動模組低耦合設計，從使用者調用觀點出發定義清晰簡潔的 API 介面。',
+          timestamp: now - 1000,
+          questionIndex: currentQIndex
+        };
+      }
+
+      setAnswers(prev => {
+        const next = { ...prev, ...mockAnswers };
+        broadcastCurrentStats(next);
+        return next;
+      });
+
+      Object.entries(mockAnswers).forEach(([stName, data]) => {
+        mqttService.publishResponse({
+          event: 'submit_answer',
+          studentName: stName,
+          answer: data.answer,
+          timestamp: data.timestamp,
+          questionIndex: data.questionIndex
+        });
+      });
+
+      if (q.type === 'game' && sessionStatus === 'results') {
+        calculateGameScores();
+      }
+
+      setSimulationToast('🧪 已模擬學生 st01, st02, st03 送出作答！');
+    } else {
+      broadcastLobbyState();
+      setSimulationToast('🧪 已模擬學生 st01, st02, st03 加入房間大廳！');
+    }
+
+    setTimeout(() => {
+      setSimulationToast('');
+    }, 3500);
+  };
+
   return (
     <div className="container animate-slide-up" style={{ minHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
       {/* Session Header */}
@@ -567,7 +721,31 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         <button className="btn btn-secondary btn-icon" onClick={onBack} title="Leave Session">
           <ArrowLeft size={18} /> Exit
         </button>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Test Simulation Button */}
+          <button 
+            type="button"
+            className="btn btn-secondary" 
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.15))',
+              border: '1px solid rgba(236, 72, 153, 0.45)',
+              color: '#f472b6',
+              padding: '0.45rem 0.9rem',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              boxShadow: '0 2px 10px rgba(236, 72, 153, 0.15)'
+            }}
+            onClick={handleSimulateStudents}
+            title="模擬三個學生 st01, st02, st03 加入房間並自動作答"
+          >
+            <FlaskConical size={16} /> 模擬學生 (st01~st03)
+          </button>
+
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
             {connectionStatus === 'connected' ? (
               <span className="badge badge-success"><Wifi size={14} /> Server Connected</span>
@@ -717,6 +895,15 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 <h3 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Users size={20} /> Students Connected ({joinedStudents.length})
                 </h3>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  style={{ padding: '0.25rem 0.65rem', fontSize: '0.78rem', color: '#f472b6', borderColor: 'rgba(236, 72, 153, 0.4)' }}
+                  onClick={handleSimulateStudents}
+                  title="模擬 st01, st02, st03 加入"
+                >
+                  <FlaskConical size={13} /> + 模擬加入
+                </button>
               </div>
               <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignContent: 'flex-start' }}>
                 {joinedStudents.length > 0 ? (
@@ -952,7 +1139,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               })()}
             </div>
 
-            <div className="flex-between" style={{ marginTop: '2rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem' }}>
+            <div className="flex-between" style={{ marginTop: '2rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
                 <Users size={20} style={{ color: 'var(--text-secondary)' }} />
                 <div>
@@ -964,9 +1151,21 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   </span>
                 </div>
               </div>
-              <button className="btn btn-danger" style={{ padding: '1rem 2rem' }} onClick={stopQuestion}>
-                <Square size={16} fill="white" /> Stop Answering
-              </button>
+              
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <button 
+                  type="button"
+                  className="btn btn-secondary" 
+                  style={{ padding: '0.85rem 1.25rem', color: '#f472b6', borderColor: 'rgba(236, 72, 153, 0.45)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem' }} 
+                  onClick={handleSimulateStudents}
+                  title="模擬 st01, st02, st03 作答"
+                >
+                  <FlaskConical size={16} /> 模擬學生作答
+                </button>
+                <button className="btn btn-danger" style={{ padding: '1rem 2rem' }} onClick={stopQuestion}>
+                  <Square size={16} fill="white" /> Stop Answering
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1567,6 +1766,32 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         )}
 
       </div>
+
+      {/* Toast Notification for Simulation */}
+      {simulationToast && (
+        <div 
+          className="animate-pop"
+          style={{
+            position: 'fixed',
+            top: '80px',
+            right: '24px',
+            background: 'rgba(15, 23, 42, 0.95)',
+            border: '1px solid #ec4899',
+            color: '#f472b6',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '12px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.9rem',
+            fontWeight: 600
+          }}
+        >
+          <FlaskConical size={18} /> {simulationToast}
+        </div>
+      )}
 
       {/* Spotlight Pop-up Modal for Pair Discussion */}
       {spotlightPair && (

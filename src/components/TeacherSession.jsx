@@ -2178,13 +2178,66 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                     );
                   }
 
-                  // CCQ or Game bar charts
+                  // Game: display options and correct answer without vote distributions (多少人選 A)
+                  if (currentQuestion.type === 'game') {
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                        {letters.map((letter, idx) => {
+                          const isCorrect = currentQuestion.correctAnswer === letter;
+                          return (
+                            <div 
+                              key={letter} 
+                              className="glass-card" 
+                              style={{ 
+                                padding: '0.75rem 1rem', 
+                                borderRadius: '10px',
+                                background: isCorrect ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                                border: isCorrect ? '1.5px solid #10b981' : '1px solid var(--border-light)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                <span 
+                                  style={{ 
+                                    fontWeight: 700, 
+                                    width: '28px', 
+                                    height: '28px', 
+                                    borderRadius: '50%', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    background: isCorrect ? '#10b981' : 'rgba(255,255,255,0.08)',
+                                    color: isCorrect ? '#fff' : 'var(--text-secondary)',
+                                    fontSize: '0.85rem'
+                                  }}
+                                >
+                                  {letter}
+                                </span>
+                                <span style={{ fontSize: '0.95rem', color: isCorrect ? '#6ee7b7' : 'var(--text-primary)', fontWeight: isCorrect ? 600 : 400 }}>
+                                  {currentQuestion.options && currentQuestion.options[idx]}
+                                </span>
+                              </div>
+                              {isCorrect && (
+                                <span className="badge badge-success" style={{ fontSize: '0.78rem' }}>
+                                  正確答案 ✅
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+
+                  // CCQ bar charts
                   return (
                     <div>
                       {letters.map((letter, idx) => {
                         const count = stats[letter] || 0;
                         const percentage = total > 0 ? (count / total) * 100 : 0;
-                        const isCorrect = (currentQuestion.type === 'ccq' || currentQuestion.type === 'game') && currentQuestion.correctAnswer === letter;
+                        const isCorrect = currentQuestion.type === 'ccq' && currentQuestion.correctAnswer === letter;
                         
                         return (
                           <div key={letter} className="chart-bar-container">

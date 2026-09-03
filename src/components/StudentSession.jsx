@@ -1414,16 +1414,18 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                     ) : null}
                   </div>
 
-                  {/* Live Statistics Section Header */}
-                  <div className="flex-between" style={{ marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <BarChart2 size={18} style={{ color: 'var(--color-indigo)' }} />
-                      <h3 style={{ fontSize: '1.05rem', margin: 0 }}>即時作答分佈 (Live Distribution)</h3>
+                  {/* Live Statistics Section Header (Only for non-game questions) */}
+                  {activeQuestion.type !== 'game' && (
+                    <div className="flex-between" style={{ marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <BarChart2 size={18} style={{ color: 'var(--color-indigo)' }} />
+                        <h3 style={{ fontSize: '1.05rem', margin: 0 }}>即時作答分佈 (Live Distribution)</h3>
+                      </div>
+                      <span className="badge badge-indigo" style={{ fontSize: '0.8rem' }}>
+                        已作答：<strong>{liveStats.totalSubmissions || (hasSubmitted ? 1 : 0)}</strong> 人
+                      </span>
                     </div>
-                    <span className="badge badge-indigo" style={{ fontSize: '0.8rem' }}>
-                      已作答：<strong>{liveStats.totalSubmissions || (hasSubmitted ? 1 : 0)}</strong> 人
-                    </span>
-                  </div>
+                  )}
 
                   {/* Poll / Survey Donut Pie Chart for Student Mobile */}
                   {activeQuestion.type === 'poll' && (
@@ -1437,8 +1439,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                     </div>
                   )}
 
-                  {/* Multiple Choice / CCQ / Game Live Chart */}
-                  {(activeQuestion.type === 'ccq' || activeQuestion.type === 'game') && (
+                  {/* Multiple Choice / CCQ Live Chart (CCQ only) */}
+                  {activeQuestion.type === 'ccq' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.5rem' }}>
                       {(activeQuestion.options || []).map((opt, idx) => {
                         const letter = String.fromCharCode(65 + idx);
@@ -1498,6 +1500,100 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                                       : 'rgba(255,255,255,0.2)'
                                 }} 
                               />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Game Options & Answer Check: Only show if you got it right and what the correct answer is */}
+                  {activeQuestion.type === 'game' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.5rem' }}>
+                      {(activeQuestion.options || []).map((opt, idx) => {
+                        const letter = String.fromCharCode(65 + idx);
+                        const isMyChoice = selectedOption === letter;
+                        const targetCorrect = revealedCorrectAnswer || (roomState === 'stopped' ? activeQuestion.correctAnswer : null);
+                        const isCorrectOption = targetCorrect === letter;
+                        const isMyChoiceWrong = isMyChoice && targetCorrect && !isCorrectOption;
+
+                        return (
+                          <div 
+                            key={letter} 
+                            className="glass-card animate-pop" 
+                            style={{ 
+                              padding: '0.75rem 1rem', 
+                              borderRadius: '10px',
+                              background: isCorrectOption 
+                                ? 'rgba(16, 185, 129, 0.12)' 
+                                : isMyChoiceWrong 
+                                  ? 'rgba(239, 68, 68, 0.1)' 
+                                  : isMyChoice 
+                                    ? 'rgba(99, 102, 241, 0.1)' 
+                                    : 'rgba(255, 255, 255, 0.02)',
+                              border: isCorrectOption 
+                                ? '1.5px solid #10b981' 
+                                : isMyChoiceWrong 
+                                  ? '1.5px solid rgba(239, 68, 68, 0.5)' 
+                                  : isMyChoice 
+                                    ? '1.5px solid var(--color-indigo)' 
+                                    : '1px solid var(--border-light)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              flexWrap: 'wrap',
+                              gap: '0.5rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                              <span 
+                                style={{ 
+                                  fontWeight: 700, 
+                                  width: '28px', 
+                                  height: '28px', 
+                                  borderRadius: '50%', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center',
+                                  background: isCorrectOption 
+                                    ? '#10b981' 
+                                    : isMyChoiceWrong 
+                                      ? '#ef4444' 
+                                      : isMyChoice 
+                                        ? 'var(--color-indigo)' 
+                                        : 'rgba(255,255,255,0.08)',
+                                  color: (isCorrectOption || isMyChoice) ? '#fff' : 'var(--text-secondary)',
+                                  fontSize: '0.85rem'
+                                }}
+                              >
+                                {letter}
+                              </span>
+                              <span style={{ 
+                                fontSize: '0.95rem', 
+                                color: isCorrectOption ? '#6ee7b7' : isMyChoiceWrong ? '#fca5a5' : 'var(--text-primary)', 
+                                fontWeight: isCorrectOption || isMyChoice ? 600 : 400 
+                              }}>
+                                <FormattedMarkdown text={opt} />
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              {isMyChoice && (
+                                <span 
+                                  className={`badge ${isCorrectOption ? 'badge-success' : isMyChoiceWrong ? 'badge-danger' : 'badge-indigo'}`} 
+                                  style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                                >
+                                  {isCorrectOption 
+                                    ? (lang === 'zh' ? '你的選擇 (答對) 🎯' : 'Your Choice (Correct) 🎯') 
+                                    : (targetCorrect ? (lang === 'zh' ? '你的選擇 (答錯) ❌' : 'Your Choice (Incorrect) ❌') : (lang === 'zh' ? '你的選擇 🎯' : 'Your Choice 🎯'))
+                                  }
+                                </span>
+                              )}
+                              {isCorrectOption && (
+                                <span className="badge badge-success" style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}>
+                                  {lang === 'zh' ? '正確答案 ✅' : 'Correct Answer ✅'}
+                                </span>
+                              )}
                             </div>
                           </div>
                         );

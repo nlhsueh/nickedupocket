@@ -3,7 +3,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { 
   Play, Square, ChevronRight, ArrowLeft, Users, Wifi, WifiOff, 
   CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud, FlaskConical, CheckCircle2,
-  Printer, Download
+  Printer, Download, Trophy, BookOpen
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
@@ -39,6 +39,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const [spotlightPair, setSpotlightPair] = useState(null);
   const [pairSearchQuery, setPairSearchQuery] = useState('');
   const [simulationToast, setSimulationToast] = useState('');
+  const [finishedViewTab, setFinishedViewTab] = useState('leaderboard'); // 'leaderboard' | 'review'
+  const [reviewSelectedQIndex, setReviewSelectedQIndex] = useState('all'); // 'all' or number
 
   // Multi-question Survey state & detection
   const isMultiQuestionSurvey = activity.questions && activity.questions.length > 1 && (
@@ -605,6 +607,29 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   };
 
   const nextQuestion = nextQuestionAndStart;
+
+  // Helper for final question review & analysis
+  const getQuestionSubmissionStats = (qIdx) => {
+    const recorded = allQuestionsAnswersRef.current?.[qIdx] || {};
+    let answersMap = { ...recorded };
+    if (qIdx === currentQIndex && answersRef.current) {
+      Object.entries(answersRef.current).forEach(([name, data]) => {
+        if (data && (data.questionIndex === undefined || data.questionIndex === qIdx)) {
+          answersMap[name] = data.answer;
+        }
+      });
+    }
+    const q = activity.questions[qIdx];
+    const total = Object.keys(answersMap).length;
+    let correctCount = 0;
+    if (q && q.correctAnswer) {
+      Object.values(answersMap).forEach(ans => {
+        if (ans === q.correctAnswer) correctCount++;
+      });
+    }
+    const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : null;
+    return { answersMap, total, correctCount, accuracy };
+  };
 
   // 4. Export to CSV & Print to PDF helpers
   const exportSurveyCSV = () => {
@@ -3001,100 +3026,140 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 : (lang === 'zh' ? '感謝全班同學的熱情參與。' : 'Thank you everyone for participating!')}
             </p>
             
-            {activity.questions.some(q => q.type === 'game') ? (
-              /* Top-to-bottom leaderboard list with Top 3 celebrated */
-              <div style={{ width: '100%', maxWidth: '640px', textAlign: 'left' }}>
-                {(() => {
-                  const sorted = getSortedScoreboard();
-                  const gold = sorted[0];
-                  const silver = sorted[1];
-                  const bronze = sorted[2];
-                  const others = sorted.slice(3);
+            {/* Tab switch between Leaderboard and Question Review */}
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button 
+                className={`btn ${finishedViewTab === 'leaderboard' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ 
+                  padding: '0.65rem 1.6rem', 
+                  fontSize: '1rem', 
+                  fontWeight: 700, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  borderRadius: '12px',
+                  background: finishedViewTab === 'leaderboard' ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : undefined,
+                  boxShadow: finishedViewTab === 'leaderboard' ? '0 4px 15px rgba(245, 158, 11, 0.3)' : 'none'
+                }}
+                onClick={() => setFinishedViewTab('leaderboard')}
+              >
+                <Trophy size={18} /> {lang === 'zh' ? '🏆 榮譽排行榜' : 'Leaderboard'}
+              </button>
+              <button 
+                className={`btn ${finishedViewTab === 'review' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ 
+                  padding: '0.65rem 1.6rem', 
+                  fontSize: '1rem', 
+                  fontWeight: 700, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  borderRadius: '12px',
+                  background: finishedViewTab === 'review' ? 'linear-gradient(135deg, var(--color-indigo) 0%, var(--color-violet) 100%)' : undefined,
+                  boxShadow: finishedViewTab === 'review' ? '0 4px 15px rgba(99, 102, 241, 0.3)' : 'none'
+                }}
+                onClick={() => setFinishedViewTab('review')}
+              >
+                <BookOpen size={18} /> {lang === 'zh' ? '📝 題目檢討與作答分析' : 'Review & Analysis'}
+              </button>
+            </div>
 
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                      {/* 1st Place - Champion */}
-                      {gold && (
-                        <div 
-                          className="glass-card animate-pop" 
-                          style={{ 
-                            padding: '1.25rem 1.5rem', 
-                            borderRadius: '16px',
-                            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.28) 0%, rgba(217, 119, 6, 0.45) 100%)',
-                            border: '2px solid #f59e0b',
-                            boxShadow: '0 0 35px rgba(245, 158, 11, 0.4)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            flexWrap: 'wrap',
-                            gap: '0.75rem'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ fontSize: '2.5rem' }}>👑 🥇</div>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span className="badge badge-warning" style={{ fontWeight: 900, fontSize: '0.82rem', padding: '0.2rem 0.55rem' }}>
-                                  {lang === 'zh' ? '冠軍 1st' : 'Champion'}
-                                </span>
-                                <span style={{ fontSize: '0.85rem', color: '#fef08a' }}>✨ 拔得頭籌</span>
-                              </div>
-                              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginTop: '0.2rem' }}>
-                                {gold.name}
-                              </div>
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#fbbf24', fontFamily: 'monospace' }}>
-                              {gold.score.toLocaleString()} <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-secondary)' }}>pts</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+            {/* TAB 1: LEADERBOARD */}
+            {finishedViewTab === 'leaderboard' && (
+              activity.questions.some(q => q.type === 'game') ? (
+                /* Top-to-bottom leaderboard list with Top 3 celebrated */
+                <div style={{ width: '100%', maxWidth: '640px', textAlign: 'left' }} className="animate-fade-in">
+                  {(() => {
+                    const sorted = getSortedScoreboard();
+                    const gold = sorted[0];
+                    const silver = sorted[1];
+                    const bronze = sorted[2];
+                    const others = sorted.slice(3);
 
-                      {/* 2nd Place - Silver */}
-                      {silver && (
-                        <div 
-                          className="glass-card animate-slide-up" 
-                          style={{ 
-                            padding: '1rem 1.4rem', 
-                            borderRadius: '14px',
-                            background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.22) 0%, rgba(100, 116, 139, 0.35) 100%)',
-                            border: '1.8px solid #94a3b8',
-                            boxShadow: '0 0 20px rgba(148, 163, 184, 0.25)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            flexWrap: 'wrap',
-                            gap: '0.75rem'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ fontSize: '2.2rem' }}>🥈</div>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span className="badge" style={{ background: 'rgba(148, 163, 184, 0.3)', color: '#f1f5f9', fontWeight: 800, fontSize: '0.78rem', padding: '0.2rem 0.5rem' }}>
-                                  {lang === 'zh' ? '亞軍 2nd' : '2nd Place'}
-                                </span>
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                        {/* 1st Place - Champion */}
+                        {gold && (
+                          <div 
+                            className="glass-card animate-pop" 
+                            style={{ 
+                              padding: '1.25rem 1.5rem', 
+                              borderRadius: '16px',
+                              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.28) 0%, rgba(217, 119, 6, 0.45) 100%)',
+                              border: '2px solid #f59e0b',
+                              boxShadow: '0 0 35px rgba(245, 158, 11, 0.4)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              flexWrap: 'wrap',
+                              gap: '0.75rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                              <div style={{ fontSize: '2.5rem' }}>👑 🥇</div>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span className="badge badge-warning" style={{ fontWeight: 900, fontSize: '0.82rem', padding: '0.2rem 0.55rem' }}>
+                                    {lang === 'zh' ? '冠軍 1st' : 'Champion'}
+                                  </span>
+                                  <span style={{ fontSize: '0.85rem', color: '#fef08a' }}>✨ 拔得頭籌</span>
+                                </div>
+                                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginTop: '0.2rem' }}>
+                                  {gold.name}
+                                </div>
                               </div>
-                              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>
-                                {silver.name}
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#fbbf24', fontFamily: 'monospace' }}>
+                                {gold.score.toLocaleString()} <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-secondary)' }}>pts</span>
                               </div>
                             </div>
                           </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '1.55rem', fontWeight: 900, color: '#e2e8f0', fontFamily: 'monospace' }}>
-                              {silver.score.toLocaleString()} <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-secondary)' }}>pts</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* 3rd Place - Bronze */}
-                      {bronze && (
-                        <div 
-                          className="glass-card animate-slide-up" 
-                          style={{ 
+                        {/* 2nd Place - Silver */}
+                        {silver && (
+                          <div 
+                            className="glass-card animate-slide-up" 
+                            style={{ 
+                              padding: '1rem 1.4rem', 
+                              borderRadius: '14px',
+                              background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.22) 0%, rgba(100, 116, 139, 0.35) 100%)',
+                              border: '1.8px solid #94a3b8',
+                              boxShadow: '0 0 20px rgba(148, 163, 184, 0.25)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              flexWrap: 'wrap',
+                              gap: '0.75rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                              <div style={{ fontSize: '2.2rem' }}>🥈</div>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span className="badge" style={{ background: 'rgba(148, 163, 184, 0.3)', color: '#f1f5f9', fontWeight: 800, fontSize: '0.78rem', padding: '0.2rem 0.5rem' }}>
+                                    {lang === 'zh' ? '亞軍 2nd' : '2nd Place'}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>
+                                  {silver.name}
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: '1.55rem', fontWeight: 900, color: '#e2e8f0', fontFamily: 'monospace' }}>
+                                {silver.score.toLocaleString()} <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-secondary)' }}>pts</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 3rd Place - Bronze */}
+                        {bronze && (
+                          <div 
+                            className="glass-card animate-slide-up" 
+                            style={{ 
                             padding: '1rem 1.4rem', 
                             borderRadius: '14px',
                             background: 'linear-gradient(135deg, rgba(180, 83, 9, 0.2) 0%, rgba(146, 64, 14, 0.32) 100%)',
@@ -3170,19 +3235,250 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               /* Display review for standard CCQ/Poll/Ordering */
               <div style={{ maxWidth: '500px', marginTop: '1.5rem' }}>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
-                  The students have successfully completed the activities. You can exit this screen to return to your dashboard or review details.
+                  {lang === 'zh' ? '全體同學已順利完成本活動，您可以檢討題目或返回儀表板。' : 'The students have successfully completed the activities. You can review questions or return to dashboard.'}
                 </p>
                 <div className="glass-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)' }}>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Session Summary</h3>
-                  <p style={{ color: 'var(--text-muted)' }}>Students Connected: {joinedStudents.length}</p>
-                  <p style={{ color: 'var(--text-muted)' }}>Total Questions Answered: {activity.questions.length}</p>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{lang === 'zh' ? '活動參與總結' : 'Session Summary'}</h3>
+                  <p style={{ color: 'var(--text-muted)' }}>{lang === 'zh' ? `在線學生：${joinedStudents.length} 人` : `Students Connected: ${joinedStudents.length}`}</p>
+                  <p style={{ color: 'var(--text-muted)' }}>{lang === 'zh' ? `活動總題數：${activity.questions.length} 題` : `Total Questions: ${activity.questions.length}`}</p>
                 </div>
               </div>
-            )}
+            )
+          )}
 
-            <button className="btn btn-primary" style={{ marginTop: '2.5rem', padding: '1rem 2.5rem' }} onClick={onBack}>
-              Return to Dashboard
-            </button>
+          {/* TAB 2: QUESTION REVIEW & ANALYSIS */}
+          {finishedViewTab === 'review' && (
+            <div style={{ width: '100%', maxWidth: '780px', textAlign: 'left' }} className="animate-fade-in">
+              {/* Question Filter Pills */}
+              <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+                <button
+                  className={`btn ${reviewSelectedQIndex === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ padding: '0.4rem 0.95rem', fontSize: '0.85rem', whiteSpace: 'nowrap', borderRadius: '20px' }}
+                  onClick={() => setReviewSelectedQIndex('all')}
+                >
+                  {lang === 'zh' ? `全部題目 (${activity.questions.length})` : `All Questions (${activity.questions.length})`}
+                </button>
+                {activity.questions.map((q, idx) => {
+                  const stats = getQuestionSubmissionStats(idx);
+                  return (
+                    <button
+                      key={idx}
+                      className={`btn ${reviewSelectedQIndex === idx ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ padding: '0.4rem 0.95rem', fontSize: '0.85rem', whiteSpace: 'nowrap', borderRadius: '20px' }}
+                      onClick={() => setReviewSelectedQIndex(idx)}
+                    >
+                      {lang === 'zh' ? `第 ${idx + 1} 題` : `Q${idx + 1}`}
+                      {stats.accuracy !== null && (
+                        <span style={{ marginLeft: '0.35rem', opacity: 0.85, fontWeight: 700 }}>
+                          ({stats.accuracy}%)
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Question Review Cards List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {activity.questions
+                  .map((q, idx) => ({ ...q, originalIdx: idx }))
+                  .filter(q => reviewSelectedQIndex === 'all' || reviewSelectedQIndex === q.originalIdx)
+                  .map((q) => {
+                    const qIdx = q.originalIdx;
+                    const stats = getQuestionSubmissionStats(qIdx);
+                    const totalSubmissions = stats.total;
+                    const letters = ['A', 'B', 'C', 'D', 'E', 'F'].slice(0, (q.options || []).length || 4);
+
+                    return (
+                      <div 
+                        key={qIdx} 
+                        className="glass-card animate-slide-up" 
+                        style={{ 
+                          padding: '1.5rem', 
+                          borderRadius: '16px',
+                          border: '1px solid var(--border-light)',
+                          background: 'rgba(255, 255, 255, 0.02)'
+                        }}
+                      >
+                        {/* Question Header */}
+                        <div className="flex-between" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="badge badge-indigo" style={{ fontWeight: 800, fontSize: '0.82rem' }}>
+                              {lang === 'zh' ? `第 ${qIdx + 1} 題` : `Question ${qIdx + 1}`}
+                            </span>
+                            <span className="badge" style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
+                              {q.type === 'game' ? 'Game 搶答' : q.type === 'ccq' ? 'CCQ 檢核' : q.type === 'poll' ? 'Poll 投票' : q.type}
+                            </span>
+                          </div>
+
+                          {/* Accuracy & Submission count */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {stats.accuracy !== null && (
+                              <span 
+                                className="badge" 
+                                style={{ 
+                                  background: stats.accuracy >= 70 ? 'rgba(16, 185, 129, 0.2)' : stats.accuracy >= 40 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                  color: stats.accuracy >= 70 ? '#6ee7b7' : stats.accuracy >= 40 ? '#fde047' : '#fca5a5',
+                                  fontWeight: 700,
+                                  fontSize: '0.82rem'
+                                }}
+                              >
+                                {lang === 'zh' ? `全班答對率 ${stats.accuracy}%` : `Accuracy ${stats.accuracy}%`} ({stats.correctCount}/{totalSubmissions})
+                              </span>
+                            )}
+                            <span className="badge badge-secondary" style={{ fontSize: '0.78rem' }}>
+                              {lang === 'zh' ? `${totalSubmissions} 人已答` : `${totalSubmissions} answered`}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Question Text & Description */}
+                        <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: '0 0 0.5rem 0', lineHeight: '1.5' }}>
+                          <FormattedMarkdown text={q.questionText} />
+                        </h3>
+                        {q.description && (
+                          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: '0 0 1rem 0' }}>
+                            {q.description}
+                          </p>
+                        )}
+
+                        {/* Options Breakdown with Selection Distribution & Voters */}
+                        {q.options && q.options.length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                            {letters.map((letter, optIdx) => {
+                              const isCorrect = q.correctAnswer === letter;
+                              const voters = Object.entries(stats.answersMap)
+                                .filter(([_, ans]) => ans === letter)
+                                .map(([name]) => name);
+                              const count = voters.length;
+                              const percentage = totalSubmissions > 0 ? (count / totalSubmissions) * 100 : 0;
+                              const optText = q.options[optIdx] || '';
+
+                              return (
+                                <div 
+                                  key={letter}
+                                  style={{
+                                    padding: '0.85rem 1rem',
+                                    borderRadius: '12px',
+                                    background: isCorrect 
+                                      ? 'rgba(16, 185, 129, 0.1)' 
+                                      : (count > 0 ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.015)'),
+                                    border: isCorrect 
+                                      ? '1.5px solid #10b981' 
+                                      : (count > 0 ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid var(--border-light)')
+                                  }}
+                                >
+                                  <div className="flex-between" style={{ alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                      <span 
+                                        style={{
+                                          width: '26px',
+                                          height: '26px',
+                                          borderRadius: '50%',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          fontWeight: 800,
+                                          fontSize: '0.85rem',
+                                          background: isCorrect ? '#10b981' : 'rgba(255, 255, 255, 0.08)',
+                                          color: isCorrect ? '#fff' : 'var(--text-secondary)'
+                                        }}
+                                      >
+                                        {letter}
+                                      </span>
+                                      <span style={{ fontSize: '0.95rem', fontWeight: isCorrect ? 700 : 500, color: isCorrect ? '#6ee7b7' : 'var(--text-primary)' }}>
+                                        <FormattedMarkdown text={optText} />
+                                      </span>
+                                    </div>
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                      {isCorrect && (
+                                        <span className="badge badge-success" style={{ fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.55rem' }}>
+                                          {lang === 'zh' ? '標準答案 ✅' : 'Correct Answer ✅'}
+                                        </span>
+                                      )}
+                                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isCorrect ? '#10b981' : 'var(--text-secondary)' }}>
+                                        {count} {lang === 'zh' ? '人' : 'votes'} ({percentage.toFixed(0)}%)
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Progress Track Bar */}
+                                  <div style={{ 
+                                    height: '6px', 
+                                    width: '100%', 
+                                    background: 'rgba(255, 255, 255, 0.06)', 
+                                    borderRadius: '3px', 
+                                    overflow: 'hidden',
+                                    margin: '0.4rem 0' 
+                                  }}>
+                                    <div 
+                                      style={{ 
+                                        height: '100%', 
+                                        width: `${percentage}%`, 
+                                        background: isCorrect 
+                                          ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' 
+                                          : 'linear-gradient(90deg, var(--color-indigo) 0%, var(--color-violet) 100%)',
+                                        borderRadius: '3px',
+                                        transition: 'width 0.4s ease'
+                                      }} 
+                                    />
+                                  </div>
+
+                                  {/* Student voter tags */}
+                                  {voters.length > 0 && (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.45rem', alignItems: 'center' }}>
+                                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                        {lang === 'zh' ? '選擇此項：' : 'Selected by: '}
+                                      </span>
+                                      {voters.map((voterName, vIdx) => (
+                                        <span 
+                                          key={vIdx} 
+                                          className="badge" 
+                                          style={{ 
+                                            fontSize: '0.72rem', 
+                                            padding: '0.15rem 0.45rem',
+                                            background: isCorrect ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.12)',
+                                            color: isCorrect ? '#6ee7b7' : '#fca5a5',
+                                            border: isCorrect ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.25)'
+                                          }}
+                                        >
+                                          {voterName}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Non-multiple choice submissions (Short answer / Pair) */}
+                        {(q.type === 'short' || q.type === 'wordcloud' || q.type === 'pair') && (
+                          <div style={{ marginTop: '0.75rem' }}>
+                            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                              {lang === 'zh' ? '學生填答內容：' : 'Student Responses:'}
+                            </h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '200px', overflowY: 'auto' }}>
+                              {Object.entries(stats.answersMap).map(([stName, ans], aIdx) => (
+                                <div key={aIdx} className="glass-card" style={{ padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}>
+                                  <strong style={{ color: 'var(--color-indigo)' }}>{stName}</strong>: {typeof ans === 'object' ? JSON.stringify(ans) : String(ans)}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          <button className="btn btn-primary" style={{ marginTop: '2.5rem', padding: '0.9rem 2.5rem', fontSize: '1rem' }} onClick={onBack}>
+            {lang === 'zh' ? '返回活動列表 / 儀表板' : 'Return to Dashboard'}
+          </button>
           </div>
         )}
 

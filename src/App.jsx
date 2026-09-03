@@ -122,7 +122,7 @@ export default function App() {
         <div className="container" style={{ textAlign: 'center', marginTop: '5rem' }}>
           <h2>Activity Not Found</h2>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-            The room code <strong>{route.roomCode}</strong> does not match any parsed markdown activity ID.
+            The activity code <strong>{route.roomCode}</strong> does not match any parsed markdown activity ID.
           </p>
           <button className="btn btn-primary" style={{ marginTop: '1.5rem' }} onClick={handleBackToDashboard}>
             Go Back to Dashboard

@@ -106,7 +106,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
           if (prev <= 1) {
             clearInterval(lobbyTimerRef.current);
             broadcastState({ event: 'session_timeout', reason: 'lobby_timeout' });
-            alert('大廳等待超過 5 分鐘未啟動，已自動關閉房間。');
+            alert(lang === 'zh' ? '大廳等待超過 5 分鐘未啟動，已自動結束活動。' : 'Session timed out due to 5 minutes of inactivity.');
             onBack();
             return 0;
           }
@@ -522,8 +522,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const exportSurveyCSV = () => {
     let csv = '\uFEFF'; // UTF-8 BOM for Microsoft Excel
     csv += `"${activity.title} - 問卷調查成果報告"\n`;
-    csv += `"房間代碼","${roomCode}","匯出時間","${new Date().toLocaleString()}"\n`;
-    csv += `"回收份數","${Object.keys(surveySubmissions).length}","在線人數","${joinedStudents.length}"\n\n`;
+    csv += `"${lang === 'zh' ? '活動代碼' : 'Activity Code'}","${roomCode}","${lang === 'zh' ? '匯出時間' : 'Export Time'}","${new Date().toLocaleString()}"\n`;
+    csv += `"${lang === 'zh' ? '回收份數' : 'Responses'}","${Object.keys(surveySubmissions).length}","${lang === 'zh' ? '在線人數' : 'Online Students'}","${joinedStudents.length}"\n\n`;
 
     // Part 1: All Questions & Options Breakdown
     csv += `"[ 各題統計總覽 ]"\n`;
@@ -577,8 +577,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const exportSingleQuestionCSV = () => {
     let csv = '\uFEFF';
     csv += `"${activity.title} - 第 ${currentQIndex + 1} 題成果統計"\n`;
-    csv += `"題目","${String(currentQuestion.questionText).replace(/"/g, '""')}"\n`;
-    csv += `"題型","${currentQuestion.type}","房間代碼","${roomCode}"\n\n`;
+    csv += `"${lang === 'zh' ? '題目' : 'Question'}","${String(currentQuestion.questionText).replace(/"/g, '""')}"\n`;
+    csv += `"${lang === 'zh' ? '題型' : 'Type'}","${currentQuestion.type}","${lang === 'zh' ? '活動代碼' : 'Activity Code'}","${roomCode}"\n\n`;
 
     if (currentQuestion.type === 'ccq' || currentQuestion.type === 'poll' || currentQuestion.type === 'game') {
       const statsObj = getMultipleChoiceStats();
@@ -1009,7 +1009,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       setSimulationToast('🧪 已模擬 10 位學生 (st01~st10) 送出作答！');
     } else {
       broadcastLobbyState();
-      setSimulationToast('🧪 已模擬 10 位學生 (st01~st10) 加入房間大廳！');
+      setSimulationToast(lang === 'zh' ? '🧪 已模擬 10 位學生 (st01~st10) 加入活動大廳！' : '🧪 Simulated 10 students (st01~st10) joining the activity!');
     }
 
     setTimeout(() => {

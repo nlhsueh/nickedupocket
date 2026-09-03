@@ -689,7 +689,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
         <form onSubmit={handleJoin} className="glass-card" style={{ width: '100%', padding: '1.75rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
             <span className="badge badge-indigo" style={{ marginBottom: '0.5rem' }}>{lang === 'zh' ? '學生作答端' : 'Student Portal'}</span>
-            <h1 className="text-gradient" style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{lang === 'zh' ? '加入活動房間' : 'Join Room'}</h1>
+            <h1 className="text-gradient" style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{lang === 'zh' ? '加入活動' : 'Join Activity'}</h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>
               {lang === 'zh' ? '輸入姓名或使用匿名代號即可加入課堂互動' : 'Enter your name or use anonymous mode to join'}
             </p>
@@ -846,7 +846,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
           )}
 
           <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.95rem', marginTop: '0.5rem', fontSize: '1rem' }} disabled={!isAnonymous && !rawName.trim()}>
-            {lang === 'zh' ? '加入課堂活動' : 'Join Room'} <ArrowRight size={18} />
+            {lang === 'zh' ? '加入活動' : 'Join Activity'} <ArrowRight size={18} />
           </button>
         </form>
 

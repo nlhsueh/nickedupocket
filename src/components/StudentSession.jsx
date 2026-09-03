@@ -220,6 +220,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       setPairSummary('');
       setOrderingItems([]);
       setRevealedCorrectAnswer(null);
+      setGameResultData(null);
       setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [], pairDiscussions: [] });
       // Announce presence only if the event is not a teacher acknowledgment broadcast (prevents loops)
       if (!payload.acknowledged) {
@@ -237,6 +238,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       setSubmitTime(null);
       setQuestionStartMs(Date.now());
       setRevealedCorrectAnswer(null);
+      setGameResultData(null);
       setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [], pairDiscussions: [] });
       
       const qData = {
@@ -1312,8 +1314,36 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                 /* Post-Submission Screen with Live Statistics */
                 <div className="animate-fade-in">
                   {/* Personal Game Result & Rank Card for mobile */}
-                  {/* Personal Game Result & Rank Card for mobile */}
                   {activeQuestion.type === 'game' && (() => {
+                    const isResultsRevealed = Boolean(roomState === 'stopped' || gameResultData || revealedCorrectAnswer);
+
+                    if (!isResultsRevealed) {
+                      // Waiting for question timer to complete or teacher to reveal
+                      return (
+                        <div 
+                          className="glass-card animate-pop" 
+                          style={{ 
+                            padding: '1.25rem', 
+                            marginBottom: '1.25rem', 
+                            background: 'rgba(99, 102, 241, 0.08)', 
+                            border: '1.5px solid rgba(99, 102, 241, 0.3)', 
+                            borderRadius: '12px',
+                            textAlign: 'center'
+                          }}
+                        >
+                          <div style={{ fontSize: '2.2rem', marginBottom: '0.2rem' }}>
+                            ⏳
+                          </div>
+                          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#818cf8' }}>
+                            {lang === 'zh' ? '作答已送出，等待結果揭曉...' : 'Answer submitted, waiting for reveal...'}
+                          </div>
+                          <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            {lang === 'zh' ? '本題倒數結束或老師揭曉後將顯示答題狀況與排行' : 'Answers and ranking will be revealed once time is up'}
+                          </p>
+                        </div>
+                      );
+                    }
+
                     const myData = gameResultData?.leaderboard?.find(p => p.name === nickname);
                     const myRank = gameResultData?.leaderboard ? gameResultData.leaderboard.findIndex(p => p.name === nickname) + 1 : 0;
                     const myGainInfo = gameResultData?.roundGains?.[nickname];
@@ -1529,9 +1559,10 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                       {(activeQuestion.options || []).map((opt, idx) => {
                         const letter = String.fromCharCode(65 + idx);
                         const isMyChoice = selectedOption === letter;
-                        const targetCorrect = revealedCorrectAnswer || (roomState === 'stopped' ? activeQuestion.correctAnswer : null);
-                        const isCorrectOption = targetCorrect === letter;
-                        const isMyChoiceWrong = isMyChoice && targetCorrect && !isCorrectOption;
+                        const isResultsRevealed = Boolean(roomState === 'stopped' || gameResultData || revealedCorrectAnswer);
+                        const targetCorrect = isResultsRevealed ? (revealedCorrectAnswer || activeQuestion.correctAnswer) : null;
+                        const isCorrectOption = Boolean(targetCorrect && targetCorrect === letter);
+                        const isMyChoiceWrong = Boolean(isMyChoice && targetCorrect && !isCorrectOption);
 
                         return (
                           <div 
@@ -1601,11 +1632,11 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                                 >
                                   {isCorrectOption 
                                     ? (lang === 'zh' ? '你的選擇 (答對) 🎯' : 'Your Choice (Correct) 🎯') 
-                                    : (targetCorrect ? (lang === 'zh' ? '你的選擇 (答錯) ❌' : 'Your Choice (Incorrect) ❌') : (lang === 'zh' ? '你的選擇 🎯' : 'Your Choice 🎯'))
+                                    : (isMyChoiceWrong ? (lang === 'zh' ? '你的選擇 (答錯) ❌' : 'Your Choice (Incorrect) ❌') : (lang === 'zh' ? '你的選擇 🎯' : 'Your Choice 🎯'))
                                   }
                                 </span>
                               )}
-                              {isCorrectOption && (
+                              {isResultsRevealed && isCorrectOption && (
                                 <span className="badge badge-success" style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}>
                                   {lang === 'zh' ? '正確答案 ✅' : 'Correct Answer ✅'}
                                 </span>

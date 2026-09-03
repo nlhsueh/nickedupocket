@@ -2227,10 +2227,11 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
                   // Game: display options and correct answer without vote distributions (多少人選 A)
                   if (currentQuestion.type === 'game') {
+                    const isRevealed = sessionStatus === 'results' || sessionStatus === 'stopped';
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                         {letters.map((letter, idx) => {
-                          const isCorrect = currentQuestion.correctAnswer === letter;
+                          const isCorrect = isRevealed && currentQuestion.correctAnswer === letter;
                           return (
                             <div 
                               key={letter} 

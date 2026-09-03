@@ -29,8 +29,37 @@
 - C. JavaScript / TypeScript (Node.js、React、Vue)
 - D. Go (微服務、雲原生系統)
 - E. C / C++ / Rust (底層系統、高效能運算)
+### [Activity: test-ch01-game] Chapter 1: 限時搶答 Game 題型測試
+#### [Game] 第 1 題：下列何者「不是」白箱測試（White-box Testing）技術？
+- 敘述涵蓋 (Statement Coverage)
+- 邊界值分析 (Boundary Value Analysis) (Correct)
+- 分支涵蓋 (Branch Coverage)
+- 條件路徑涵蓋 (Path Coverage)
 
+<details>
+<summary>答案</summary>
+**正確答案**：B
+</details>
 
+#### [Game] 第 2 題：測試發現了 10 個缺陷並全數修復，代表軟體中已不存在任何潛在缺陷？
+- 正確 (True)
+- 錯誤 (False) (Correct)
+
+<details>
+<summary>答案</summary>
+**正確答案**：B
+</details>
+
+#### [Game] 第 3 題：將品質保證活動儘早移至軟體生命週期前端執行的實踐稱作什麼？
+- Shift-Right Testing
+- Shift-Left Testing (Correct)
+- Big-Bang Testing
+- Monkey Testing
+
+<details>
+<summary>答案</summary>
+**正確答案**：B
+</details>
 
 ## Chapter 2: 文字與流程題型 (WordCloud, Ordering, Short)
 

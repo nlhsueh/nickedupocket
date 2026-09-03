@@ -1312,14 +1312,24 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                 /* Post-Submission Screen with Live Statistics */
                 <div className="animate-fade-in">
                   {/* Personal Game Result & Rank Card for mobile */}
-                  {activeQuestion.type === 'game' && gameResultData && (() => {
-                    const myData = gameResultData.leaderboard?.find(p => p.name === nickname);
-                    const myRank = gameResultData.leaderboard?.findIndex(p => p.name === nickname) + 1;
-                    const gained = myData?.roundGain || 0;
-                    const isCorrect = myData?.isCorrect;
-                    const myGainInfo = gameResultData.roundGains?.[nickname];
-                    const hasAnswered = myGainInfo?.hasAnswered;
-                    const elapsed = myGainInfo?.elapsedSec;
+                  {/* Personal Game Result & Rank Card for mobile */}
+                  {activeQuestion.type === 'game' && (() => {
+                    const myData = gameResultData?.leaderboard?.find(p => p.name === nickname);
+                    const myRank = gameResultData?.leaderboard ? gameResultData.leaderboard.findIndex(p => p.name === nickname) + 1 : 0;
+                    const myGainInfo = gameResultData?.roundGains?.[nickname];
+
+                    // Determine if student has answered
+                    const studentHasAnswered = Boolean(hasSubmitted || selectedOption || myGainInfo?.hasAnswered);
+
+                    // Target correct answer
+                    const targetCorrect = revealedCorrectAnswer || (roomState === 'stopped' ? activeQuestion.correctAnswer : null);
+
+                    // Determine if correct
+                    const isCorrect = Boolean(
+                      myData?.isCorrect || 
+                      myGainInfo?.isCorrect || 
+                      (selectedOption && targetCorrect && selectedOption === targetCorrect)
+                    );
 
                     return (
                       <div 
@@ -1329,27 +1339,29 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                           marginBottom: '1.25rem', 
                           background: isCorrect 
                             ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.3) 100%)' 
-                            : (hasAnswered ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.04)'), 
+                            : (studentHasAnswered ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.04)'), 
                           border: isCorrect 
                             ? '1.5px solid #10b981' 
-                            : (hasAnswered ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-light)'), 
+                            : (studentHasAnswered ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-light)'), 
                           borderRadius: '12px',
                           textAlign: 'center',
                           boxShadow: isCorrect ? '0 0 15px rgba(16, 185, 129, 0.25)' : 'none'
                         }}
                       >
                         <div style={{ fontSize: '2.2rem', marginBottom: '0.2rem' }}>
-                          {isCorrect ? (myRank === 1 ? '👑 🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🎉') : (hasAnswered ? '❌' : '⏱️')}
+                          {isCorrect ? (myRank === 1 ? '👑 🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🎉') : (studentHasAnswered ? '❌' : '⏱️')}
                         </div>
-                        <div style={{ fontSize: '1.2rem', fontWeight: 800, color: isCorrect ? '#6ee7b7' : (hasAnswered ? '#fca5a5' : 'var(--text-secondary)') }}>
+                        <div style={{ fontSize: '1.2rem', fontWeight: 800, color: isCorrect ? '#6ee7b7' : (studentHasAnswered ? '#fca5a5' : 'var(--text-secondary)') }}>
                           {isCorrect 
                             ? (lang === 'zh' ? '回答正確！' : 'Correct!') 
-                            : (hasAnswered ? (lang === 'zh' ? '回答錯誤' : 'Incorrect') : (lang === 'zh' ? '時間到未作答' : "Time's Up"))
+                            : (studentHasAnswered ? (lang === 'zh' ? '回答錯誤' : 'Incorrect') : (lang === 'zh' ? '時間到未作答' : "Time's Up"))
                           }
                         </div>
-                        <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fbbf24', marginTop: '0.4rem' }}>
-                          {lang === 'zh' ? '目前排名' : 'Current Rank'}：第 {myRank > 0 ? myRank : '-'} 名 / {lang === 'zh' ? '總積分' : 'Total Score'} {myData?.score || 0} pts
-                        </div>
+                        {myData?.score !== undefined && (
+                          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fbbf24', marginTop: '0.4rem' }}>
+                            {lang === 'zh' ? '目前排名' : 'Current Rank'}：第 {myRank > 0 ? myRank : '-'} 名 / {lang === 'zh' ? '總積分' : 'Total Score'} {myData.score} pts
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
@@ -1372,11 +1384,15 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                       )}
                       <div>
                         <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
-                          {hasSubmitted ? (roomState === 'stopped' ? '作答已結束' : '作答已送出 (Submitted!)') : '未在時間內提交'}
+                          {hasSubmitted 
+                            ? (roomState === 'stopped' 
+                                ? (lang === 'zh' ? '作答已結束' : 'Question Stopped') 
+                                : (lang === 'zh' ? '作答已送出' : 'Submitted')) 
+                            : (lang === 'zh' ? '未在時間內提交' : 'Not submitted in time')}
                         </strong>
                         {selectedOption && (
                           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                            你的選擇：<strong style={{ color: 'var(--color-indigo)' }}>{selectedOption}</strong>
+                            {lang === 'zh' ? '你的選擇：' : 'Your choice: '}<strong style={{ color: 'var(--color-indigo)' }}>{selectedOption}</strong>
                             {activeQuestion.options && activeQuestion.options[selectedOption.charCodeAt(0) - 65] ? (
                               <span> - {activeQuestion.options[selectedOption.charCodeAt(0) - 65]}</span>
                             ) : null}
@@ -1419,10 +1435,10 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                     <div className="flex-between" style={{ marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <BarChart2 size={18} style={{ color: 'var(--color-indigo)' }} />
-                        <h3 style={{ fontSize: '1.05rem', margin: 0 }}>即時作答分佈 (Live Distribution)</h3>
+                        <h3 style={{ fontSize: '1.05rem', margin: 0 }}>{lang === 'zh' ? '即時作答分佈' : 'Live Distribution'}</h3>
                       </div>
                       <span className="badge badge-indigo" style={{ fontSize: '0.8rem' }}>
-                        已作答：<strong>{liveStats.totalSubmissions || (hasSubmitted ? 1 : 0)}</strong> 人
+                        {lang === 'zh' ? '已作答：' : 'Submitted: '}<strong>{liveStats.totalSubmissions || (hasSubmitted ? 1 : 0)}</strong>{lang === 'zh' ? ' 人' : ''}
                       </span>
                     </div>
                   )}
@@ -1607,7 +1623,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                       <div className="flex-between" style={{ marginBottom: '0.6rem' }}>
                         <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <Cloud size={16} style={{ color: 'var(--color-indigo)' }} />
-                          全班即時文字雲 (Class Word Cloud)：
+                          {lang === 'zh' ? '全班即時文字雲：' : 'Class Word Cloud:'}
                         </h4>
                       </div>
                       
@@ -1674,7 +1690,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                   {activeQuestion.type === 'pair' && (
                     <div style={{ marginBottom: '1.5rem' }}>
                       <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Users size={16} style={{ color: '#06b6d4' }} /> 全班雙人討論成果 (Class Pair Insights)：
+                        <Users size={16} style={{ color: '#06b6d4' }} /> {lang === 'zh' ? '全班雙人討論成果：' : 'Class Pair Insights:'}
                       </h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '280px', overflowY: 'auto', paddingRight: '0.25rem' }}>
                         {liveStats.pairDiscussions && liveStats.pairDiscussions.length > 0 ? (
@@ -1707,7 +1723,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                   {/* Short Answer Responses List */}
                   {activeQuestion.type === 'short' && (
                     <div style={{ marginBottom: '1.5rem' }}>
-                      <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>全班回答列表 (Class Responses)：</h4>
+                      <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>{lang === 'zh' ? '全班回答列表：' : 'Class Responses:'}</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.25rem' }}>
                         {liveStats.shortAnswers && liveStats.shortAnswers.length > 0 ? (
                           liveStats.shortAnswers.map((item, idx) => (
@@ -1731,7 +1747,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                   {/* Ordering Details */}
                   {activeQuestion.type === 'ordering' && (
                     <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
-                      <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>你的排序結果 (Your Submitted Order)：</h4>
+                      <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>{lang === 'zh' ? '你的排序結果：' : 'Your Submitted Order:'}</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
                         {orderingItems.map((item, idx) => {
                           const isCorrect = item.correctNum === idx + 1;
@@ -1958,7 +1974,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                   <div style={{ marginBottom: '1.25rem' }}>
                     <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
                       <MessageSquare size={14} style={{ color: '#06b6d4' }} />
-                      雙人討論重點簡述 (Discussion Summary)：
+                      {lang === 'zh' ? '雙人討論重點簡述：' : 'Discussion Summary:'}
                     </label>
                     <textarea
                       className="input-field"

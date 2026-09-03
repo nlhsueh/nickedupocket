@@ -92,6 +92,20 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
   const timeLeftRef = useRef(timeLeft);
   timeLeftRef.current = timeLeft;
+
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
+
+  const joinedStudentsRef = useRef(joinedStudents);
+  joinedStudentsRef.current = joinedStudents;
+
+  const studentScoresRef = useRef(studentScores);
+  studentScoresRef.current = studentScores;
+
+  const questionStartTimeRef = useRef(questionStartTime);
+  questionStartTimeRef.current = questionStartTime;
+
+  const lastGameDataRef = useRef(null);
   
   const currentQuestion = activity.questions[currentQIndex];
   const studentUrl = `${window.location.origin}${window.location.pathname}#/student/${roomCode}`;
@@ -260,7 +274,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     if (payload.event === 'join') {
       setJoinedStudents(prev => {
         if (prev.includes(payload.studentName)) return prev;
-        return [...prev, payload.studentName];
+        const updated = [...prev, payload.studentName];
+        joinedStudentsRef.current = updated;
+        return updated;
       });
       // Acknowledge join and tell student the current room status
       broadcastLobbyState();
@@ -275,8 +291,17 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
             questionIndex: payload.questionIndex
           }
         };
+        answersRef.current = next;
         broadcastCurrentStats(next);
         return next;
+      });
+
+      // Ensure submitting student is registered in joined students list
+      setJoinedStudents(prev => {
+        if (prev.includes(payload.studentName)) return prev;
+        const updated = [...prev, payload.studentName];
+        joinedStudentsRef.current = updated;
+        return updated;
       });
     }
     else if (payload.event === 'submit_survey') {
@@ -307,8 +332,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         correctAnswer: q ? q.correctAnswer : null,
         stats: statsObj.stats,
         totalSubmissions: statsObj.total,
-        totalStudents: joinedStudents.length,
-        shortAnswers: getShortAnswers()
+        totalStudents: joinedStudentsRef.current.length || joinedStudents.length,
+        shortAnswers: getShortAnswers(),
+        gameData: lastGameDataRef.current
       });
     } else if (status === 'finished') {
       broadcastState({ event: 'session_finished' });
@@ -319,8 +345,12 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const startQuestion = () => {
     if (lobbyTimerRef.current) clearInterval(lobbyTimerRef.current);
     setAnswers({});
+    answersRef.current = {};
     setSessionStatus('active');
-    setQuestionStartTime(Date.now());
+    sessionStatusRef.current = 'active';
+    const now = Date.now();
+    setQuestionStartTime(now);
+    questionStartTimeRef.current = now;
 
     if (isMultiQuestionSurvey) {
       // Multi-question survey: broadcast full survey, no auto-stop countdown timer
@@ -431,9 +461,12 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const stopQuestion = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     setSessionStatus('results');
+    sessionStatusRef.current = 'results';
 
     let gameData = null;
-    if (currentQuestion.type === 'game') {
+    const qIndex = currentQIndexRef.current;
+    const q = activity.questions[qIndex];
+    if (q && q.type === 'game') {
       const { newScores, currentRoundGains } = calculateGameScores();
       const sortedLeaderboard = Object.entries(newScores)
         .map(([name, score]) => ({ 
@@ -449,19 +482,19 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         roundGains: currentRoundGains,
         leaderboard: sortedLeaderboard
       };
+      lastGameDataRef.current = gameData;
     }
 
-    const q = activity.questions[currentQIndex];
     const statsObj = getMultipleChoiceStats();
     const wordCloudData = (q && q.type === 'wordcloud') ? getWordCloudFrequencies() : null;
 
     broadcastState({ 
       event: 'question_stop', 
-      questionIndex: currentQIndex,
+      questionIndex: qIndex,
       correctAnswer: q ? q.correctAnswer : null,
       stats: statsObj.stats,
       totalSubmissions: statsObj.total,
-      totalStudents: joinedStudents.length,
+      totalStudents: joinedStudentsRef.current.length || joinedStudents.length,
       shortAnswers: getShortAnswers(),
       pairDiscussions: getPairDiscussions(),
       wordCloud: wordCloudData ? {
@@ -479,6 +512,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       setCurrentQIndex(nextIdx);
       currentQIndexRef.current = nextIdx;
       setAnswers({});
+      answersRef.current = {};
       setShortAnswerViewMode('grid');
       setWordCloudViewMode('cloud');
       
@@ -491,6 +525,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       sessionStatusRef.current = 'active';
       const now = Date.now();
       setQuestionStartTime(now);
+      questionStartTimeRef.current = now;
       setTimeLeft(duration);
       timeLeftRef.current = duration;
 
@@ -635,19 +670,30 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     URL.revokeObjectURL(url);
   };
 
-  // 5. Game Score calculations (方案 A: 答對 850 + 速度加成最高 150，答錯扣 300，未作答 0)
+  // 5. Game Score calculations (答對 850 + 速度加成最高 150，答錯 0 分，逾時 0 分)
   const calculateGameScores = (answersMap) => {
-    const q = activity.questions[currentQIndex];
-    const newScores = { ...studentScores };
-    const ansMap = answersMap || answers;
+    const qIndex = currentQIndexRef.current;
+    const q = activity.questions[qIndex];
+    if (!q) return { newScores: studentScoresRef.current, currentRoundGains: {} };
+
+    const newScores = { ...studentScoresRef.current };
+    const ansMap = answersMap || answersRef.current || answers;
     const currentRoundGains = {};
+    const startTime = questionStartTimeRef.current || questionStartTime;
+    const timeLimitMs = (q.timeLimit || 20) * 1000;
 
-    joinedStudents.forEach((studentName) => {
+    // Collect all students: registered joined students AND anyone who answered
+    const allStudents = Array.from(new Set([
+      ...joinedStudentsRef.current,
+      ...joinedStudents,
+      ...Object.keys(ansMap)
+    ]));
+
+    allStudents.forEach((studentName) => {
       const response = ansMap[studentName];
-      const timeLimitMs = (q.timeLimit || 20) * 1000;
 
-      if (response && response.questionIndex === currentQIndex) {
-        const elapsed = Math.max(0, response.timestamp - questionStartTime);
+      if (response && response.questionIndex === qIndex) {
+        const elapsed = Math.max(0, (response.timestamp || Date.now()) - startTime);
         const elapsedSec = (elapsed / 1000).toFixed(1);
 
         if (response.answer === q.correctAnswer) {
@@ -667,7 +713,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
             elapsedSec: elapsedSec
           };
         } else {
-          // 答錯：0 分（不倒扣）
+          // 答錯：0 分（不倒扣，已作答）
           newScores[studentName] = (newScores[studentName] || 0);
           currentRoundGains[studentName] = {
             gained: 0,
@@ -688,6 +734,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       }
     });
 
+    studentScoresRef.current = newScores;
     setStudentScores(newScores);
     setRoundScores(currentRoundGains);
     return { newScores, currentRoundGains };
@@ -2676,11 +2723,11 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   <div className="flex-between" style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.35)', paddingBottom: '0.75rem', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div>
                       <h3 style={{ fontSize: '1.25rem', margin: 0, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Award size={24} /> 🏆 即時積分排行榜 (Leaderboard)
+                        <Award size={24} /> 🏆 {lang === 'zh' ? '即時積分排行榜' : 'Leaderboard'}
                       </h3>
                     </div>
                     <span className="badge badge-warning" style={{ fontWeight: 800, fontSize: '0.85rem' }}>
-                      第 {currentQIndex + 1} / {activity.questions.length} 題
+                      {lang === 'zh' ? `第 ${currentQIndex + 1} / ${activity.questions.length} 題` : `Q ${currentQIndex + 1} / ${activity.questions.length}`}
                     </span>
                   </div>
 

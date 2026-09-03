@@ -392,26 +392,50 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     }
   };
 
-  const nextQuestion = () => {
+  const nextQuestionAndStart = () => {
     if (currentQIndex < activity.questions.length - 1) {
       const nextIdx = currentQIndex + 1;
       setCurrentQIndex(nextIdx);
-      setSessionStatus('lobby'); // Go back to lobbying / ready state for next question
+      currentQIndexRef.current = nextIdx;
       setAnswers({});
       setShortAnswerViewMode('grid');
       setWordCloudViewMode('cloud');
       
-      // Update configured duration for next question based on its type
       const nextQ = activity.questions[nextIdx];
-      setConfiguredDuration(getDefaultDurationForQuestion(nextQ));
+      const duration = getDefaultDurationForQuestion(nextQ);
+      setConfiguredDuration(duration);
 
-      // Alert students that we are moving to next question
-      broadcastState({ event: 'next_question_waiting', questionIndex: nextIdx });
+      // Start next question immediately without going back to lobby
+      setSessionStatus('active');
+      sessionStatusRef.current = 'active';
+      const now = Date.now();
+      setQuestionStartTime(now);
+      setTimeLeft(duration);
+      timeLeftRef.current = duration;
+
+      // Broadcast active question to students
+      broadcastActiveQuestion(nextIdx, duration);
+
+      // Start countdown timer
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current);
+            stopQuestion();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     } else {
       setSessionStatus('finished');
+      sessionStatusRef.current = 'finished';
       broadcastState({ event: 'session_finished' });
     }
   };
+
+  const nextQuestion = nextQuestionAndStart;
 
   // 4. Game Score calculations
   const calculateGameScores = () => {
@@ -717,10 +741,31 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   return (
     <div className="container animate-slide-up" style={{ minHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
       {/* Session Header */}
-      <div className="flex-between glass-card" style={{ marginBottom: '1.5rem', padding: '1rem' }}>
-        <button className="btn btn-secondary btn-icon" onClick={onBack} title="Leave Session">
-          <ArrowLeft size={18} /> Exit
-        </button>
+      <div className="flex-between glass-card" style={{ marginBottom: '1.5rem', padding: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <button className="btn btn-secondary btn-icon" onClick={onBack} title="回到 NickPocketEdu">
+            <ArrowLeft size={18} /> Exit
+          </button>
+          <div 
+            onClick={onBack}
+            style={{ 
+              cursor: 'pointer', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem',
+              userSelect: 'none',
+              padding: '0.2rem 0.5rem',
+              borderRadius: '8px'
+            }}
+            title="點擊回到 NickPocketEdu"
+          >
+            <span className="text-gradient" style={{ fontSize: '1.35rem', fontWeight: 800 }}>NickPocketEdu</span>
+            <span style={{ color: 'var(--border-light)', fontSize: '1.1rem' }}>|</span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', fontWeight: 600, maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={activity.title}>
+              {activity.title}
+            </span>
+          </div>
+        </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Test Simulation Button */}
           <button 
@@ -927,6 +972,38 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         {sessionStatus === 'active' && (
           <div className="glass-card animate-slide-up" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '2rem' }}>
             <div>
+              {/* Clickable breadcrumb title to return to NickPocketEdu */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
+                <span 
+                  onClick={onBack}
+                  style={{ 
+                    cursor: 'pointer',
+                    fontSize: '0.88rem',
+                    color: 'var(--color-indigo)',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                  title="點擊回到 NickPocketEdu"
+                >
+                  <ArrowLeft size={14} /> NickPocketEdu
+                </span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>/</span>
+                <span 
+                  onClick={onBack}
+                  style={{ 
+                    cursor: 'pointer', 
+                    fontSize: '0.88rem', 
+                    color: 'var(--text-secondary)',
+                    fontWeight: 600
+                  }}
+                  title="點擊回到 NickPocketEdu"
+                >
+                  {activity.title}
+                </span>
+              </div>
+
               <div className="flex-between" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <span className="badge badge-indigo">Question {currentQIndex + 1} of {activity.questions.length} ({currentQuestion.type.toUpperCase()})</span>
                 
@@ -1173,23 +1250,147 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         {/* RESULTS SCREEN */}
         {sessionStatus === 'results' && (
           <div className="glass-card animate-slide-up" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column' }}>
-            <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+            <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
-                <span className="badge badge-success">Answering Stopped</span>
-                <h2 style={{ fontSize: '1.5rem', marginTop: '0.25rem' }}>Question Results</h2>
+                {/* Clickable breadcrumb title to return to NickPocketEdu */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                  <span 
+                    onClick={onBack}
+                    style={{ 
+                      cursor: 'pointer',
+                      fontSize: '0.88rem',
+                      color: 'var(--color-indigo)',
+                      fontWeight: 600,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
+                    }}
+                    title="點擊回到 NickPocketEdu"
+                  >
+                    <ArrowLeft size={14} /> NickPocketEdu
+                  </span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>/</span>
+                  <span 
+                    onClick={onBack}
+                    style={{ 
+                      cursor: 'pointer', 
+                      fontSize: '0.88rem', 
+                      color: 'var(--text-secondary)',
+                      fontWeight: 600
+                    }}
+                    title="點擊回到 NickPocketEdu"
+                  >
+                    {activity.title}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className="badge badge-success">Answering Stopped</span>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0 }}>Question Results</h2>
+                </div>
               </div>
-              <button className="btn btn-primary" onClick={nextQuestion}>
-                Next Question <ChevronRight size={18} />
-              </button>
+
+              {/* Action Buttons in Results screen: Game vs Non-Game */}
+              <div>
+                {currentQuestion.type === 'game' ? (
+                  currentQIndex < activity.questions.length - 1 ? (
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ 
+                        padding: '0.75rem 1.5rem', 
+                        fontSize: '1rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
+                      }} 
+                      onClick={nextQuestionAndStart}
+                      title="進入下一題並立即開始搶答計時"
+                    >
+                      <Play size={18} fill="white" /> 下一題並立即搶答 (Next & Start)
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ 
+                        padding: '0.75rem 1.5rem', 
+                        fontSize: '1rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)'
+                      }} 
+                      onClick={nextQuestionAndStart}
+                      title="結算總分並揭曉最終冠軍頒獎台"
+                    >
+                      <Award size={18} /> 🏆 揭曉最終冠軍頒獎台 (View Final Podium)
+                    </button>
+                  )
+                ) : (
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '0.75rem 1.5rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
+                    onClick={onBack}
+                    title="結束本題並回到 NickPocketEdu"
+                  >
+                    <ArrowLeft size={16} /> 返回 NickPocketEdu
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Prominent Standard Correct Answer Banner (For CCQ & Game) */}
+            {((currentQuestion.type === 'ccq' || currentQuestion.type === 'game') && currentQuestion.correctAnswer) && (
+              <div 
+                className="glass-card animate-pop" 
+                style={{ 
+                  padding: '1rem 1.5rem', 
+                  marginBottom: '1.5rem',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.22) 100%)',
+                  border: '1.5px solid rgba(16, 185, 129, 0.5)',
+                  borderRadius: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '1rem',
+                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.15)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 0 15px rgba(16, 185, 129, 0.5)' }}>
+                    <CheckCircle size={24} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.82rem', color: '#a7f3d0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      標準正確答案 (Standard Correct Answer)
+                    </div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ecfdf5', marginTop: '0.2rem' }}>
+                      Option {currentQuestion.correctAnswer}
+                      {currentQuestion.options && currentQuestion.options[currentQuestion.correctAnswer.charCodeAt(0) - 65] && (
+                        <span style={{ fontWeight: 500, fontSize: '1.05rem', marginLeft: '0.5rem', color: '#d1fae5' }}>
+                          — {currentQuestion.options[currentQuestion.correctAnswer.charCodeAt(0) - 65]}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span className="badge badge-success" style={{ fontSize: '0.95rem', padding: '0.4rem 0.85rem', fontWeight: 700, background: 'rgba(16, 185, 129, 0.3)', border: '1px solid #10b981' }}>
+                    🎉 答對人數：{Object.values(answers).filter(a => a.questionIndex === currentQIndex && a.answer === currentQuestion.correctAnswer).length} / {Object.keys(answers).length} 人
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="grid-2" style={{ flex: 1, alignItems: 'start', gap: '2rem' }}>
               {/* Left Column: Visual Charts / Stats */}
               <div>
                 <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Live Graph</h3>
                 
-                {/* CCQ or Poll bar charts */}
-                {(currentQuestion.type === 'ccq' || currentQuestion.type === 'poll') && (() => {
+                {/* CCQ, Poll, or Game bar charts */}
+                {(currentQuestion.type === 'ccq' || currentQuestion.type === 'poll' || currentQuestion.type === 'game') && (() => {
                   const { stats, total } = getMultipleChoiceStats();
                   const letters = ['A', 'B', 'C', 'D'];
                   
@@ -1198,7 +1399,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                       {letters.map((letter, idx) => {
                         const count = stats[letter] || 0;
                         const percentage = total > 0 ? (count / total) * 100 : 0;
-                        const isCorrect = currentQuestion.type === 'ccq' && currentQuestion.correctAnswer === letter;
+                        const isCorrect = (currentQuestion.type === 'ccq' || currentQuestion.type === 'game') && currentQuestion.correctAnswer === letter;
                         
                         return (
                           <div key={letter} className="chart-bar-container">
@@ -1637,37 +1838,90 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
               {/* Right Column: Individual Student Submissions */}
               <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', maxHeight: '350px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem' }}>
-                  Student Submissions
-                </h3>
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', margin: 0 }}>
+                    Student Submissions ({joinedStudents.length})
+                  </h3>
+                  {(currentQuestion.type === 'ccq' || currentQuestion.type === 'game' || currentQuestion.type === 'ordering') && (() => {
+                    const answeredCount = Object.keys(answers).length;
+                    let correctCount = 0;
+                    if (currentQuestion.type === 'ordering') {
+                      correctCount = Object.values(answers).filter(a => a.questionIndex === currentQIndex && Array.isArray(a.answer) && a.answer.every((v, i) => v === currentQuestion.items[i])).length;
+                    } else {
+                      correctCount = Object.values(answers).filter(a => a.questionIndex === currentQIndex && a.answer === currentQuestion.correctAnswer).length;
+                    }
+                    return (
+                      <span className="badge badge-success" style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem' }}>
+                        答對率: {answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0}% ({correctCount}/{answeredCount})
+                      </span>
+                    );
+                  })()}
+                </div>
+
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                   {joinedStudents.map((stName, idx) => {
                     const submission = answers[stName];
-                    let statusLabel = 'No Answer';
-                    let badgeClass = 'badge-danger';
+                    let statusLabel = '未作答 (No Answer)';
+                    let isCorrect = false;
+                    let hasAnswered = false;
                     
                     if (submission && submission.questionIndex === currentQIndex) {
+                      hasAnswered = true;
                       if (currentQuestion.type === 'ccq' || currentQuestion.type === 'game') {
-                        const isCorrect = submission.answer === currentQuestion.correctAnswer;
-                        statusLabel = `Answered ${submission.answer} (${isCorrect ? 'Correct' : 'Incorrect'})`;
-                        badgeClass = isCorrect ? 'badge-success' : 'badge-danger';
-                      } else if (currentQuestion.type === 'poll') {
-                        statusLabel = `Answered ${submission.answer}`;
-                        badgeClass = 'badge-indigo';
+                        isCorrect = submission.answer === currentQuestion.correctAnswer;
+                        statusLabel = isCorrect 
+                          ? `🎉 答對！選了 Option ${submission.answer}` 
+                          : `❌ 答錯，選了 Option ${submission.answer}`;
                       } else if (currentQuestion.type === 'ordering') {
-                        const isCorrect = Array.isArray(submission.answer) && submission.answer.every((val, index) => val === currentQuestion.items[index]);
-                        statusLabel = isCorrect ? 'Sorted Correctly' : 'Sorted Incorrectly';
-                        badgeClass = isCorrect ? 'badge-success' : 'badge-danger';
-                      } else if ((currentQuestion.type === 'short' || currentQuestion.type === 'wordcloud' || currentQuestion.type === 'pair')) {
-                        statusLabel = submission.answer ? 'Submitted' : 'No Answer';
-                        badgeClass = submission.answer ? 'badge-indigo' : 'badge-danger';
+                        isCorrect = Array.isArray(submission.answer) && submission.answer.every((val, index) => val === currentQuestion.items[index]);
+                        statusLabel = isCorrect ? '🎉 排序完全正確！' : '❌ 排序未完全正確';
+                      } else if (currentQuestion.type === 'poll') {
+                        statusLabel = `已投 Option ${submission.answer}`;
+                      } else if (currentQuestion.type === 'pair') {
+                        statusLabel = `已提交雙人討論 (夥伴: ${submission.answer?.partnerName || '未填'})`;
+                      } else {
+                        statusLabel = submission.answer ? '已送出作答' : '未作答';
                       }
                     }
 
                     return (
-                      <div key={idx} className="flex-between" style={{ padding: '0.25rem 0.5rem', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                        <span style={{ fontSize: '0.9rem' }}>{stName}</span>
-                        <span className={`badge ${badgeClass}`} style={{ fontSize: '0.75rem' }}>{statusLabel}</span>
+                      <div 
+                        key={idx} 
+                        className="flex-between animate-pop" 
+                        style={{ 
+                          padding: '0.45rem 0.75rem', 
+                          borderRadius: '8px',
+                          background: isCorrect 
+                            ? 'rgba(16, 185, 129, 0.15)' 
+                            : (hasAnswered ? 'rgba(255, 255, 255, 0.02)' : 'rgba(239, 68, 68, 0.05)'),
+                          border: isCorrect 
+                            ? '1.5px solid rgba(16, 185, 129, 0.6)' 
+                            : '1px solid rgba(255, 255, 255, 0.05)',
+                          boxShadow: isCorrect ? '0 0 12px rgba(16, 185, 129, 0.2)' : 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <span style={{ 
+                          fontSize: '0.92rem', 
+                          fontWeight: isCorrect ? 700 : 500,
+                          color: isCorrect ? '#6ee7b7' : 'var(--text-primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem'
+                        }}>
+                          {isCorrect ? '✅ ' : (hasAnswered ? '👤 ' : '⚪ ')}
+                          {stName}
+                        </span>
+                        <span 
+                          className={`badge ${isCorrect ? 'badge-success' : (hasAnswered ? (currentQuestion.type === 'poll' || currentQuestion.type === 'pair' || currentQuestion.type === 'short' || currentQuestion.type === 'wordcloud' ? 'badge-indigo' : 'badge-danger') : 'badge-secondary')}`} 
+                          style={{ 
+                            fontSize: isCorrect ? '0.85rem' : '0.78rem',
+                            padding: isCorrect ? '0.3rem 0.65rem' : '0.25rem 0.5rem',
+                            fontWeight: isCorrect ? 700 : 500
+                          }}
+                        >
+                          {statusLabel}
+                        </span>
                       </div>
                     );
                   })}

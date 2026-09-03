@@ -100,3 +100,50 @@
 - C. 普通 (3 顆星)
 - D. 尚有進步空間 (2 顆星以下)
 
+## Chapter X01: 課堂隨堂評量 (Chapter X01: In-Class Assessment)
+
+### [Activity: test-x01-ccq] Chapter X01: 核心觀念檢核 CCQ
+#### [CCQ] 在物件導向設計中，SOLID 原則中的「S」代表下列何者？
+- Single Responsibility Principle (單一職責原則) (Correct)
+- System Scalability Principle (系統擴展性原則)
+- Software Security Principle (軟體安全原則)
+- Service Separation Principle (服務分離原則)
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：A
+**解析**：S 代表 Single Responsibility Principle，主張一個模組或類別應僅有一個引起其變更的原因。
+</details>
+
+### [Activity: test-x01-pair] Chapter X01: 技術選型雙人討論
+#### [Pair] 雙人討論：關聯式資料庫（RDBMS）與 NoSQL 資料庫的架構抉擇
+請與鄰近同學組成雙人組，針對以下情境討論並提交結論：
+在電商系統中，「使用者訂單與交易紀錄」與「商品瀏覽歷史與購物車暫存」，應分別採用何種資料庫儲存策略？請說明理由。
+
+### [Activity: test-x01-poll] Chapter X01: 開發工具習慣投票
+#### [Poll] 進行團隊開發時，你們目前最偏好或使用的分支管理策略（Git Branching Strategy）為何？
+- A. Git Flow (包含 develop, feature, release, hotfix 等分支)
+- B. GitHub Flow (以 main 為核心，透過 short-lived feature branch 與 PR 合併)
+- C. Trunk-Based Development (主幹開發，搭配 Feature Flags 頻繁合併)
+- D. GitLab Flow (結合環境分支如 pre-production、production)
+
+## Chapter X02: 實務研討與期末回饋 (Chapter X02: Workshop & Feedback)
+
+### [Activity: test-x02-wordcloud] Chapter X02: 敏捷心態文字雲
+#### [WordCloud] 請輸入 1~3 個關鍵詞，代表你認為「敏捷團隊最核心的文化特質」？
+
+### [Activity: test-x02-survey] Chapter X02: 模組化學習成效問卷 (2題連續問卷)
+#### [問卷] 第 1 題：你對本章節實作練習的掌握程度評估為何？
+- A. 完全掌握，能夠獨立設計並排除異常
+- B. 大致掌握，參照講義範例可順利完成
+- C. 部分理解，需要更多實例說明
+- D. 尚未掌握，希望能安排課後輔導
+
+#### [問卷] 第 2 題：後續章節你最期待深入探討的主題是？
+- A. 微服務與分散式系統測試架構
+- B. AI 輔助自動化生成測試案例與 Mocking
+- C. 容器化 CI/CD Pipeline 測試整合
+- D. 高並發效能壓測與瓶頸定位 (JMeter / k6)
+
+

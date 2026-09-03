@@ -74,7 +74,7 @@ export default function App() {
       const loaded = [];
       for (const item of courseFiles) {
         try {
-          const res = await fetch(`${baseUrl}courses/${item.file}`);
+          const res = await fetch(`${baseUrl}courses/${item.file}?t=${Date.now()}`, { cache: 'no-store' });
           if (!res.ok) throw new Error('Fetch status ' + res.status);
           const text = await res.text();
           const parsed = parseMarkdownCourse(text, item.id);

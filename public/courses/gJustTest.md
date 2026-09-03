@@ -29,6 +29,7 @@
 - C. JavaScript / TypeScript (Node.js、React、Vue)
 - D. Go (微服務、雲原生系統)
 - E. C / C++ / Rust (底層系統、高效能運算)
+
 ### [Activity: test-ch01-game] Chapter 1: 限時搶答 Game 題型測試
 #### [Game] 第 1 題：下列何者「不是」白箱測試（White-box Testing）技術？
 - 敘述涵蓋 (Statement Coverage)

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
   Play, Square, ChevronRight, ArrowLeft, Users, Wifi, WifiOff, 
-  CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud, FlaskConical, CheckCircle2
+  CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud, FlaskConical, CheckCircle2,
+  Printer, Download
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
@@ -515,7 +516,124 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
   const nextQuestion = nextQuestionAndStart;
 
-  // 4. Game Score calculations (方案 A: 答對 850 + 速度加成最高 150，答錯扣 300，未作答 0)
+  // 4. Export to CSV & Print to PDF helpers
+  const exportSurveyCSV = () => {
+    let csv = '\uFEFF'; // UTF-8 BOM for Microsoft Excel
+    csv += `"${activity.title} - 問卷調查成果報告"\n`;
+    csv += `"房間代碼","${roomCode}","匯出時間","${new Date().toLocaleString()}"\n`;
+    csv += `"回收份數","${Object.keys(surveySubmissions).length}","在線人數","${joinedStudents.length}"\n\n`;
+
+    // Part 1: All Questions & Options Breakdown
+    csv += `"[ 各題統計總覽 ]"\n`;
+    csv += `"題號","題目內容","選項編號","選項內容","得票數","百分比"\n`;
+    activity.questions.forEach((q, qIdx) => {
+      const stats = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, G: 0, H: 0, I: 0, J: 0, K: 0, L: 0, M: 0 };
+      let total = 0;
+      Object.values(surveySubmissions).forEach(sub => {
+        const choice = sub.answers?.[qIdx];
+        if (choice && stats[choice] !== undefined) {
+          stats[choice]++;
+          total++;
+        }
+      });
+
+      (q.options || []).forEach((opt, optIdx) => {
+        const letter = String.fromCharCode(65 + optIdx);
+        const count = stats[letter] || 0;
+        const pct = total > 0 ? ((count / total) * 100).toFixed(1) + '%' : '0%';
+        const cleanOpt = String(opt).replace(/"/g, '""');
+        const cleanQ = String(q.questionText).replace(/"/g, '""');
+        csv += `"第 ${qIdx + 1} 題","${cleanQ}","${letter}","${cleanOpt}","${count}","${pct}"\n`;
+      });
+    });
+
+    // Part 2: Individual Submissions Detail
+    csv += `\n"[ 學生作答明細紀錄 ]"\n`;
+    const qHeaders = activity.questions.map((_, i) => `"第 ${i + 1} 題"`).join(',');
+    csv += `"學生暱稱/代號","提交時間",${qHeaders}\n`;
+
+    Object.entries(surveySubmissions).forEach(([stName, sub]) => {
+      const timeStr = sub.timestamp ? new Date(sub.timestamp).toLocaleTimeString() : '';
+      const answersList = activity.questions.map((_, qIdx) => {
+        const ans = sub.answers?.[qIdx] || '';
+        return `"${ans}"`;
+      }).join(',');
+      csv += `"${stName.replace(/"/g, '""')}","${timeStr}",${answersList}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${activity.title || 'survey'}_問卷統計_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportSingleQuestionCSV = () => {
+    let csv = '\uFEFF';
+    csv += `"${activity.title} - 第 ${currentQIndex + 1} 題成果統計"\n`;
+    csv += `"題目","${String(currentQuestion.questionText).replace(/"/g, '""')}"\n`;
+    csv += `"題型","${currentQuestion.type}","房間代碼","${roomCode}"\n\n`;
+
+    if (currentQuestion.type === 'ccq' || currentQuestion.type === 'poll' || currentQuestion.type === 'game') {
+      const statsObj = getMultipleChoiceStats();
+      csv += `"[ 選項統計 ]"\n`;
+      csv += `"選項","內容","票數","佔比"\n`;
+      (currentQuestion.options || []).forEach((opt, idx) => {
+        const letter = String.fromCharCode(65 + idx);
+        const count = statsObj.stats[letter] || 0;
+        const pct = statsObj.total > 0 ? ((count / statsObj.total) * 100).toFixed(1) + '%' : '0%';
+        csv += `"${letter}","${String(opt).replace(/"/g, '""')}","${count}","${pct}"\n`;
+      });
+      csv += `\n"[ 學生作答紀錄 ]"\n`;
+      csv += `"學生暱稱","選擇答案","作答時間"\n`;
+      Object.entries(answers).forEach(([stName, data]) => {
+        if (data.questionIndex === currentQIndex) {
+          csv += `"${stName}","${data.answer}","${data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : ''}"\n`;
+        }
+      });
+    } else if (currentQuestion.type === 'wordcloud') {
+      const wc = getWordCloudFrequencies();
+      csv += `"[ 詞頻統計 ]"\n`;
+      csv += `"排名","詞彙","提及次數","佔比"\n`;
+      wc.sortedList.forEach((item, idx) => {
+        const pct = wc.totalWords > 0 ? ((item.count / wc.totalWords) * 100).toFixed(1) + '%' : '0%';
+        csv += `"${idx + 1}","${item.text}","${item.count}","${pct}"\n`;
+      });
+    } else if (currentQuestion.type === 'pair') {
+      csv += `"[ 雙人討論成果 ]"\n`;
+      csv += `"組員 1","組員 2","討論結論"\n`;
+      Object.entries(answers).forEach(([stName, data]) => {
+        if (data.questionIndex === currentQIndex && data.answer?.summary) {
+          csv += `"${stName}","${data.answer.partnerName || ''}","${String(data.answer.summary).replace(/"/g, '""')}"\n`;
+        }
+      });
+    } else {
+      csv += `"[ 學生回答內容 ]"\n`;
+      csv += `"學生暱稱","填答內容","提交時間"\n`;
+      Object.entries(answers).forEach(([stName, data]) => {
+        if (data.questionIndex === currentQIndex) {
+          const ansStr = typeof data.answer === 'object' ? JSON.stringify(data.answer) : String(data.answer || '');
+          csv += `"${stName}","${ansStr.replace(/"/g, '""')}","${data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : ''}"\n`;
+        }
+      });
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${activity.title || 'activity'}_Q${currentQIndex + 1}_統計_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // 5. Game Score calculations (方案 A: 答對 850 + 速度加成最高 150，答錯扣 300，未作答 0)
   const calculateGameScores = (answersMap) => {
     const q = activity.questions[currentQIndex];
     const newScores = { ...studentScores };
@@ -1512,19 +1630,45 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 </div>
               </div>
 
-              <div>
+              <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
                 <button 
-                  className="btn btn-secondary" 
-                  style={{ padding: '0.75rem 1.5rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
+                  className="btn btn-secondary no-print" 
+                  style={{ padding: '0.75rem 1.25rem', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)' }} 
+                  onClick={exportSurveyCSV}
+                  title="匯出包含統計與作答明細的 CSV / Excel 試算表"
+                >
+                  <Download size={16} /> 匯出 CSV
+                </button>
+                <button 
+                  className="btn btn-primary no-print" 
+                  style={{ 
+                    padding: '0.75rem 1.25rem', 
+                    fontSize: '0.92rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.45rem',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
+                  }} 
+                  onClick={() => window.print()}
+                  title="列印或儲存為完整 PDF 報告 (自動展開所有題目與圖表)"
+                >
+                  <Printer size={16} /> 列印 / 儲存 PDF
+                </button>
+                <button 
+                  className="btn btn-secondary no-print" 
+                  style={{ padding: '0.75rem 1.25rem', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }} 
                   onClick={onBack}
                   title="回到 NickPocketEdu"
                 >
-                  <ArrowLeft size={16} /> 返回 NickPocketEdu
+                  <ArrowLeft size={16} /> 返回
                 </button>
               </div>
             </div>
 
-            {/* Question Tabs */}
+            {/* SCREEN-ONLY INTERACTIVE TABS VIEW */}
+            <div className="screen-only">
+              {/* Question Tabs */}
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.35rem' }}>
               {activity.questions.map((q, idx) => (
                 <button
@@ -1639,6 +1783,41 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 );
               })()
             )}
+            </div>
+
+            {/* PRINT-ONLY DEDICATED REPORT (All questions sequentially for PDF) */}
+            <div className="print-only-report">
+              <div style={{ borderBottom: '2px solid #0f172a', paddingBottom: '1rem', marginBottom: '2rem' }}>
+                <h1 style={{ fontSize: '1.8rem', color: '#0f172a', margin: '0 0 0.5rem 0' }}>{activity.title}</h1>
+                <div style={{ display: 'flex', gap: '2rem', fontSize: '0.95rem', color: '#475569' }}>
+                  <span><strong>房間代碼：</strong>{roomCode}</span>
+                  <span><strong>回收問卷：</strong>{Object.keys(surveySubmissions).length} 份</span>
+                  <span><strong>在線人數：</strong>{joinedStudents.length} 人</span>
+                  <span><strong>產生時間：</strong>{new Date().toLocaleString()}</span>
+                </div>
+              </div>
+
+              {activity.questions.map((q, qIdx) => {
+                const stats = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, G: 0, H: 0, I: 0, J: 0, K: 0, L: 0, M: 0 };
+                let total = 0;
+                Object.values(surveySubmissions).forEach(sub => {
+                  const choice = sub.answers?.[qIdx];
+                  if (choice && stats[choice] !== undefined) {
+                    stats[choice]++;
+                    total++;
+                  }
+                });
+
+                return (
+                  <div key={qIdx} className="print-question-card">
+                    <h3 style={{ fontSize: '1.25rem', color: '#0f172a', margin: '0 0 1.25rem 0', lineHeight: '1.4' }}>
+                      第 {qIdx + 1} 題：{q.questionText}
+                    </h3>
+                    <PieChart stats={stats} options={q.options} total={total} />
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ) : sessionStatus === 'results' && (
           <div className="glass-card animate-slide-up" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column' }}>
@@ -1765,14 +1944,32 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   <CheckCircle2 size={18} /> 完成問卷調查 (Finish Survey)
                 </button>
               ) : (
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ padding: '0.75rem 1.5rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
-                  onClick={onBack}
-                  title="結束本題並回到 NickPocketEdu"
-                >
-                  <ArrowLeft size={16} /> 返回 NickPocketEdu
-                </button>
+                <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+                  <button 
+                    className="btn btn-secondary no-print" 
+                    style={{ padding: '0.75rem 1.15rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)' }} 
+                    onClick={exportSingleQuestionCSV}
+                    title="匯出本作答結果的 CSV / Excel 試算表"
+                  >
+                    <Download size={15} /> 匯出 CSV
+                  </button>
+                  <button 
+                    className="btn btn-secondary no-print" 
+                    style={{ padding: '0.75rem 1.15rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} 
+                    onClick={() => window.print()}
+                    title="列印或儲存本作答結果為 PDF"
+                  >
+                    <Printer size={15} /> 儲存 PDF
+                  </button>
+                  <button 
+                    className="btn btn-secondary no-print" 
+                    style={{ padding: '0.75rem 1.35rem', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }} 
+                    onClick={onBack}
+                    title="結束本題並回到 NickPocketEdu"
+                  >
+                    <ArrowLeft size={16} /> 返回 NickPocketEdu
+                  </button>
+                </div>
               )}
               </div>
             </div>

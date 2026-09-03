@@ -610,8 +610,9 @@ export default function TeacherDashboard({
                         ) : (
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
                             {q.options.map((opt, i) => {
-                              const letters = ['A', 'B', 'C', 'D'];
-                              const isCorrect = q.correctAnswer === letters[i];
+                              const letter = String.fromCharCode(65 + i);
+                              const isCorrect = q.correctAnswer === letter;
+                              const cleanOpt = String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt;
                               return (
                                 <div 
                                   key={i} 
@@ -624,7 +625,7 @@ export default function TeacherDashboard({
                                     color: isCorrect ? 'var(--color-success)' : 'var(--text-primary)'
                                   }}
                                 >
-                                  <strong>{letters[i]}.</strong> {opt}
+                                  <strong>{letter}.</strong> {cleanOpt}
                                 </div>
                               );
                             })}
@@ -773,11 +774,15 @@ export default function TeacherDashboard({
                                 </p>
                                 {actType !== 'ordering' && actType !== 'short' && actType !== 'pair' && act.questions[0].options && (
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                                    {act.questions[0].options.map((opt, oIdx) => (
-                                      <span key={oIdx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.03)' }}>
-                                        {['A','B','C','D'][oIdx]}. <FormattedMarkdown text={opt} />
-                                      </span>
-                                    ))}
+                                    {act.questions[0].options.map((opt, oIdx) => {
+                                      const letter = String.fromCharCode(65 + oIdx);
+                                      const cleanOpt = String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt;
+                                      return (
+                                        <span key={oIdx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.03)' }}>
+                                          {letter}. <FormattedMarkdown text={cleanOpt} />
+                                        </span>
+                                      );
+                                    })}
                                   </div>
                                 )}
                                 {actType === 'ordering' && act.questions[0].items && (

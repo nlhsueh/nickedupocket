@@ -1398,11 +1398,12 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               {currentQuestion.type !== 'ordering' && currentQuestion.type !== 'short' && currentQuestion.type !== 'wordcloud' && currentQuestion.options && (
                 <div className="grid-2" style={{ gap: '1rem' }}>
                   {currentQuestion.options.map((opt, idx) => {
-                    const letters = ['A', 'B', 'C', 'D'];
+                    const letter = String.fromCharCode(65 + idx);
+                    const cleanOpt = String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt;
                     return (
                       <div key={idx} className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', border: '1px solid var(--border-light)' }}>
-                        <span className="option-letter" style={{ background: 'rgba(255,255,255,0.05)' }}>{letters[idx]}</span>
-                        <span style={{ fontSize: '1.1rem' }}><FormattedMarkdown text={opt} /></span>
+                        <span className="option-letter" style={{ background: 'rgba(255,255,255,0.05)' }}>{letter}</span>
+                        <span style={{ fontSize: '1.1rem' }}><FormattedMarkdown text={cleanOpt} /></span>
                       </div>
                     );
                   })}

@@ -219,6 +219,9 @@ export function parseMarkdownCourse(mdText, fileId = '') {
             cleanText = optionText.substring(0, optionText.length - 1).trim();
           }
 
+          // Strip redundant option letters such as "A. ", "A、", "A) ", "(A) ", "Option A: ", "A: "
+          cleanText = cleanText.replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || cleanText;
+
           currentQuestion.options.push(cleanText);
 
           if (isCorrect && (currentQuestion.type === 'game' || currentQuestion.type === 'ccq')) {

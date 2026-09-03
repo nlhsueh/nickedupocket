@@ -1069,7 +1069,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                                 {letter}
                               </span>
                               <span style={{ fontSize: '0.9rem', color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: isSelected ? 600 : 400 }}>
-                                <FormattedMarkdown text={opt} />
+                                <FormattedMarkdown text={String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt} />
                               </span>
                             </div>
                           );
@@ -1857,7 +1857,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                            disabled={submitting}
                          >
                            <span className="option-letter">{letter}</span>
-                           <span style={{ fontSize: '0.95rem' }}><FormattedMarkdown text={opt} /></span>
+                           <span style={{ fontSize: '0.95rem' }}>
+                             <FormattedMarkdown text={String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt} />
+                           </span>
                          </button>
                        );
                      })}

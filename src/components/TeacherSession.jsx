@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
   Play, Square, ChevronRight, ArrowLeft, Users, Wifi, WifiOff, 
-  CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud, FlaskConical
+  CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud, FlaskConical, CheckCircle2
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
+import PieChart from './PieChart';
 
 export default function TeacherSession({ activity, roomCode, onBack }) {
   const formatTime = (secs) => {
@@ -31,6 +32,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   // View modes & Spotlight
   const [shortAnswerViewMode, setShortAnswerViewMode] = useState('grid'); // 'grid' or 'danmaku'
   const [wordCloudViewMode, setWordCloudViewMode] = useState('cloud'); // 'cloud', 'ranking', 'raw'
+  const [pollViewMode, setPollViewMode] = useState('pie'); // 'pie' (default for Survey/Poll) or 'bar'
   const [spotlightPair, setSpotlightPair] = useState(null);
   const [pairSearchQuery, setPairSearchQuery] = useState('');
   const [simulationToast, setSimulationToast] = useState('');
@@ -1325,54 +1327,99 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 </div>
               </div>
 
-              {/* Action Buttons in Results screen: Game vs Non-Game */}
+              {/* Action buttons: Next & Start for Game, or Next Question for Multi-question Surveys/Activities, or Return */}
               <div>
                 {currentQuestion.type === 'game' ? (
-                  currentQIndex < activity.questions.length - 1 ? (
-                    <button 
-                      className="btn btn-primary" 
-                      style={{ 
-                        padding: '0.75rem 1.5rem', 
-                        fontSize: '1rem', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '0.5rem',
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
-                      }} 
-                      onClick={nextQuestionAndStart}
-                      title="進入下一題並立即開始搶答計時"
-                    >
-                      <Play size={18} fill="white" /> 下一題並立即搶答 (Next & Start)
-                    </button>
-                  ) : (
-                    <button 
-                      className="btn btn-primary" 
-                      style={{ 
-                        padding: '0.75rem 1.5rem', 
-                        fontSize: '1rem', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '0.5rem',
-                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                        boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)'
-                      }} 
-                      onClick={nextQuestionAndStart}
-                      title="結算總分並揭曉最終冠軍頒獎台"
-                    >
-                      <Award size={18} /> 🏆 揭曉最終冠軍頒獎台 (View Final Podium)
-                    </button>
-                  )
+                currentQIndex < activity.questions.length - 1 ? (
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ 
+                      padding: '0.75rem 1.5rem', 
+                      fontSize: '1rem', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
+                    }} 
+                    onClick={nextQuestionAndStart}
+                    title="進入下一題並立即開始搶答計時"
+                  >
+                    <Play size={18} fill="white" /> 下一題並立即搶答 (Next & Start)
+                  </button>
                 ) : (
                   <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '0.75rem 1.5rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
-                    onClick={onBack}
-                    title="結束本題並回到 NickPocketEdu"
+                    className="btn btn-primary" 
+                    style={{ 
+                      padding: '0.75rem 1.5rem', 
+                      fontSize: '1rem', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                      boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)'
+                    }} 
+                    onClick={nextQuestionAndStart}
+                    title="結算總分並揭曉最終冠軍頒獎台"
                   >
-                    <ArrowLeft size={16} /> 返回 NickPocketEdu
+                    <Award size={18} /> 🏆 揭曉最終冠軍頒獎台 (View Final Podium)
                   </button>
-                )}
+                )
+              ) : activity.questions.length > 1 && currentQIndex < activity.questions.length - 1 ? (
+                /* Multi-question Survey / Activity */
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ 
+                      padding: '0.75rem 1.5rem', 
+                      fontSize: '0.95rem', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                      boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
+                    }} 
+                    onClick={nextQuestionAndStart}
+                    title="進入問卷下一題"
+                  >
+                    下一題問卷 (Next Question) <ChevronRight size={18} />
+                  </button>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '0.75rem 1.25rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} 
+                    onClick={onBack}
+                    title="提前結束並回到 NickPocketEdu"
+                  >
+                    <ArrowLeft size={16} /> 返回
+                  </button>
+                </div>
+              ) : activity.questions.length > 1 && currentQIndex === activity.questions.length - 1 ? (
+                /* Multi-question Survey finished */
+                <button 
+                  className="btn btn-success" 
+                  style={{ 
+                    padding: '0.75rem 1.5rem', 
+                    fontSize: '0.95rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                  }} 
+                  onClick={onBack}
+                  title="問卷全數完成，返回 NickPocketEdu"
+                >
+                  <CheckCircle2 size={18} /> 完成問卷調查 (Finish Survey)
+                </button>
+              ) : (
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: '0.75rem 1.5rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
+                  onClick={onBack}
+                  title="結束本題並回到 NickPocketEdu"
+                >
+                  <ArrowLeft size={16} /> 返回 NickPocketEdu
+                </button>
+              )}
               </div>
             </div>
 
@@ -1423,13 +1470,73 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
             <div className="grid-2" style={{ flex: 1, alignItems: 'start', gap: '2rem' }}>
               {/* Left Column: Visual Charts / Stats */}
               <div>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Live Graph</h3>
-                
-                {/* CCQ, Poll, or Game bar charts */}
+                {/* Visual Charts / Stats */}
                 {(currentQuestion.type === 'ccq' || currentQuestion.type === 'poll' || currentQuestion.type === 'game') && (() => {
                   const { stats, total } = getMultipleChoiceStats();
-                  const letters = ['A', 'B', 'C', 'D'];
+                  const letters = (currentQuestion.options && currentQuestion.options.length > 0)
+                    ? currentQuestion.options.map((_, i) => String.fromCharCode(65 + i))
+                    : ['A', 'B', 'C', 'D'];
                   
+                  // If question is Poll / Survey, show Donut PieChart by default with a toggle!
+                  if (currentQuestion.type === 'poll') {
+                    return (
+                      <div>
+                        {/* View Mode Toggle for Poll / Survey */}
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', alignItems: 'center' }}>
+                          <button 
+                            className={`btn ${pollViewMode === 'pie' ? 'btn-primary' : 'btn-secondary'}`}
+                            style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                            onClick={() => setPollViewMode('pie')}
+                          >
+                            🥧 圓餅圖 (Pie Chart)
+                          </button>
+                          <button 
+                            className={`btn ${pollViewMode === 'bar' ? 'btn-primary' : 'btn-secondary'}`}
+                            style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                            onClick={() => setPollViewMode('bar')}
+                          >
+                            📊 長條圖 (Bar Chart)
+                          </button>
+                        </div>
+
+                        {pollViewMode === 'pie' ? (
+                          <div className="glass-card animate-slide-up" style={{ padding: '1.25rem', borderRadius: '14px', background: 'rgba(255, 255, 255, 0.02)' }}>
+                            <PieChart stats={stats} options={currentQuestion.options} total={total} />
+                          </div>
+                        ) : (
+                          <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {letters.map((letter, idx) => {
+                              const count = stats[letter] || 0;
+                              const percentage = total > 0 ? (count / total) * 100 : 0;
+                              
+                              return (
+                                <div key={letter} className="chart-bar-container">
+                                  <div className="chart-bar-label">
+                                    <span>
+                                      <strong>Option {letter}</strong>
+                                      {currentQuestion.options && currentQuestion.options[idx] && `: ${currentQuestion.options[idx]}`}
+                                    </span>
+                                    <span>{count} 票 ({percentage.toFixed(0)}%)</span>
+                                  </div>
+                                  <div className="chart-bar-track">
+                                    <div 
+                                      className="chart-bar-fill" 
+                                      style={{ 
+                                        width: `${percentage}%`,
+                                        background: 'linear-gradient(90deg, var(--color-indigo) 0%, var(--color-violet) 100%)'
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // CCQ or Game bar charts
                   return (
                     <div>
                       {letters.map((letter, idx) => {

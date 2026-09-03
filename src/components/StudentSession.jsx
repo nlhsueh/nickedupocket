@@ -6,6 +6,7 @@ import {
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
 import { getActivityShortTitle } from '../utils/formatters';
+import PieChart from './PieChart';
 
 const FLORA_FAUNA_EMOJIS = [
   // Animals (可愛動物)
@@ -1045,8 +1046,20 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                     </span>
                   </div>
 
-                  {/* Multiple Choice / CCQ / Poll / Game Live Chart */}
-                  {(activeQuestion.type === 'ccq' || activeQuestion.type === 'poll' || activeQuestion.type === 'game') && (
+                  {/* Poll / Survey Donut Pie Chart for Student Mobile */}
+                  {activeQuestion.type === 'poll' && (
+                    <div className="glass-card animate-slide-up" style={{ padding: '1rem', marginBottom: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px' }}>
+                      <PieChart 
+                        stats={liveStats.stats} 
+                        options={activeQuestion.options} 
+                        total={liveStats.totalSubmissions} 
+                        isCompact={true} 
+                      />
+                    </div>
+                  )}
+
+                  {/* Multiple Choice / CCQ / Game Live Chart */}
+                  {(activeQuestion.type === 'ccq' || activeQuestion.type === 'game') && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.5rem' }}>
                       {(activeQuestion.options || []).map((opt, idx) => {
                         const letter = String.fromCharCode(65 + idx);

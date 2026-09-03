@@ -67,13 +67,13 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       } else {
         // Legacy Support: Treating "### [Type] Question" or "### 🙋 CCQ: Question" as an activity containing a single question
         const cleanHeading = rawText.replace(/^[🙋🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
-        const typeMatch = cleanHeading.match(/^\[?(CCQ|Poll|Ordering|Game|Short|QA|WordCloud|Pair|Discussion|PairDiscussion|Pair-Discussion|投票|搶答|文字雲|排序|簡答|觀念檢核|雙人討論|分組討論|小組討論|討論|討論題)\]?[:：\s]?(.*)/i);
+        const typeMatch = cleanHeading.match(/^\[?(CCQ|Poll|Survey|Ordering|Game|Short|QA|WordCloud|Pair|Discussion|PairDiscussion|Pair-Discussion|投票|問卷|問卷調查|搶答|文字雲|排序|簡答|觀念檢核|雙人討論|分組討論|小組討論|討論|討論題)\]?[:：\s]?(.*)/i);
         
         if (typeMatch) {
           const rawType = typeMatch[1].toLowerCase();
           let qType = rawType;
           if (['qa', 'short', '簡答', '簡答題'].includes(rawType)) qType = 'short';
-          else if (['poll', '投票'].includes(rawType)) qType = 'poll';
+          else if (['poll', 'survey', '投票', '問卷', '問卷調查'].includes(rawType)) qType = 'poll';
           else if (['game', '搶答', '搶答題'].includes(rawType)) qType = 'game';
           else if (['wordcloud', '文字雲'].includes(rawType)) qType = 'wordcloud';
           else if (['ordering', '排序', '排序題'].includes(rawType)) qType = 'ordering';
@@ -134,13 +134,13 @@ export function parseMarkdownCourse(mdText, fileId = '') {
 
       const qTextRaw = line.substring(5).trim();
       const cleanLine = qTextRaw.replace(/^[🙋🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
-      const typeMatch = cleanLine.match(/^\[?(CCQ|Poll|Ordering|Game|Short|QA|WordCloud|Pair|Discussion|PairDiscussion|Pair-Discussion|投票|搶答|文字雲|排序|簡答|觀念檢核|雙人討論|分組討論|小組討論|討論|討論題)\]?[:：\s]?(.*)/i);
+      const typeMatch = cleanLine.match(/^\[?(CCQ|Poll|Survey|Ordering|Game|Short|QA|WordCloud|Pair|Discussion|PairDiscussion|Pair-Discussion|投票|問卷|問卷調查|搶答|文字雲|排序|簡答|觀念檢核|雙人討論|分組討論|小組討論|討論|討論題)\]?[:：\s]?(.*)/i);
 
       if (typeMatch) {
         const rawType = typeMatch[1].toLowerCase();
         let qType = rawType;
         if (['qa', 'short', '簡答', '簡答題'].includes(rawType)) qType = 'short';
-        else if (['poll', '投票'].includes(rawType)) qType = 'poll';
+        else if (['poll', 'survey', '投票', '問卷', '問卷調查'].includes(rawType)) qType = 'poll';
         else if (['game', '搶答', '搶答題'].includes(rawType)) qType = 'game';
         else if (['wordcloud', '文字雲'].includes(rawType)) qType = 'wordcloud';
         else if (['ordering', '排序', '排序題'].includes(rawType)) qType = 'ordering';

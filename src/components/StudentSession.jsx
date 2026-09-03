@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wifi, WifiOff, Hourglass, CheckCircle2, AlertCircle, 
-  ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud, GripVertical, Users, MessageSquare
+  ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud, GripVertical, Users, MessageSquare,
+  Award, Trophy, Star
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
@@ -135,6 +136,10 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
 
   // Game Leaderboard & Result data received on stop
   const [gameResultData, setGameResultData] = useState(null);
+  const [finalGameSummary, setFinalGameSummary] = useState(null);
+  const [studentAnswersMap, setStudentAnswersMap] = useState({});
+  const [allQuestionsReview, setAllQuestionsReview] = useState(null);
+  const [allAnswersByQuestion, setAllAnswersByQuestion] = useState({});
 
   // Time tracker for game timer display
   const [timeLeft, setTimeLeft] = useState(0);
@@ -302,6 +307,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       }
       if (payload.gameData) {
         setGameResultData(payload.gameData);
+        setFinalGameSummary(payload.gameData);
       }
       if (payload.stats || payload.wordCloud || payload.shortAnswers || payload.pairDiscussions) {
         setLiveStats(prev => ({
@@ -337,6 +343,16 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     else if (payload.event === 'session_finished') {
       setRoomState('finished');
       setActiveQuestion(null);
+      if (payload.gameData) {
+        setFinalGameSummary(payload.gameData);
+        setGameResultData(payload.gameData);
+      }
+      if (payload.allQuestions) {
+        setAllQuestionsReview(payload.allQuestions);
+      }
+      if (payload.allAnswersByQuestion) {
+        setAllAnswersByQuestion(payload.allAnswersByQuestion);
+      }
     }
   };
 
@@ -370,6 +386,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             questionIndex: activeQuestion.index
           });
           setHasSubmitted(true);
+          if (activeQuestion.index !== undefined) {
+            setStudentAnswersMap(prev => ({ ...prev, [activeQuestion.index]: { summary: pairSummary.trim(), partnerName: partnerName.trim() } }));
+          }
         }
       } else if ((activeQuestion.type === 'short' || activeQuestion.type === 'wordcloud')) {
         if (textAnswer.trim()) {
@@ -381,6 +400,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             questionIndex: activeQuestion.index
           });
           setHasSubmitted(true);
+          if (activeQuestion.index !== undefined) {
+            setStudentAnswersMap(prev => ({ ...prev, [activeQuestion.index]: textAnswer.trim() }));
+          }
         }
       } else {
         if (selectedOption) {
@@ -392,6 +414,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             questionIndex: activeQuestion.index
           });
           setHasSubmitted(true);
+          if (activeQuestion.index !== undefined) {
+            setStudentAnswersMap(prev => ({ ...prev, [activeQuestion.index]: selectedOption }));
+          }
         }
       }
     } catch (e) {
@@ -430,6 +455,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   const selectOptionValue = (letter) => {
     if (hasSubmitted || roomState !== 'answering') return;
     setSelectedOption(letter);
+    if (activeQuestion && activeQuestion.index !== undefined) {
+      setStudentAnswersMap(prev => ({ ...prev, [activeQuestion.index]: letter }));
+    }
   };
 
   const submitChoiceValue = () => {
@@ -449,6 +477,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
 
       if (success) {
         setHasSubmitted(true);
+        if (activeQuestion && activeQuestion.index !== undefined) {
+          setStudentAnswersMap(prev => ({ ...prev, [activeQuestion.index]: selectedOption }));
+        }
       } else {
         alert('Failed to send answer. Check your connection.');
       }
@@ -2170,22 +2201,242 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
         )}
 
         {/* FINISHED SESSION STATE */}
-        {roomState === 'finished' && (
-          <div className="glass-card flex-center animate-pop" style={{ flex: 1, flexDirection: 'column', textAlign: 'center', padding: '3rem 1.5rem' }}>
-            <div style={{ fontSize: '4.5rem', marginBottom: '1rem' }}>🎓</div>
-            <h1 className="text-gradient" style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>
-              {lang === 'zh' ? '課堂活動圓滿結束' : 'Activity Finished'}
-            </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '280px', marginBottom: '2rem', lineHeight: '1.5' }}>
-              {lang === 'zh' 
-                ? '恭喜完成本次課堂互動作答！感謝您的參與。' 
-                : 'Congratulations on completing the interactive quiz/game! Thank you for participating.'}
-            </p>
-            <button className="btn btn-secondary" onClick={onLeave} style={{ width: '100%', padding: '1rem' }}>
-              {lang === 'zh' ? '離開活動' : 'Exit Activity'}
-            </button>
-          </div>
-        )}
+        {roomState === 'finished' && (() => {
+          const isGameSession = Boolean(
+            (activity?.questions && activity.questions.some(q => q.type === 'game')) || 
+            (allQuestionsReview && allQuestionsReview.some(q => q.type === 'game')) ||
+            finalGameSummary || 
+            gameResultData
+          );
+
+          if (!isGameSession) {
+            // Standard non-game finished view
+            return (
+              <div className="glass-card flex-center animate-pop" style={{ flex: 1, flexDirection: 'column', textAlign: 'center', padding: '3rem 1.5rem' }}>
+                <div style={{ fontSize: '4.5rem', marginBottom: '1rem' }}>🎓</div>
+                <h1 className="text-gradient" style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>
+                  {lang === 'zh' ? '課堂活動圓滿結束' : 'Activity Finished'}
+                </h1>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '280px', marginBottom: '2rem', lineHeight: '1.5' }}>
+                  {lang === 'zh' 
+                    ? '恭喜完成本次課堂互動作答！感謝您的參與。' 
+                    : 'Congratulations on completing the interactive quiz! Thank you for participating.'}
+                </p>
+                <button className="btn btn-secondary" onClick={onLeave} style={{ width: '100%', padding: '1rem' }}>
+                  {lang === 'zh' ? '離開活動' : 'Exit Activity'}
+                </button>
+              </div>
+            );
+          }
+
+          // GAME Finished View: Rank, score, answer review and standard answers
+          const leaderboard = finalGameSummary?.leaderboard || gameResultData?.leaderboard || [];
+          const myData = leaderboard.find(p => p.name === nickname);
+          const myRank = leaderboard.findIndex(p => p.name === nickname) + 1;
+          const myScore = myData?.score || 0;
+          const totalPlayers = leaderboard.length || 1;
+
+          const rawQuestions = allQuestionsReview || activity?.questions || [];
+          const questionsList = rawQuestions.filter(q => q.type === 'game' || q.correctAnswer);
+
+          let totalCorrect = 0;
+          questionsList.forEach((q, idx) => {
+            const actualQIdx = q.index !== undefined ? q.index : idx;
+            const myAns = allAnswersByQuestion?.[actualQIdx]?.[nickname] || studentAnswersMap[actualQIdx];
+            if (myAns && q.correctAnswer && myAns === q.correctAnswer) {
+              totalCorrect++;
+            }
+          });
+
+          return (
+            <div className="animate-fade-in" style={{ width: '100%' }}>
+              {/* Honors / Rank Badge Card */}
+              <div 
+                className="glass-card animate-pop" 
+                style={{
+                  padding: '1.5rem 1.25rem',
+                  marginBottom: '1.25rem',
+                  borderRadius: '16px',
+                  textAlign: 'center',
+                  background: myRank === 1 
+                    ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.4) 100%)'
+                    : myRank === 2
+                      ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.2) 0%, rgba(100, 116, 139, 0.35) 100%)'
+                      : myRank === 3
+                        ? 'linear-gradient(135deg, rgba(180, 83, 9, 0.2) 0%, rgba(146, 64, 14, 0.32) 100%)'
+                        : 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.18) 100%)',
+                  border: myRank === 1 
+                    ? '2px solid #f59e0b'
+                    : myRank === 2
+                      ? '2px solid #94a3b8'
+                      : myRank === 3
+                        ? '2px solid #b45309'
+                        : '1.5px solid var(--border-light)',
+                  boxShadow: myRank === 1 
+                    ? '0 0 25px rgba(245, 158, 11, 0.35)'
+                    : myRank <= 3
+                      ? '0 0 16px rgba(255, 255, 255, 0.1)'
+                      : 'none'
+                }}
+              >
+                <div style={{ fontSize: '3rem', marginBottom: '0.35rem' }}>
+                  {myRank === 1 ? '👑 🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🏆'}
+                </div>
+                <h2 style={{ 
+                  fontSize: '1.35rem', 
+                  fontWeight: 800, 
+                  margin: '0 0 0.35rem 0',
+                  color: myRank === 1 ? '#fbbf24' : myRank === 2 ? '#f1f5f9' : myRank === 3 ? '#fdba74' : 'var(--text-primary)'
+                }}>
+                  {myRank === 1 
+                    ? (lang === 'zh' ? '🎉 恭喜榮獲全班第 1 名！' : '🎉 Champion! Rank #1')
+                    : myRank === 2
+                      ? (lang === 'zh' ? '🥈 恭喜榮獲全班第 2 名！' : '🥈 2nd Place!')
+                      : myRank === 3
+                        ? (lang === 'zh' ? '🥉 恭喜榮獲全班第 3 名！' : '🥉 3rd Place!')
+                        : (lang === 'zh' ? `第 ${myRank > 0 ? myRank : '-'} 名 (共 ${totalPlayers} 位同學)` : `Rank #${myRank > 0 ? myRank : '-'} of ${totalPlayers}`)}
+                </h2>
+                
+                <div style={{ 
+                  fontSize: '1.85rem', 
+                  fontWeight: 900, 
+                  color: '#fbbf24', 
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.5px',
+                  margin: '0.35rem 0 0.75rem 0'
+                }}>
+                  {myScore.toLocaleString()} <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-secondary)' }}>pts</span>
+                </div>
+
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  gap: '1rem',
+                  paddingTop: '0.65rem',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                  fontSize: '0.88rem'
+                }}>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>{lang === 'zh' ? '答對題數：' : 'Correct: '}</span>
+                    <strong style={{ color: '#10b981' }}>{totalCorrect}</strong> / {questionsList.length}
+                  </div>
+                  <div style={{ color: 'var(--border-light)' }}>|</div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>{lang === 'zh' ? '答對率：' : 'Accuracy: '}</span>
+                    <strong style={{ color: '#6366f1' }}>
+                      {questionsList.length > 0 ? Math.round((totalCorrect / questionsList.length) * 100) : 0}%
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Question Review & Standard Answers */}
+              <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
+                <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
+                  <h3 style={{ fontSize: '1.05rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    📋 {lang === 'zh' ? '題目作答回顧與標準答案' : 'Question Review & Correct Answers'}
+                  </h3>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  {questionsList.map((q, idx) => {
+                    const actualQIdx = q.index !== undefined ? q.index : idx;
+                    const myAns = allAnswersByQuestion?.[actualQIdx]?.[nickname] || studentAnswersMap[actualQIdx];
+                    const isCorrect = Boolean(myAns && q.correctAnswer && myAns === q.correctAnswer);
+                    const hasAnswered = Boolean(myAns);
+
+                    const correctOptText = q.options && q.correctAnswer 
+                      ? q.options[q.correctAnswer.charCodeAt(0) - 65] 
+                      : '';
+                    const myOptText = hasAnswered && q.options 
+                      ? q.options[myAns.charCodeAt(0) - 65] 
+                      : '';
+
+                    return (
+                      <div 
+                        key={idx} 
+                        className="glass-card" 
+                        style={{ 
+                          padding: '1rem', 
+                          borderRadius: '12px',
+                          borderLeft: isCorrect 
+                            ? '4px solid #10b981' 
+                            : (hasAnswered ? '4px solid #ef4444' : '4px solid #94a3b8'),
+                          background: 'rgba(255, 255, 255, 0.02)'
+                        }}
+                      >
+                        <div className="flex-between" style={{ alignItems: 'flex-start', marginBottom: '0.5rem', gap: '0.5rem' }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                            {lang === 'zh' ? `第 ${idx + 1} 題` : `Q${idx + 1}`}
+                          </span>
+                          <span 
+                            className={`badge ${isCorrect ? 'badge-success' : (hasAnswered ? 'badge-danger' : 'badge-secondary')}`}
+                            style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem' }}
+                          >
+                            {isCorrect 
+                              ? (lang === 'zh' ? '答對 ✅' : 'Correct ✅')
+                              : (hasAnswered 
+                                  ? (lang === 'zh' ? '答錯 ❌' : 'Incorrect ❌')
+                                  : (lang === 'zh' ? '未作答 ⏱️' : "No Answer ⏱️"))}
+                          </span>
+                        </div>
+
+                        <p style={{ fontSize: '0.92rem', color: 'var(--text-primary)', margin: '0 0 0.75rem 0', lineHeight: '1.45' }}>
+                          <FormattedMarkdown text={q.questionText} />
+                        </p>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem' }}>
+                          {/* Student's answer */}
+                          <div style={{ 
+                            padding: '0.45rem 0.75rem', 
+                            borderRadius: '8px', 
+                            background: isCorrect 
+                              ? 'rgba(16, 185, 129, 0.08)' 
+                              : (hasAnswered ? 'rgba(239, 68, 68, 0.08)' : 'rgba(255, 255, 255, 0.03)'),
+                            border: isCorrect 
+                              ? '1px solid rgba(16, 185, 129, 0.2)' 
+                              : (hasAnswered ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid var(--border-light)')
+                          }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>
+                              {lang === 'zh' ? '你的作答：' : 'Your Answer: '}
+                            </span>
+                            <strong style={{ color: isCorrect ? '#10b981' : (hasAnswered ? '#ef4444' : 'var(--text-muted)') }}>
+                              {hasAnswered ? `${myAns} ${myOptText ? `- ${myOptText}` : ''}` : (lang === 'zh' ? '未在時間內作答' : 'No answer submitted')}
+                            </strong>
+                          </div>
+
+                          {/* Standard Correct Answer */}
+                          <div style={{ 
+                            padding: '0.45rem 0.75rem', 
+                            borderRadius: '8px', 
+                            background: 'rgba(16, 185, 129, 0.12)',
+                            border: '1px solid rgba(16, 185, 129, 0.35)'
+                          }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>
+                              {lang === 'zh' ? '標準答案：' : 'Correct Answer: '}
+                            </span>
+                            <strong style={{ color: '#10b981' }}>
+                              {q.correctAnswer} {correctOptText ? `- ${correctOptText}` : ''}
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Exit Activity Button */}
+              <button 
+                className="btn btn-secondary" 
+                onClick={onLeave} 
+                style={{ width: '100%', padding: '0.9rem', fontSize: '0.95rem' }}
+              >
+                {lang === 'zh' ? '離開活動' : 'Exit Activity'}
+              </button>
+            </div>
+          );
+        })()}
 
       </div>
 

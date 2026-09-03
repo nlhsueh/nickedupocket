@@ -106,6 +106,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   questionStartTimeRef.current = questionStartTime;
 
   const lastGameDataRef = useRef(null);
+  const allQuestionsAnswersRef = useRef({});
   
   const currentQuestion = activity.questions[currentQIndex];
   const studentUrl = `${window.location.origin}${window.location.pathname}#/student/${roomCode}`;
@@ -296,6 +297,16 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         return next;
       });
 
+      if (payload.questionIndex !== undefined) {
+        allQuestionsAnswersRef.current = {
+          ...allQuestionsAnswersRef.current,
+          [payload.questionIndex]: {
+            ...(allQuestionsAnswersRef.current[payload.questionIndex] || {}),
+            [payload.studentName]: payload.answer
+          }
+        };
+      }
+
       // Ensure submitting student is registered in joined students list
       setJoinedStudents(prev => {
         if (prev.includes(payload.studentName)) return prev;
@@ -337,7 +348,27 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         gameData: lastGameDataRef.current
       });
     } else if (status === 'finished') {
-      broadcastState({ event: 'session_finished' });
+      const sorted = getSortedScoreboard();
+      const finalGameData = {
+        scores: studentScoresRef.current,
+        leaderboard: sorted,
+        allQuestions: activity.questions.map((q, idx) => ({
+          index: idx,
+          type: q.type,
+          questionText: q.questionText,
+          description: q.description || '',
+          options: q.options || [],
+          correctAnswer: q.correctAnswer
+        })),
+        allAnswersByQuestion: allQuestionsAnswersRef.current
+      };
+      broadcastState({ 
+        event: 'session_finished',
+        gameData: finalGameData,
+        allQuestions: finalGameData.allQuestions,
+        allAnswersByQuestion: allQuestionsAnswersRef.current,
+        leaderboard: sorted
+      });
     }
   };
 
@@ -547,7 +578,29 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     } else {
       setSessionStatus('finished');
       sessionStatusRef.current = 'finished';
-      broadcastState({ event: 'session_finished' });
+
+      const sorted = getSortedScoreboard();
+      const finalGameData = {
+        scores: studentScoresRef.current,
+        leaderboard: sorted,
+        allQuestions: activity.questions.map((q, idx) => ({
+          index: idx,
+          type: q.type,
+          questionText: q.questionText,
+          description: q.description || '',
+          options: q.options || [],
+          correctAnswer: q.correctAnswer
+        })),
+        allAnswersByQuestion: allQuestionsAnswersRef.current
+      };
+
+      broadcastState({ 
+        event: 'session_finished',
+        gameData: finalGameData,
+        allQuestions: finalGameData.allQuestions,
+        allAnswersByQuestion: allQuestionsAnswersRef.current,
+        leaderboard: sorted
+      });
     }
   };
 
@@ -2931,73 +2984,187 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
           </div>
         )}
 
-        {/* COMPLETED SESSION / GAME LEADERBOARD PODIUM */}
+        {/* COMPLETED SESSION / GAME LEADERBOARD */}
         {sessionStatus === 'finished' && (
-          <div className="glass-card animate-slide-up flex-center" style={{ flex: 1, flexDirection: 'column', padding: '3rem', textAlign: 'center' }}>
-            <span className="badge badge-success" style={{ marginBottom: '1rem' }}>Finished</span>
-            <h1 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Activity Completed!</h1>
+          <div className="glass-card animate-slide-up flex-center" style={{ flex: 1, flexDirection: 'column', padding: '2.5rem 1.5rem', textAlign: 'center' }}>
+            <span className="badge badge-warning" style={{ marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.88rem', padding: '0.35rem 0.85rem' }}>
+              🏆 {lang === 'zh' ? '課堂活動圓滿結束' : 'Activity Completed'}
+            </span>
+            <h1 className="text-gradient" style={{ fontSize: '2.2rem', marginBottom: '0.4rem' }}>
+              {activity.questions.some(q => q.type === 'game') 
+                ? (lang === 'zh' ? '🏆 榮譽排行榜 (Final Standings)' : '🏆 Hall of Fame')
+                : (lang === 'zh' ? '課堂活動總結' : 'Session Summary')}
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem' }}>
+              {activity.questions.some(q => q.type === 'game')
+                ? (lang === 'zh' ? '全體同學作答總積分揭曉，恭喜獲獎同學！' : 'Final leaderboard rankings across all tournament rounds!')
+                : (lang === 'zh' ? '感謝全班同學的熱情參與。' : 'Thank you everyone for participating!')}
+            </p>
             
             {activity.questions.some(q => q.type === 'game') ? (
-              /* Display 3D Leaderboard Podium for Games */
-              <div style={{ width: '100%', maxWidth: '600px' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>CS Trivia Champions:</h3>
-                
+              /* Top-to-bottom leaderboard list with Top 3 celebrated */
+              <div style={{ width: '100%', maxWidth: '640px', textAlign: 'left' }}>
                 {(() => {
                   const sorted = getSortedScoreboard();
                   const gold = sorted[0];
                   const silver = sorted[1];
                   const bronze = sorted[2];
+                  const others = sorted.slice(3);
 
                   return (
-                    <div>
-                      <div className="podium-container">
-                        {/* 2nd Place */}
-                        {silver && (
-                          <div className="podium-pillar podium-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                            <div className="podium-avatar">🥈</div>
-                            <div className="podium-rank">2</div>
-                            <div className="podium-name">{silver.name}</div>
-                            <div className="podium-score">{silver.score} pts</div>
-                          </div>
-                        )}
-
-                        {/* 1st Place */}
-                        {gold && (
-                          <div className="podium-pillar podium-1 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-                            <div className="podium-avatar">👑 🥇</div>
-                            <div className="podium-rank">1</div>
-                            <div className="podium-name">{gold.name}</div>
-                            <div className="podium-score">{gold.score} pts</div>
-                          </div>
-                        )}
-
-                        {/* 3rd Place */}
-                        {bronze && (
-                          <div className="podium-pillar podium-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                            <div className="podium-avatar">🥉</div>
-                            <div className="podium-rank">3</div>
-                            <div className="podium-name">{bronze.name}</div>
-                            <div className="podium-score">{bronze.score} pts</div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Display runners up */}
-                      {sorted.length > 3 && (
-                        <div className="glass-card" style={{ width: '100%', marginTop: '1.5rem', padding: '1rem' }}>
-                          <h4 style={{ textAlign: 'left', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Runners Up:</h4>
-                          {sorted.slice(3, 7).map((p, index) => (
-                            <div key={index} className="flex-between" style={{ padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                              <span><strong>#{index + 4}</strong> {p.name}</span>
-                              <strong>{p.score} pts</strong>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      {/* 1st Place - Champion */}
+                      {gold && (
+                        <div 
+                          className="glass-card animate-pop" 
+                          style={{ 
+                            padding: '1.25rem 1.5rem', 
+                            borderRadius: '16px',
+                            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.28) 0%, rgba(217, 119, 6, 0.45) 100%)',
+                            border: '2px solid #f59e0b',
+                            boxShadow: '0 0 35px rgba(245, 158, 11, 0.4)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '0.75rem'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{ fontSize: '2.5rem' }}>👑 🥇</div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span className="badge badge-warning" style={{ fontWeight: 900, fontSize: '0.82rem', padding: '0.2rem 0.55rem' }}>
+                                  {lang === 'zh' ? '冠軍 1st' : 'Champion'}
+                                </span>
+                                <span style={{ fontSize: '0.85rem', color: '#fef08a' }}>✨ 拔得頭籌</span>
+                              </div>
+                              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginTop: '0.2rem' }}>
+                                {gold.name}
+                              </div>
                             </div>
-                          ))}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#fbbf24', fontFamily: 'monospace' }}>
+                              {gold.score.toLocaleString()} <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-secondary)' }}>pts</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 2nd Place - Silver */}
+                      {silver && (
+                        <div 
+                          className="glass-card animate-slide-up" 
+                          style={{ 
+                            padding: '1rem 1.4rem', 
+                            borderRadius: '14px',
+                            background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.22) 0%, rgba(100, 116, 139, 0.35) 100%)',
+                            border: '1.8px solid #94a3b8',
+                            boxShadow: '0 0 20px rgba(148, 163, 184, 0.25)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '0.75rem'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{ fontSize: '2.2rem' }}>🥈</div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span className="badge" style={{ background: 'rgba(148, 163, 184, 0.3)', color: '#f1f5f9', fontWeight: 800, fontSize: '0.78rem', padding: '0.2rem 0.5rem' }}>
+                                  {lang === 'zh' ? '亞軍 2nd' : '2nd Place'}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>
+                                {silver.name}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '1.55rem', fontWeight: 900, color: '#e2e8f0', fontFamily: 'monospace' }}>
+                              {silver.score.toLocaleString()} <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-secondary)' }}>pts</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 3rd Place - Bronze */}
+                      {bronze && (
+                        <div 
+                          className="glass-card animate-slide-up" 
+                          style={{ 
+                            padding: '1rem 1.4rem', 
+                            borderRadius: '14px',
+                            background: 'linear-gradient(135deg, rgba(180, 83, 9, 0.2) 0%, rgba(146, 64, 14, 0.32) 100%)',
+                            border: '1.8px solid #b45309',
+                            boxShadow: '0 0 20px rgba(180, 83, 9, 0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '0.75rem'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{ fontSize: '2.2rem' }}>🥉</div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span className="badge" style={{ background: 'rgba(180, 83, 9, 0.3)', color: '#fed7aa', fontWeight: 800, fontSize: '0.78rem', padding: '0.2rem 0.5rem' }}>
+                                  {lang === 'zh' ? '季軍 3rd' : '3rd Place'}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>
+                                {bronze.name}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '1.55rem', fontWeight: 900, color: '#fdba74', fontFamily: 'monospace' }}>
+                              {bronze.score.toLocaleString()} <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-secondary)' }}>pts</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 4th and beyond (Runners up) */}
+                      {others.length > 0 && (
+                        <div className="glass-card" style={{ padding: '0.85rem 1.25rem', marginTop: '0.5rem', borderRadius: '12px' }}>
+                          <h4 style={{ margin: '0 0 0.6rem 0', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                            {lang === 'zh' ? '其他名次：' : 'Other Standings:'}
+                          </h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                            {others.map((p, idx) => (
+                              <div 
+                                key={idx} 
+                                className="flex-between" 
+                                style={{ 
+                                  padding: '0.45rem 0.65rem', 
+                                  borderRadius: '8px',
+                                  background: 'rgba(255, 255, 255, 0.02)',
+                                  border: '1px solid var(--border-light)'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                  <span className="badge badge-secondary" style={{ width: '28px', height: '22px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.78rem' }}>
+                                    #{idx + 4}
+                                  </span>
+                                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.92rem' }}>
+                                    {p.name}
+                                  </span>
+                                </div>
+                                <span style={{ fontWeight: 800, color: '#fbbf24', fontFamily: 'monospace', fontSize: '0.95rem' }}>
+                                  {p.score.toLocaleString()} pts
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
                   );
                 })()}
-
               </div>
             ) : (
               /* Display review for standard CCQ/Poll/Ordering */

@@ -40,7 +40,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
   // Multi-question Survey state & detection
   const isMultiQuestionSurvey = activity.questions && activity.questions.length > 1 && (
-    activity.questions.every(q => q.type === 'poll') ||
+    activity.questions.every(q => q.type === 'poll' || q.type === 'short') ||
     /問卷|survey/i.test(activity.title)
   );
   const [surveySubmissions, setSurveySubmissions] = useState({}); // { [studentName]: { answers: { [qIdx]: 'A' }, timestamp } }
@@ -832,12 +832,28 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         simStudents.forEach((st, sIdx) => {
           const answersObj = {};
           activity.questions.forEach((qItem, qIdx) => {
-            const opts = (qItem.options && qItem.options.length > 0)
-              ? qItem.options.map((_, i) => String.fromCharCode(65 + i))
-              : ['A', 'B', 'C', 'D'];
-            // Distribute answers nicely across 10 students
-            const chosen = opts[(sIdx + qIdx) % opts.length];
-            answersObj[qIdx] = chosen;
+            if (!qItem.options || qItem.options.length === 0 || qItem.type === 'short') {
+              const feedbackSamples = [
+                '希望能掌握 Python 核心語法基礎，並能獨立完成爬蟲與資料分析專題！',
+                '期待老師多提供實作範例拆解，並分享常見 Bug 的排錯與除錯心法。',
+                '希望透過這門課建立扎實的程式邏輯，未來能順利銜接人工智慧與機器學習應用。',
+                '課程進度安排很清晰，期待每週作業能有詳細的參考解法與觀念補充。',
+                '希望能多學一些自動化處理 Excel 與批次檔案的實用 Python 技巧！',
+                '期待期末能有小專案的實作演練，整合課堂所學的各項模組。',
+                '目前學習步調非常適合零基礎，希望能多推薦優質的延伸閱讀與練習平台。',
+                '對 Web API 串接與資料庫應用特別感興趣，希望能有相關範例展示。',
+                '希望線上非同步課程能定期安排線上答疑或討論時間，能及時解惑。',
+                '很期待這門課！希望能順利取得學分並真正具備寫程式解決問題的能力。'
+              ];
+              answersObj[qIdx] = feedbackSamples[sIdx % feedbackSamples.length];
+            } else {
+              const opts = (qItem.options && qItem.options.length > 0)
+                ? qItem.options.map((_, i) => String.fromCharCode(65 + i))
+                : ['A', 'B', 'C', 'D'];
+              // Distribute answers nicely across 10 students
+              const chosen = opts[(sIdx + qIdx) % opts.length];
+              answersObj[qIdx] = chosen;
+            }
           });
           mockSurveySubs[st] = {
             answers: answersObj,
@@ -1711,7 +1727,25 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                         <span className="badge badge-indigo" style={{ marginRight: '0.5rem' }}>第 {qIdx + 1} 題</span>
                         {q.questionText}
                       </div>
-                      <PieChart stats={stats} options={q.options} total={total} isCompact={true} />
+                      {(!q.options || q.options.length === 0 || q.type === 'short') ? (
+                        <div style={{ maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <div style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 600, marginBottom: '0.2rem' }}>
+                            💬 學生開放回饋內容（共 {Object.values(surveySubmissions).filter(s => s.answers?.[qIdx] && String(s.answers[qIdx]).trim()).length} 則）
+                          </div>
+                          {Object.entries(surveySubmissions).map(([stName, sub], sIdx) => {
+                            const text = sub.answers?.[qIdx];
+                            if (!text || !String(text).trim()) return null;
+                            return (
+                              <div key={sIdx} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <span style={{ fontSize: '0.78rem', color: 'var(--color-indigo)', fontWeight: 600, marginRight: '0.4rem' }}>{stName}:</span>
+                                <span style={{ fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>{text}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <PieChart stats={stats} options={q.options} total={total} isCompact={true} />
+                      )}
                     </div>
                   );
                 })}
@@ -1737,48 +1771,81 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                       <FormattedMarkdown text={q.questionText} />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
-                      <button 
-                        className={`btn ${pollViewMode === 'pie' ? 'btn-primary' : 'btn-secondary'}`}
-                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
-                        onClick={() => setPollViewMode('pie')}
-                      >
-                        🥧 圓餅圖 (Pie Chart)
-                      </button>
-                      <button 
-                        className={`btn ${pollViewMode === 'bar' ? 'btn-primary' : 'btn-secondary'}`}
-                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
-                        onClick={() => setPollViewMode('bar')}
-                      >
-                        📊 長條圖 (Bar Chart)
-                      </button>
-                    </div>
+                    {(!q.options || q.options.length === 0 || q.type === 'short') ? (
+                      <div className="glass-card" style={{ padding: '1.5rem', borderRadius: '14px', background: 'rgba(255,255,255,0.02)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.75rem' }}>
+                          <span style={{ fontSize: '1.05rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            💬 全班開放式回饋成果牆
+                          </span>
+                          <span className="badge badge-purple">
+                            共 {Object.values(surveySubmissions).filter(s => s.answers?.[surveyViewQIndex] && String(s.answers[surveyViewQIndex]).trim()).length} 位同學填寫
+                          </span>
+                        </div>
 
-                    {pollViewMode === 'pie' ? (
-                      <div className="glass-card" style={{ padding: '2rem', borderRadius: '14px', background: 'rgba(255,255,255,0.02)', maxWidth: '750px' }}>
-                        <PieChart stats={stats} options={q.options} total={total} />
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+                          {Object.entries(surveySubmissions).map(([stName, sub], sIdx) => {
+                            const text = sub.answers?.[surveyViewQIndex];
+                            if (!text || !String(text).trim()) return null;
+                            return (
+                              <div key={sIdx} className="glass-card animate-pop" style={{ padding: '1rem 1.25rem', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.82rem', color: 'var(--color-indigo)', fontWeight: 600 }}>
+                                  <span>{stName}</span>
+                                  <span style={{ color: 'var(--text-muted)' }}>#{sIdx + 1}</span>
+                                </div>
+                                <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.55', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+                                  <FormattedMarkdown text={text} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     ) : (
-                      <div className="glass-card" style={{ padding: '1.5rem', maxWidth: '650px', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                        {(q.options || []).map((opt, optIdx) => {
-                          const letter = String.fromCharCode(65 + optIdx);
-                          const count = stats[letter] || 0;
-                          const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                          return (
-                            <div key={letter} className="chart-bar-container">
-                              <div className="chart-bar-label">
-                                <span style={{ wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.4' }}>
-                                  {String(opt || letter).replace(/^(Option\s+[A-Z][:.\-\s]*|[A-Z][:.\-]\s*)/i, '').trim() || opt}
-                                </span>
-                                <span style={{ flexShrink: 0, marginLeft: '0.5rem' }}>{count} 票 ({pct}%)</span>
-                              </div>
-                              <div className="chart-bar-track">
-                                <div className="chart-bar-fill" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, var(--color-indigo) 0%, var(--color-violet) 100%)' }} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      <>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                          <button 
+                            className={`btn ${pollViewMode === 'pie' ? 'btn-primary' : 'btn-secondary'}`}
+                            style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
+                            onClick={() => setPollViewMode('pie')}
+                          >
+                            🥧 圓餅圖 (Pie Chart)
+                          </button>
+                          <button 
+                            className={`btn ${pollViewMode === 'bar' ? 'btn-primary' : 'btn-secondary'}`}
+                            style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
+                            onClick={() => setPollViewMode('bar')}
+                          >
+                            📊 長條圖 (Bar Chart)
+                          </button>
+                        </div>
+
+                        {pollViewMode === 'pie' ? (
+                          <div className="glass-card" style={{ padding: '2rem', borderRadius: '14px', background: 'rgba(255,255,255,0.02)', maxWidth: '750px' }}>
+                            <PieChart stats={stats} options={q.options} total={total} />
+                          </div>
+                        ) : (
+                          <div className="glass-card" style={{ padding: '1.5rem', maxWidth: '650px', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                            {(q.options || []).map((opt, optIdx) => {
+                              const letter = String.fromCharCode(65 + optIdx);
+                              const count = stats[letter] || 0;
+                              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                              return (
+                                <div key={letter} className="chart-bar-container">
+                                  <div className="chart-bar-label">
+                                    <span style={{ wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.4' }}>
+                                      {String(opt || letter).replace(/^(Option\s+[A-Z][:.\-\s]*|[A-Z][:.\-]\s*)/i, '').trim() || opt}
+                                    </span>
+                                    <span style={{ flexShrink: 0, marginLeft: '0.5rem' }}>{count} 票 ({pct}%)</span>
+                                  </div>
+                                  <div className="chart-bar-track">
+                                    <div className="chart-bar-fill" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, var(--color-indigo) 0%, var(--color-violet) 100%)' }} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 );
@@ -1814,7 +1881,22 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                     <h3 style={{ fontSize: '1.25rem', color: '#0f172a', margin: '0 0 1.25rem 0', lineHeight: '1.4' }}>
                       第 {qIdx + 1} 題：{q.questionText}
                     </h3>
-                    <PieChart stats={stats} options={q.options} total={total} />
+                    {(!q.options || q.options.length === 0 || q.type === 'short') ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        {Object.entries(surveySubmissions).map(([stName, sub], sIdx) => {
+                          const text = sub.answers?.[qIdx];
+                          if (!text || !String(text).trim()) return null;
+                          return (
+                            <div key={sIdx} style={{ border: '1px solid #cbd5e1', padding: '0.75rem 1rem', borderRadius: '8px', background: '#f8fafc' }}>
+                              <strong>{stName}：</strong>
+                              <span>{text}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <PieChart stats={stats} options={q.options} total={total} />
+                    )}
                   </div>
                 );
               })}

@@ -1029,72 +1029,110 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                         <FormattedMarkdown text={q.questionText} />
                       </div>
                       
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {(q.options || []).map((opt, optIdx) => {
-                          const letter = String.fromCharCode(65 + optIdx);
-                          const isSelected = surveyAnswers[qIdx] === letter;
-                          return (
-                            <div
-                              key={letter}
-                              onClick={() => setSurveyAnswers(prev => ({ ...prev, [qIdx]: letter }))}
-                              className="glass-card animate-pop"
-                              style={{
-                                padding: '0.65rem 0.9rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.75rem',
-                                textAlign: 'left',
-                                background: isSelected ? 'linear-gradient(90deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.35) 100%)' : 'rgba(255,255,255,0.02)',
-                                border: isSelected ? '1.5px solid var(--color-indigo)' : '1px solid rgba(255,255,255,0.06)',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s ease'
-                              }}
-                            >
-                              <span 
-                                style={{ 
-                                  width: '24px', 
-                                  height: '24px', 
-                                  borderRadius: '50%', 
-                                  background: isSelected ? 'var(--color-indigo)' : 'rgba(255,255,255,0.08)',
-                                  color: isSelected ? '#fff' : 'var(--text-secondary)',
+                      {(!q.options || q.options.length === 0 || q.type === 'short') ? (
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <textarea
+                            className="input-field"
+                            style={{
+                              width: '100%',
+                              minHeight: '100px',
+                              padding: '0.85rem',
+                              fontSize: '0.95rem',
+                              fontFamily: 'inherit',
+                              borderRadius: '10px',
+                              background: 'rgba(255, 255, 255, 0.02)',
+                              border: '1px solid var(--border-light)',
+                              color: 'var(--text-primary)',
+                              lineHeight: '1.5',
+                              resize: 'vertical'
+                            }}
+                            value={surveyAnswers[qIdx] || ''}
+                            onChange={(e) => setSurveyAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
+                            placeholder="請在此輸入你的想法、期許或建議（選填）..."
+                            maxLength={300}
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+                            <span>✍️ 開放問答題（選填）</span>
+                            <span>{(surveyAnswers[qIdx] || '').length} / 300 字</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {(q.options || []).map((opt, optIdx) => {
+                            const letter = String.fromCharCode(65 + optIdx);
+                            const isSelected = surveyAnswers[qIdx] === letter;
+                            return (
+                              <div
+                                key={letter}
+                                onClick={() => setSurveyAnswers(prev => ({ ...prev, [qIdx]: letter }))}
+                                className="glass-card animate-pop"
+                                style={{
+                                  padding: '0.65rem 0.9rem',
                                   display: 'flex',
                                   alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontWeight: 700,
-                                  fontSize: '0.8rem',
-                                  flexShrink: 0
+                                  gap: '0.75rem',
+                                  textAlign: 'left',
+                                  background: isSelected ? 'linear-gradient(90deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.35) 100%)' : 'rgba(255,255,255,0.02)',
+                                  border: isSelected ? '1.5px solid var(--color-indigo)' : '1px solid rgba(255,255,255,0.06)',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease'
                                 }}
                               >
-                                {letter}
-                              </span>
-                              <span style={{ fontSize: '0.9rem', color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: isSelected ? 600 : 400 }}>
-                                <FormattedMarkdown text={String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt} />
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                                <span 
+                                  style={{ 
+                                    width: '24px', 
+                                    height: '24px', 
+                                    borderRadius: '50%', 
+                                    background: isSelected ? 'var(--color-indigo)' : 'rgba(255,255,255,0.08)',
+                                    color: isSelected ? '#fff' : 'var(--text-secondary)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 700,
+                                    fontSize: '0.8rem',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  {letter}
+                                </span>
+                                <span style={{ fontSize: '0.9rem', color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: isSelected ? 600 : 400 }}>
+                                  <FormattedMarkdown text={String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt} />
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
 
-                <div style={{ marginTop: '1.75rem', textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
-                    填寫進度：<strong style={{ color: 'var(--color-indigo)' }}>{Object.keys(surveyAnswers).length}</strong> / {surveyQuestions.length} 題已選
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem', boxShadow: '0 4px 15px rgba(99, 102, 241, 0.35)' }}
-                    disabled={Object.keys(surveyAnswers).length < surveyQuestions.length}
-                    onClick={handleSubmitSurvey}
-                  >
-                    {Object.keys(surveyAnswers).length < surveyQuestions.length 
-                      ? `請完成所有題目 (${Object.keys(surveyAnswers).length}/${surveyQuestions.length})` 
-                      : '🚀 提交整份問卷 (Submit Survey)'}
-                  </button>
-                </div>
+                {(() => {
+                  const requiredCount = surveyQuestions.filter(q => q.options && q.options.length > 0 && q.type !== 'short').length;
+                  const answeredRequired = surveyQuestions.filter((q, idx) => q.options && q.options.length > 0 && q.type !== 'short' && !!surveyAnswers[idx]).length;
+                  const canSubmit = answeredRequired === requiredCount;
+
+                  return (
+                    <div style={{ marginTop: '1.75rem', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
+                        必填選擇題進度：<strong style={{ color: 'var(--color-indigo)' }}>{answeredRequired}</strong> / {requiredCount} 題已選
+                        {surveyQuestions.length > requiredCount && `（另有 ${surveyQuestions.length - requiredCount} 題開放問答）`}
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem', boxShadow: '0 4px 15px rgba(99, 102, 241, 0.35)' }}
+                        disabled={!canSubmit}
+                        onClick={handleSubmitSurvey}
+                      >
+                        {!canSubmit 
+                          ? `請完成所有必填題 (${answeredRequired}/${requiredCount})` 
+                          : '🚀 提交整份問卷 (Submit Survey)'}
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -1137,15 +1175,28 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                     <FormattedMarkdown text={q.questionText} />
                   </div>
 
-                  {myChoice && (
-                    <div style={{ fontSize: '0.85rem', color: 'var(--color-indigo)', marginBottom: '1rem', fontWeight: 600 }}>
-                      你的選擇：Option {myChoice}
+                  {(!q.options || q.options.length === 0 || q.type === 'short') ? (
+                    <div className="glass-card" style={{ padding: '1.25rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px' }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                        ✍️ 你的填答回饋：
+                      </div>
+                      <div style={{ fontSize: '0.95rem', color: myChoice ? 'var(--text-primary)' : 'var(--text-muted)', background: 'rgba(255,255,255,0.04)', padding: '0.85rem', borderRadius: '8px', lineHeight: '1.55', whiteSpace: 'pre-wrap' }}>
+                        {myChoice || '（未填寫）'}
+                      </div>
                     </div>
-                  )}
+                  ) : (
+                    <>
+                      {myChoice && (
+                        <div style={{ fontSize: '0.85rem', color: 'var(--color-indigo)', marginBottom: '1rem', fontWeight: 600 }}>
+                          你的選擇：Option {myChoice}
+                        </div>
+                      )}
 
-                  <div className="glass-card" style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px' }}>
-                    <PieChart stats={qStat.stats} options={q.options} total={qStat.total} isCompact={true} />
-                  </div>
+                      <div className="glass-card" style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px' }}>
+                        <PieChart stats={qStat.stats} options={q.options} total={qStat.total} isCompact={true} />
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })()}

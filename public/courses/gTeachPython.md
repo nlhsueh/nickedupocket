@@ -363,7 +363,7 @@
 
 ## Chapter X01: 課程學習起點與修課調查 (Chapter X01: Course Orientation & Survey)
 
-### [Activity: python-x01-survey] Chapter X01: Python 線上學習背景與學習動機問卷 (6題連續問卷)
+### [Activity: python-x01-survey] Chapter X01: Python 線上學習背景與學習動機問卷 (7題問卷)
 #### [問卷] 第 1 題：請問你目前就讀的系所／學院為何？
 - A. 資訊工程學系 (資電學院)
 - B. 電機工程學系 (資電學院)
@@ -410,5 +410,4 @@
 - D. 探索自動化腳本、爬蟲與 Web 應用開發
 - E. 滿足系所必修或通識選修學分要求
 
-### [Activity: python-x01-feedback] Chapter X01: 課程期待、疑問與建議 (開放問答)
-#### [Short] 請問你對這門 Python 線上程式設計課程有哪些期許與學習目標？或是有任何修課上的疑問與想給老師的建議？
+#### [問卷] 第 7 題（開放問答）：請問你對這門 Python 線上程式設計課程有哪些期待、疑問或建議？

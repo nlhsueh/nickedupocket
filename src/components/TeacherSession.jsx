@@ -2646,119 +2646,133 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   </div>
 
                   <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.55rem', paddingRight: '0.25rem' }}>
-                    {getSortedScoreboard().map((p, idx) => {
-                      const gainInfo = roundScores[p.name];
-                      const gained = gainInfo?.gained || 0;
-                      const isCorrect = gainInfo?.isCorrect || false;
-                      const elapsed = gainInfo?.elapsedSec;
-                      const topScore = getSortedScoreboard()[0]?.score || 1;
-                      const barWidth = Math.max(10, Math.min(100, (p.score / (topScore || 1)) * 100));
-
-                      const isGold = idx === 0;
-                      const isSilver = idx === 1;
-                      const isBronze = idx === 2;
+                    {(() => {
+                      const allScores = getSortedScoreboard();
+                      const topScores = allScores.slice(0, 5);
+                      const topScore = allScores[0]?.score || 1;
 
                       return (
-                        <div 
-                          key={idx} 
-                          className="glass-card animate-pop" 
-                          style={{ 
-                            padding: '0.65rem 0.9rem', 
-                            borderRadius: '12px',
-                            background: isGold 
-                              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.32) 100%)' 
-                              : (isSilver 
-                                ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.18) 0%, rgba(100, 116, 139, 0.25) 100%)'
-                                : (isBronze 
-                                  ? 'linear-gradient(135deg, rgba(180, 83, 9, 0.18) 0%, rgba(146, 64, 14, 0.25) 100%)'
-                                  : 'rgba(255, 255, 255, 0.03)')),
-                            border: isGold 
-                              ? '1.5px solid #f59e0b' 
-                              : (isSilver 
-                                ? '1.5px solid #94a3b8' 
-                                : (isBronze 
-                                  ? '1.5px solid #b45309' 
-                                  : '1px solid rgba(255, 255, 255, 0.05)')),
-                            boxShadow: isGold ? '0 0 16px rgba(245, 158, 11, 0.3)' : 'none',
-                            position: 'relative',
-                            overflow: 'hidden'
-                          }}
-                        >
-                          {/* Background score progress track */}
-                          <div 
-                            style={{ 
-                              position: 'absolute', 
-                              left: 0, 
-                              top: 0, 
-                              bottom: 0, 
-                              width: `${barWidth}%`, 
-                              background: isGold 
-                                ? 'rgba(245, 158, 11, 0.1)' 
-                                : 'rgba(255, 255, 255, 0.03)',
-                              zIndex: 0,
-                              pointerEvents: 'none',
-                              borderRadius: '12px'
-                            }} 
-                          />
+                        <>
+                          {topScores.map((p, idx) => {
+                            const gainInfo = roundScores[p.name];
+                            const gained = gainInfo?.gained || 0;
+                            const isCorrect = gainInfo?.isCorrect || false;
+                            const elapsed = gainInfo?.elapsedSec;
+                            const barWidth = Math.max(10, Math.min(100, (p.score / (topScore || 1)) * 100));
 
-                          <div className="flex-between" style={{ position: 'relative', zIndex: 1, alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <span 
+                            const isGold = idx === 0;
+                            const isSilver = idx === 1;
+                            const isBronze = idx === 2;
+
+                            return (
+                              <div 
+                                key={idx} 
+                                className="glass-card animate-pop" 
                                 style={{ 
-                                  fontSize: isGold ? '1.2rem' : '0.95rem',
-                                  fontWeight: 800,
-                                  width: '34px',
-                                  height: '34px',
-                                  borderRadius: '50%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  background: isGold ? '#f59e0b' : (isSilver ? '#94a3b8' : (isBronze ? '#b45309' : 'rgba(255,255,255,0.08)')),
-                                  color: (isGold || isSilver || isBronze) ? '#080B11' : 'var(--text-secondary)',
-                                  boxShadow: isGold ? '0 0 12px rgba(245, 158, 11, 0.6)' : 'none'
+                                  padding: '0.65rem 0.9rem', 
+                                  borderRadius: '12px',
+                                  background: isGold 
+                                    ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.32) 100%)' 
+                                    : (isSilver 
+                                      ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.18) 0%, rgba(100, 116, 139, 0.25) 100%)'
+                                      : (isBronze 
+                                        ? 'linear-gradient(135deg, rgba(180, 83, 9, 0.18) 0%, rgba(146, 64, 14, 0.25) 100%)'
+                                        : 'rgba(255, 255, 255, 0.03)')),
+                                  border: isGold 
+                                    ? '1.5px solid #f59e0b' 
+                                    : (isSilver 
+                                      ? '1.5px solid #94a3b8' 
+                                      : (isBronze 
+                                        ? '1.5px solid #b45309' 
+                                        : '1px solid rgba(255, 255, 255, 0.05)')),
+                                  boxShadow: isGold ? '0 0 16px rgba(245, 158, 11, 0.3)' : 'none',
+                                  position: 'relative',
+                                  overflow: 'hidden'
                                 }}
                               >
-                                {isGold ? '👑' : (isSilver ? '2' : (isBronze ? '3' : `#${idx + 1}`))}
-                              </span>
+                                {/* Background score progress track */}
+                                <div 
+                                  style={{ 
+                                    position: 'absolute', 
+                                    left: 0, 
+                                    top: 0, 
+                                    bottom: 0, 
+                                    width: `${barWidth}%`, 
+                                    background: isGold 
+                                      ? 'rgba(245, 158, 11, 0.1)' 
+                                      : 'rgba(255, 255, 255, 0.03)',
+                                    zIndex: 0,
+                                    pointerEvents: 'none',
+                                    borderRadius: '12px'
+                                  }} 
+                                />
 
-                              <div>
-                                <div style={{ fontSize: '1.05rem', fontWeight: 700, color: isGold ? '#fef08a' : 'var(--text-primary)' }}>
-                                  {p.name}
-                                </div>
-                                <div style={{ fontSize: '0.78rem', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                                  {isCorrect ? (
-                                    <span style={{ color: '#10b981', fontWeight: 700 }}>
-                                      +{gained} pts
+                                <div className="flex-between" style={{ position: 'relative', zIndex: 1, alignItems: 'center' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <span 
+                                      style={{ 
+                                        fontSize: isGold ? '1.2rem' : '0.95rem',
+                                        fontWeight: 800,
+                                        width: '34px',
+                                        height: '34px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        background: isGold ? '#f59e0b' : (isSilver ? '#94a3b8' : (isBronze ? '#b45309' : 'rgba(255,255,255,0.08)')),
+                                        color: (isGold || isSilver || isBronze) ? '#080B11' : 'var(--text-secondary)',
+                                        boxShadow: isGold ? '0 0 12px rgba(245, 158, 11, 0.6)' : 'none'
+                                      }}
+                                    >
+                                      {isGold ? '👑' : (isSilver ? '2' : (isBronze ? '3' : `#${idx + 1}`))}
                                     </span>
-                                  ) : gainInfo?.hasAnswered ? (
-                                    <span style={{ color: '#f87171', fontWeight: 700 }}>
-                                      -300 pts (答錯)
-                                    </span>
-                                  ) : (
-                                    <span style={{ color: 'var(--text-muted)' }}>
-                                      0 pts (未作答)
-                                    </span>
-                                  )}
 
-                                  {/* Subtly show response time */}
-                                  {elapsed && (
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', opacity: 0.75 }}>
-                                      • ⏱️ {elapsed}s
-                                    </span>
-                                  )}
+                                    <div>
+                                      <div style={{ fontSize: '1.05rem', fontWeight: 700, color: isGold ? '#fef08a' : 'var(--text-primary)' }}>
+                                        {p.name}
+                                      </div>
+                                      <div style={{ fontSize: '0.78rem', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                        {isCorrect ? (
+                                          <span style={{ color: '#10b981', fontWeight: 700 }}>
+                                            +{gained} pts
+                                          </span>
+                                        ) : gainInfo?.hasAnswered ? (
+                                          <span style={{ color: '#f87171', fontWeight: 700 }}>
+                                            -300 pts (答錯)
+                                          </span>
+                                        ) : (
+                                          <span style={{ color: 'var(--text-muted)' }}>
+                                            0 pts (未作答)
+                                          </span>
+                                        )}
+
+                                        {/* Subtly show response time */}
+                                        {elapsed && (
+                                          <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', opacity: 0.75 }}>
+                                            • ⏱️ {elapsed}s
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fbbf24', fontFamily: 'monospace' }}>
+                                      {p.score.toLocaleString()} <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)' }}>pts</span>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
+                            );
+                          })}
+                          {allScores.length > 5 && (
+                            <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', paddingTop: '0.4rem', opacity: 0.85 }}>
+                              ... 僅顯示前 5 名（共 {allScores.length} 位同學參與）
                             </div>
-
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fbbf24', fontFamily: 'monospace' }}>
-                                {p.score.toLocaleString()} <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)' }}>pts</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                          )}
+                        </>
                       );
-                    })}
+                    })()}
                   </div>
                 </div>
               ) : (

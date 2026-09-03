@@ -30,39 +30,7 @@
 - D. Go (微服務、雲原生系統)
 - E. C / C++ / Rust (底層系統、高效能運算)
 
-### [Activity: test-ch01-game] Chapter 1: 限時搶答 Game 錦標賽 (多題連續競速)
-#### [Game] 第 1 題：下列何者「不是」白箱測試（White-box Testing）技術？
-- 敘述涵蓋 (Statement Coverage)
-- 邊界值分析 (Boundary Value Analysis) (Correct)
-- 分支涵蓋 (Branch Coverage)
-- 條件路徑涵蓋 (Path Coverage)
 
-<details>
-<summary>答案</summary>
-**正確答案**：B
-</details>
-
-#### [Game] 第 2 題：測試發現了 10 個缺陷並全數修復，代表軟體中已不存在任何潛在缺陷？
-- 正確 (True)
-- 錯誤 (False) (Correct)
-
-<details>
-<summary>答案</summary>
-**正確答案**：B
-</details>
-
-#### [Game] 第 3 題：將品質保證活動儘早移至軟體生命週期前端執行的實踐稱作什麼？
-- Shift-Right Testing
-- Shift-Left Testing (Correct)
-- Big-Bang Testing
-- Monkey Testing
-
-<details>
-<summary>答案</summary>
-**正確答案**：B
-</details>
-
----
 
 ## Chapter 2: 文字與流程題型 (WordCloud, Ordering, Short)
 
@@ -91,7 +59,7 @@
 #### [問卷] 第 2 題：你認為課堂中最有助於釐清觀念的互動形式為何？
 - A. 觀念檢核 CCQ 與即時統計解析
 - B. 雙人討論 Pair Discussion 與全班成果牆
-- C. 限時搶答 Game 錦標賽
+- C. 流程排序 Ordering 與文字雲題型
 - D. 上機實驗操作與程式碼走查
 
 #### [問卷] 第 3 題：整體而言，你對這門課的學習收穫滿意度為？

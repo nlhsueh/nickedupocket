@@ -34,7 +34,12 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   const targetActivity = activity;
   const activityTitle = getActivityShortTitle(targetActivity, chapter) || targetActivity?.title || '';
   const firstQuestion = targetActivity?.questions?.[0];
-  const questionSnippet = firstQuestion?.questionText || '';
+  const rawSnippet = firstQuestion?.questionText || '';
+  const questionSnippet = rawSnippet 
+    ? (rawSnippet.trim().endsWith('...') || rawSnippet.trim().endsWith('…') 
+        ? rawSnippet.trim() 
+        : `${rawSnippet.trim()} ...`)
+    : '';
   const questionType = firstQuestion?.type || '';
 
   const renderTypeBadge = (type) => {
@@ -670,7 +675,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
 
   const handleTeacherLaunch = () => {
     const password = prompt('Enter Teacher Access Password:');
-    if (password === 'nlhsueh007') {
+    if (password === 'iActivity') {
       window.location.hash = `#/teacher/${roomCode}`;
     } else if (password !== null) {
       alert('Incorrect password.');
@@ -725,125 +730,145 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             </div>
           </div>
 
-          {/* Anonymous Option Toggle Card */}
-          <div 
-            className="glass-card" 
-            style={{ 
-              padding: '0.75rem 1rem', 
-              marginBottom: '1rem', 
-              borderRadius: '10px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              background: isAnonymous ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-              border: isAnonymous ? '1.5px solid var(--color-indigo)' : '1px solid var(--border-light)',
-              cursor: 'pointer'
-            }}
-            onClick={() => {
-              const nextAnon = !isAnonymous;
-              setIsAnonymous(nextAnon);
-              if (nextAnon && !anonymousName) {
-                setAnonymousName(`匿名${Math.floor(Math.random() * 89 + 11)}`);
-              }
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <span style={{ fontSize: '1.25rem' }}>🎭</span>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isAnonymous ? 'var(--color-indigo)' : 'var(--text-primary)' }}>
-                  {lang === 'zh' ? '匿名作答模式' : 'Anonymous Mode'}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  {lang === 'zh' ? '不顯示真實姓名，由系統自動指派隨機匿名代號' : 'Keep identity private with an assigned pseudonym'}
-                </div>
-              </div>
-            </div>
-            <input 
-              type="checkbox" 
-              checked={isAnonymous} 
-              onChange={(e) => setIsAnonymous(e.target.checked)} 
-              style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--color-indigo)' }}
-            />
-          </div>
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{lang === 'zh' ? '你的姓名 / 暱稱' : 'Your Nickname'}</span>
+            </label>
 
-          {isAnonymous ? (
-            <div className="form-group animate-pop" style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>系統已為您隨機指派匿名代號</span>
-                <button 
-                  type="button" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setAnonymousName(`匿名${Math.floor(Math.random() * 89 + 11)}`);
-                  }}
-                  style={{ background: 'none', border: 'none', color: 'var(--color-indigo)', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem', fontWeight: 600 }}
-                >
-                  🎲 換一個匿名號
-                </button>
-              </label>
-              <div 
-                className="input-field" 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.6rem', 
-                  fontSize: '1.15rem', 
-                  fontWeight: 700, 
-                  color: 'var(--color-indigo)',
-                  background: 'rgba(99, 102, 241, 0.08)',
-                  borderColor: 'rgba(99, 102, 241, 0.35)',
-                  padding: '0.75rem 1rem'
-                }}
-              >
-                <span>🎭</span> {anonymousName}
-              </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.45rem', textAlign: 'left', lineHeight: '1.4' }}>
-                🔒 您將以 <strong>🎭 {anonymousName}</strong> 加入並填寫問卷，保護您的個人隱私。
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {!isAnonymous ? (
+                <>
+                  <div 
+                    className="glass-card" 
+                    style={{ 
+                      fontSize: '1.75rem', 
+                      padding: '0.45rem 0.85rem', 
+                      borderRadius: '12px', 
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1.5px solid var(--border-glow)',
+                      userSelect: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                    }}
+                  >
+                    {assignedEmoji}
+                  </div>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    value={rawName} 
+                    onChange={(e) => setRawName(e.target.value)} 
+                    placeholder={lang === 'zh' ? '輸入姓名，例如：小明' : 'Enter name, e.g. Alex'} 
+                    maxLength={15}
+                    required 
+                    style={{ flex: 1, fontSize: '1.05rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAnonymous(true);
+                      if (!anonymousName) {
+                        setAnonymousName(`匿名${Math.floor(Math.random() * 89 + 11)}`);
+                      }
+                    }}
+                    className="btn btn-secondary"
+                    style={{
+                      padding: '0.55rem 0.75rem',
+                      fontSize: '0.82rem',
+                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid var(--border-light)',
+                      borderRadius: '10px',
+                      color: 'var(--text-secondary)'
+                    }}
+                    title={lang === 'zh' ? '切換為匿名作答模式' : 'Switch to Anonymous Mode'}
+                  >
+                    🎭 {lang === 'zh' ? '匿名' : 'Anon'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div 
+                    className="glass-card animate-pop" 
+                    style={{ 
+                      fontSize: '1.75rem', 
+                      padding: '0.45rem 0.85rem', 
+                      borderRadius: '12px', 
+                      background: 'rgba(99, 102, 241, 0.15)',
+                      border: '1.5px solid var(--color-indigo)',
+                      userSelect: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 15px rgba(99, 102, 241, 0.2)'
+                    }}
+                  >
+                    🎭
+                  </div>
+                  <div 
+                    className="input-field animate-pop" 
+                    style={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      fontSize: '1.05rem', 
+                      fontWeight: 700, 
+                      color: 'var(--color-indigo)',
+                      background: 'rgba(99, 102, 241, 0.08)',
+                      borderColor: 'rgba(99, 102, 241, 0.35)',
+                      padding: '0.65rem 0.9rem'
+                    }}
+                  >
+                    <span>{anonymousName}</span>
+                    <button 
+                      type="button" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAnonymousName(`匿名${Math.floor(Math.random() * 89 + 11)}`);
+                      }}
+                      style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        color: 'var(--color-indigo)', 
+                        fontSize: '0.75rem', 
+                        cursor: 'pointer',
+                        fontWeight: 600
+                      }}
+                      title={lang === 'zh' ? '更換隨機代號' : 'Reroll pseudonym'}
+                    >
+                      🎲 換號
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsAnonymous(false)}
+                    className="btn btn-secondary"
+                    style={{
+                      padding: '0.55rem 0.75rem',
+                      fontSize: '0.82rem',
+                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid var(--border-light)',
+                      borderRadius: '10px',
+                      color: 'var(--text-secondary)'
+                    }}
+                    title={lang === 'zh' ? '切換回具名作答' : 'Switch back to Real Name'}
+                  >
+                    {lang === 'zh' ? '具名' : 'Name'}
+                  </button>
+                </>
+              )}
             </div>
-          ) : (
-            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>{lang === 'zh' ? '你的姓名 / 暱稱' : 'Your Nickname'}</span>
-                <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>{lang === 'zh' ? '🌱 專屬幸運物徽章' : '🌱 Exclusive Avatar'}</span>
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div 
-                  className="glass-card" 
-                  style={{ 
-                    fontSize: '1.75rem', 
-                    padding: '0.45rem 0.85rem', 
-                    borderRadius: '12px', 
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1.5px solid var(--border-glow)',
-                    userSelect: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-                  }}
-                  title="系統為您隨機分配的專屬動植物徽章（固定不可更改，無選擇困難）"
-                >
-                  {assignedEmoji}
-                </div>
-                <input 
-                  type="text" 
-                  className="input-field" 
-                  value={rawName} 
-                  onChange={(e) => setRawName(e.target.value)} 
-                  placeholder={lang === 'zh' ? '輸入姓名，例如：小明' : 'Enter name, e.g. Alex'} 
-                  maxLength={15}
-                  required 
-                  style={{ flex: 1, fontSize: '1.05rem' }}
-                />
-              </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.45rem', textAlign: 'left', lineHeight: '1.4' }}>
-                {lang === 'zh' 
-                  ? <>🔒 系統已為您鎖定專屬幸運物 <strong>{assignedEmoji}</strong>，加入後全班將顯示為 <strong>{assignedEmoji} {rawName.trim() || '你的名字'}</strong>。</>
-                  : <>🔒 Locked avatar <strong>{assignedEmoji}</strong>, display name will be <strong>{assignedEmoji} {rawName.trim() || 'Your Name'}</strong>.</>}
-              </p>
-            </div>
-          )}
+          </div>
 
           <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.95rem', marginTop: '0.5rem', fontSize: '1rem' }} disabled={!isAnonymous && !rawName.trim()}>
             {lang === 'zh' ? '加入活動' : 'Join Activity'} <ArrowRight size={18} />

@@ -276,7 +276,7 @@ export default function TeacherDashboard({
           
           <div>
             <h2 style={{ fontSize: '1.4rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Book size={22} style={{ color: 'var(--color-indigo)' }} /> Available Courses
+              <Book size={22} style={{ color: 'var(--color-indigo)' }} /> {lang === 'zh' ? '可用課程清單' : 'Available Courses'}
             </h2>
             
             <div className="grid-2">
@@ -289,7 +289,7 @@ export default function TeacherDashboard({
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <span className={`badge ${course.id.startsWith('custom_') ? 'badge-warning' : 'badge-indigo'}`}>
-                      {course.id.startsWith('custom_') ? 'Custom' : 'Standard'}
+                      {course.id.startsWith('custom_') ? (lang === 'zh' ? '自訂課程' : 'Custom') : (lang === 'zh' ? '系統內建' : 'Standard')}
                     </span>
                     {course.id.startsWith('custom_') && (
                       <button 
@@ -304,14 +304,14 @@ export default function TeacherDashboard({
 
                   <h3 style={{ fontSize: '1.3rem', margin: '1rem 0 0.5rem 0' }}>{course.courseTitle}</h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                    Chapters: {course.chapters?.length || 0} • Activities: {
-                      course.chapters?.reduce((acc, chap) => acc + (chap.activities?.length || 0), 0) || 0
-                    }
+                    {lang === 'zh' 
+                      ? `章節數：${course.chapters?.length || 0} • 互動活動：${course.chapters?.reduce((acc, chap) => acc + (chap.activities?.length || 0), 0) || 0} 個`
+                      : `Chapters: ${course.chapters?.length || 0} • Activities: ${course.chapters?.reduce((acc, chap) => acc + (chap.activities?.length || 0), 0) || 0}`}
                   </p>
 
                   <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', color: 'var(--color-indigo)' }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      Select Course <ChevronRight size={16} />
+                      {lang === 'zh' ? '進入課程章節' : 'Select Course'} <ChevronRight size={16} />
                     </span>
                   </div>
                 </div>
@@ -339,9 +339,13 @@ export default function TeacherDashboard({
             onClick={() => document.getElementById('md-file-input').click()}
           >
             <Upload size={48} className="animate-float" style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }} />
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>Drag & Drop Course Markdown File</h3>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>
+              {lang === 'zh' ? '拖放 Markdown 課程檔案至此' : 'Drag & Drop Course Markdown File'}
+            </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '380px' }}>
-              Upload any course `.md` file. Make sure it uses `# Course`, `## Chapters`, `### [Activity: ID]` headers.
+              {lang === 'zh' 
+                ? '上傳任何自訂課程 .md 檔案，支援 # 課程名稱、## 章節、### [Activity: ID] 題型標籤。' 
+                : 'Upload any course .md file. Make sure it uses # Course, ## Chapters, ### [Activity: ID] headers.'}
             </p>
             <input 
               type="file" 
@@ -351,7 +355,7 @@ export default function TeacherDashboard({
               style={{ display: 'none' }} 
             />
             <button className="btn btn-secondary" style={{ marginTop: '1.5rem' }}>
-              Select File from Computer
+              {lang === 'zh' ? '從電腦選取檔案上傳' : 'Select File from Computer'}
             </button>
           </div>
 
@@ -379,7 +383,7 @@ export default function TeacherDashboard({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <h4 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-                  Chapters
+                  {lang === 'zh' ? '章節清單' : 'Chapters'}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                   {currentCourse.chapters.map((chapter) => {
@@ -415,7 +419,7 @@ export default function TeacherDashboard({
               {currentChapter && (
                 <div>
                   <h4 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-                    Activities
+                    {lang === 'zh' ? '章節活動' : 'Activities'}
                   </h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     <button
@@ -435,7 +439,7 @@ export default function TeacherDashboard({
                       }}
                       onClick={() => setSelectedActivityId(null)}
                     >
-                      <span>📂 Chapter Overview (All)</span>
+                      <span>{lang === 'zh' ? '📂 章節總覽 (全部活動)' : '📂 Chapter Overview (All)'}</span>
                     </button>
 
                     {currentChapter.activities?.map((act) => {
@@ -483,7 +487,7 @@ export default function TeacherDashboard({
                 {/* Header row */}
                 <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
                   <div>
-                    <span className="badge badge-success">Activity Selected</span>
+                    <span className="badge badge-success">{lang === 'zh' ? '已選取活動' : 'Activity Selected'}</span>
                     <h3 style={{ fontSize: '1.4rem', marginTop: '0.2rem' }}>{getActivityShortTitle(currentActivity, currentChapter)}</h3>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ID: {currentActivity.id}</span>
                   </div>
@@ -492,7 +496,7 @@ export default function TeacherDashboard({
                     style={{ padding: '1rem 2rem', fontSize: '1.05rem' }} 
                     onClick={() => onLaunch(getRoomCode(currentActivity.id))}
                   >
-                    <Play size={18} fill="white" /> Launch Activity Session
+                    <Play size={18} fill="white" /> {lang === 'zh' ? '啟動課堂互動房間 (Launch)' : 'Launch Activity Session'}
                   </button>
                 </div>
 
@@ -537,14 +541,14 @@ export default function TeacherDashboard({
                       type="button"
                     >
                       {qrCopied ? <Check size={12} style={{ color: 'var(--color-success)' }} /> : <QrCode size={12} />}
-                      {qrCopied ? 'Copied QR!' : 'Copy QR'}
+                      {qrCopied ? (lang === 'zh' ? '已複製！' : 'Copied QR!') : (lang === 'zh' ? '複製 QR 碼' : 'Copy QR')}
                     </button>
                   </div>
 
                   {/* Share Link Details */}
                   <div style={{ flex: 1, minWidth: '240px' }}>
                     <h4 style={{ fontSize: '0.95rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      📢 Static Share Link (Embed in slides before class)
+                      📢 {lang === 'zh' ? '課堂投影片嵌入邀請連結 (上課前直接使用)' : 'Static Share Link (Embed in slides before class)'}
                     </h4>
                     
                     <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -558,17 +562,19 @@ export default function TeacherDashboard({
                       <button 
                         className="btn btn-secondary btn-icon" 
                         onClick={() => copyToClipboard(getShareUrl(currentActivity.id))}
-                        title="Copy Link"
+                        title={lang === 'zh' ? '複製連結' : 'Copy Link'}
                       >
                         {copied ? <Check size={18} style={{ color: 'var(--color-success)' }} /> : <Copy size={18} />}
                       </button>
                     </div>
 
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                      Room Code: <strong style={{ color: 'var(--color-indigo)' }}>{getRoomCode(currentActivity.id)}</strong>
+                      {lang === 'zh' ? '房間代碼：' : 'Room Code: '}<strong style={{ color: 'var(--color-indigo)' }}>{getRoomCode(currentActivity.id)}</strong>
                     </p>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      * Any student scanning the QR code or visiting the URL will automatically route to your active room!
+                      {lang === 'zh' 
+                        ? '* 學生掃描 QR Code 或造訪上述網址，系統會自動導引至您啟動的對應房間！' 
+                        : '* Any student scanning the QR code or visiting the URL will automatically route to your active room!'}
                     </span>
                   </div>
                 </div>
@@ -649,17 +655,17 @@ export default function TeacherDashboard({
                 
                 {/* Header row */}
                 <div style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
-                  <span className="badge badge-indigo">Chapter Overview</span>
+                  <span className="badge badge-indigo">{lang === 'zh' ? '章節總覽' : 'Chapter Overview'}</span>
                   <h3 style={{ fontSize: '1.55rem', marginTop: '0.25rem', marginBottom: '0.25rem' }}>{formatChapterTitle(currentChapter.title)}</h3>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    Total activities: {currentChapter.activities?.length || 0}
+                    {lang === 'zh' ? `活動總數：${currentChapter.activities?.length || 0} 個` : `Total activities: ${currentChapter.activities?.length || 0}`}
                   </p>
                 </div>
 
                 {/* Filter bar */}
                 <div>
                   <h4 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Filter Activities by Type:
+                    {lang === 'zh' ? '依題型篩選活動：' : 'Filter Activities by Type:'}
                   </h4>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {['all', 'ccq', 'poll', 'ordering', 'game', 'wordcloud', 'pair', 'short'].map((type) => {
@@ -668,16 +674,16 @@ export default function TeacherDashboard({
                         <button
                           key={type}
                           className={`btn ${isActive ? 'btn-primary' : 'btn-secondary'}`}
-                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textTransform: 'capitalize' }}
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                           onClick={() => setActivityTypeFilter(type)}
                         >
-                          {type === 'all' ? '📁 All' : 
+                          {type === 'all' ? (lang === 'zh' ? '📁 全部' : '📁 All') : 
                            type === 'ccq' ? '❓ CCQ' : 
-                           type === 'poll' ? '📊 Poll' : 
-                           type === 'ordering' ? '🔢 Ordering' : 
-                           type === 'game' ? '🎮 Game' :
-                           type === 'wordcloud' ? '☁️ WordCloud' :
-                           type === 'pair' ? '👥 Pair Discussion' : '📝 Short Answer'}
+                           type === 'poll' ? (lang === 'zh' ? '📊 投票/問卷' : '📊 Poll/Survey') : 
+                           type === 'ordering' ? (lang === 'zh' ? '🔢 排序題' : '🔢 Ordering') : 
+                           type === 'game' ? (lang === 'zh' ? '🎮 搶答題' : '🎮 Game') :
+                           type === 'wordcloud' ? (lang === 'zh' ? '☁️ 文字雲' : '☁️ WordCloud') :
+                           type === 'pair' ? (lang === 'zh' ? '👥 雙人討論' : '👥 Pair Discussion') : (lang === 'zh' ? '📝 簡答題' : '📝 Short Answer')}
                         </button>
                       );
                     })}
@@ -747,20 +753,20 @@ export default function TeacherDashboard({
                                   className="btn btn-secondary"
                                   style={{ padding: '0.5rem 0.75rem', gap: '0.25rem', fontSize: '0.75rem', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                   onClick={() => copyActivityLinkToClipboard(act.id)}
-                                  title="Copy Student Link"
+                                  title={lang === 'zh' ? '複製學生邀請連結' : 'Copy Student Link'}
                                 >
                                   {isLinkCopied ? <Check size={14} style={{ color: 'var(--color-success)' }} /> : <Copy size={14} />}
-                                  {isLinkCopied ? 'Link Copied!' : 'Copy Link'}
+                                  {isLinkCopied ? (lang === 'zh' ? '已複製！' : 'Copied!') : (lang === 'zh' ? '複製連結' : 'Copy Link')}
                                 </button>
 
                                 <button 
                                   className="btn btn-secondary"
                                   style={{ padding: '0.5rem 0.75rem', gap: '0.25rem', fontSize: '0.75rem', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-indigo)', borderColor: 'rgba(99, 102, 241, 0.3)' }}
                                   onClick={() => copyActivityQrToClipboard(act.id)}
-                                  title="Copy QR Code Image"
+                                  title={lang === 'zh' ? '複製 QR Code 圖片' : 'Copy QR Code Image'}
                                 >
                                   {isQrCopied ? <Check size={14} style={{ color: 'var(--color-success)' }} /> : <QrCode size={14} />}
-                                  {isQrCopied ? 'QR Copied!' : 'Copy QR'}
+                                  {isQrCopied ? (lang === 'zh' ? '已複製！' : 'Copied!') : (lang === 'zh' ? '複製 QR' : 'Copy QR')}
                                 </button>
 
                                 <button 
@@ -768,7 +774,7 @@ export default function TeacherDashboard({
                                   style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} 
                                   onClick={() => onLaunch(roomCodeForAct)}
                                 >
-                                  <Play size={12} fill="white" /> Launch
+                                  <Play size={12} fill="white" /> {lang === 'zh' ? '啟動' : 'Launch'}
                                 </button>
                               </div>
                             </div>

@@ -1022,8 +1022,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       {/* Session Header */}
       <div className="flex-between glass-card" style={{ marginBottom: '1.5rem', padding: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <button className="btn btn-secondary btn-icon" onClick={onBack} title="回到 NickPocketEdu">
-            <ArrowLeft size={18} /> Exit
+          <button className="btn btn-secondary btn-icon" onClick={onBack} title={lang === 'zh' ? '回到 NickPocketEdu' : 'Return to NickPocketEdu'}>
+            <ArrowLeft size={18} /> {lang === 'zh' ? '離開' : 'Exit'}
           </button>
           <div 
             onClick={onBack}
@@ -1036,7 +1036,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               padding: '0.2rem 0.5rem',
               borderRadius: '8px'
             }}
-            title="點擊回到 NickPocketEdu"
+            title={lang === 'zh' ? '點擊回到 NickPocketEdu' : 'Click to return to NickPocketEdu'}
           >
             <span className="text-gradient" style={{ fontSize: '1.35rem', fontWeight: 800 }}>NickPocketEdu</span>
             <span style={{ color: 'var(--border-light)', fontSize: '1.1rem' }}>|</span>
@@ -1074,16 +1074,16 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
             {connectionStatus === 'connected' ? (
-              <span className="badge badge-success"><Wifi size={14} /> Server Connected</span>
+              <span className="badge badge-success"><Wifi size={14} /> {lang === 'zh' ? '伺服器已連線' : 'Server Connected'}</span>
             ) : connectionStatus === 'connecting' ? (
-              <span className="badge badge-warning"><RefreshCw size={14} className="animate-spin" /> Connecting</span>
+              <span className="badge badge-warning"><RefreshCw size={14} className="animate-spin" /> {lang === 'zh' ? '連線中...' : 'Connecting'}</span>
             ) : (
-              <span className="badge badge-danger" title={connectionError}><WifiOff size={14} /> Offline</span>
+              <span className="badge badge-danger" title={connectionError}><WifiOff size={14} /> {lang === 'zh' ? '離線' : 'Offline'}</span>
             )}
           </div>
           <div className="glass-card" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginRight: '0.5rem' }}>Room Code:</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginRight: '0.5rem' }}>{lang === 'zh' ? '房間代碼：' : 'Room Code:'}</span>
               <strong style={{ fontSize: '1.2rem', color: 'var(--color-indigo)', letterSpacing: '1px' }}>{roomCode}</strong>
             </div>
             
@@ -1093,7 +1093,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 <QRCodeSVG value={studentUrl} size={28} bgColor="#ffffff" fgColor="#080B11" />
               </div>
               <div className="qr-expanded-popover glass-card">
-                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>Scan to Join Room</p>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>{lang === 'zh' ? '掃描加入房間' : 'Scan to Join Room'}</p>
                 <div style={{ background: 'white', padding: '8px', borderRadius: '8px', display: 'inline-block' }}>
                   <QRCodeSVG value={studentUrl} size={150} bgColor="#ffffff" fgColor="#080B11" />
                 </div>
@@ -1113,19 +1113,21 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
             {/* Left card: QR and Join Info */}
             <div className="glass-card flex-center" style={{ flexDirection: 'column', padding: '2rem', textAlign: 'center' }}>
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
-                <span className="badge badge-indigo">Join the Interaction</span>
+                <span className="badge badge-indigo">{lang === 'zh' ? '課堂互動大廳' : 'Join the Interaction'}</span>
                 <span className="badge badge-warning" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Hourglass size={14} className="animate-spin" /> Lobby Timeout: <strong style={{ fontFamily: 'monospace' }}>{formatTime(lobbyTimeLeft)}</strong>
+                  <Hourglass size={14} className="animate-spin" /> {lang === 'zh' ? '大廳等候逾時：' : 'Lobby Timeout: '} <strong style={{ fontFamily: 'monospace' }}>{formatTime(lobbyTimeLeft)}</strong>
                 </span>
               </div>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Scan QR Code or Enter URL to Join</h2>
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
+                {lang === 'zh' ? '手機掃描 QR Code 或輸入網址加入' : 'Scan QR Code or Enter URL to Join'}
+              </h2>
               
               <div className="glass-card" style={{ padding: '1rem', background: 'white', borderRadius: '16px', display: 'inline-block', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                 <QRCodeSVG value={studentUrl} size={180} bgColor="#ffffff" fgColor="#080B11" includeMargin={false} />
               </div>
               
               <p style={{ marginTop: '1.25rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                Direct Link: <a href={studentUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-indigo)', textDecoration: 'underline' }}>{studentUrl}</a>
+                {lang === 'zh' ? '學生端連結：' : 'Direct Link: '}<a href={studentUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-indigo)', textDecoration: 'underline' }}>{studentUrl}</a>
               </p>
               
               {/* Pre-start Timer Duration Setting Panel */}
@@ -1210,7 +1212,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               
               <div style={{ marginTop: '1.5rem', width: '100%' }}>
                 <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.05rem' }} onClick={startQuestion}>
-                  <Play size={18} fill="white" /> Start Activity ({formatTime(configuredDuration)})
+                  <Play size={18} fill="white" /> {lang === 'zh' ? `開始互動作答 (${formatTime(configuredDuration)})` : `Start Activity (${formatTime(configuredDuration)})`}
                 </button>
               </div>
             </div>
@@ -1219,16 +1221,16 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
             <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', maxHeight: '450px' }}>
               <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
                 <h3 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Users size={20} /> Students Connected ({joinedStudents.length})
+                  <Users size={20} /> {lang === 'zh' ? `已加入學生 (${joinedStudents.length} 人)` : `Students Connected (${joinedStudents.length})`}
                 </h3>
                 <button 
                   type="button" 
                   className="btn btn-secondary" 
                   style={{ padding: '0.25rem 0.65rem', fontSize: '0.78rem', color: '#f472b6', borderColor: 'rgba(236, 72, 153, 0.4)' }}
                   onClick={handleSimulateStudents}
-                  title="模擬 10 位學生加入"
+                  title={lang === 'zh' ? '模擬 10 位學生加入' : 'Simulate 10 students joining'}
                 >
-                  <FlaskConical size={13} /> + 模擬 10 人加入
+                  <FlaskConical size={13} /> {lang === 'zh' ? '+ 模擬 10 人加入' : '+ Simulate 10 Students'}
                 </button>
               </div>
               <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignContent: 'flex-start' }}>
@@ -1241,7 +1243,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 ) : (
                   <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-muted)' }}>
                     <Users size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
-                    <p>Waiting for students to join...</p>
+                    <p>{lang === 'zh' ? '等待學生掃碼加入中...' : 'Waiting for students to join...'}</p>
                   </div>
                 )}
               </div>
@@ -1399,13 +1401,13 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <span className={`badge ${timeLeft <= 15 ? "badge-danger animate-pulse-glow" : "badge-warning"}`} style={{ fontSize: '1rem', padding: '0.45rem 0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Hourglass size={16} className="animate-spin" />
-                    Time Left: <strong style={{ fontFamily: 'monospace', fontSize: '1.1rem' }}>{formatTime(timeLeft)}</strong>
+                    {lang === 'zh' ? '剩餘時間：' : 'Time Left: '}<strong style={{ fontFamily: 'monospace', fontSize: '1.1rem' }}>{formatTime(timeLeft)}</strong>
                   </span>
-                  <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }} onClick={() => extendTime(30)} title="Add 30 seconds to countdown">
+                  <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }} onClick={() => extendTime(30)} title={lang === 'zh' ? '增加 30 秒倒數' : 'Add 30 seconds'}>
                     +30s
                   </button>
-                  <button className="btn btn-danger" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={stopQuestion} title="Immediately stop answering">
-                    <Square size={14} fill="white" /> Stop Answering
+                  <button className="btn btn-danger" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={stopQuestion} title={lang === 'zh' ? '立即截止作答' : 'Stop answering'}>
+                    <Square size={14} fill="white" /> {lang === 'zh' ? '截止作答' : 'Stop Answering'}
                   </button>
                 </div>
               </div>
@@ -1622,10 +1624,10 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   onClick={handleSimulateStudents}
                   title="模擬 10 位學生 (st01~st10) 作答"
                 >
-                  <FlaskConical size={16} /> 模擬 10 人作答
+                  <FlaskConical size={16} /> {lang === 'zh' ? '模擬 10 人作答' : 'Simulate 10 Students'}
                 </button>
                 <button className="btn btn-danger" style={{ padding: '1rem 2rem' }} onClick={stopQuestion}>
-                  <Square size={16} fill="white" /> Stop Answering
+                  <Square size={16} fill="white" /> {lang === 'zh' ? '截止作答 (Stop)' : 'Stop Answering'}
                 </button>
               </div>
             </div>
@@ -1942,8 +1944,8 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span className="badge badge-success">Answering Stopped</span>
-                  <h2 style={{ fontSize: '1.5rem', margin: 0 }}>Question Results</h2>
+                  <span className="badge badge-success">{lang === 'zh' ? '作答已截止' : 'Answering Stopped'}</span>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0 }}>{lang === 'zh' ? '作答結果統計' : 'Question Results'}</h2>
                 </div>
               </div>
 
@@ -1963,9 +1965,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                       boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
                     }} 
                     onClick={nextQuestionAndStart}
-                    title="進入下一題並立即開始搶答計時"
+                    title={lang === 'zh' ? '進入下一題並立即開始搶答計時' : 'Next Question and Start'}
                   >
-                    <Play size={18} fill="white" /> 下一題並立即搶答 (Next & Start)
+                    <Play size={18} fill="white" /> {lang === 'zh' ? '下一題並立即搶答' : 'Next & Start'}
                   </button>
                 ) : (
                   <button 
@@ -1980,9 +1982,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                       boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)'
                     }} 
                     onClick={nextQuestionAndStart}
-                    title="結算總分並揭曉最終冠軍頒獎台"
+                    title={lang === 'zh' ? '結算總分並揭曉最終冠軍頒獎台' : 'View Final Tournament Podium'}
                   >
-                    <Award size={18} /> 🏆 揭曉最終冠軍頒獎台 (View Final Podium)
+                    <Award size={18} /> {lang === 'zh' ? '🏆 揭曉最終冠軍頒獎台' : '🏆 View Final Podium'}
                   </button>
                 )
               ) : activity.questions.length > 1 && currentQIndex < activity.questions.length - 1 ? (
@@ -2000,17 +2002,17 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                       boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
                     }} 
                     onClick={nextQuestionAndStart}
-                    title="進入問卷下一題"
+                    title={lang === 'zh' ? '進入問卷下一題' : 'Next Question'}
                   >
-                    下一題問卷 (Next Question) <ChevronRight size={18} />
+                    {lang === 'zh' ? '進入下一題' : 'Next Question'} <ChevronRight size={18} />
                   </button>
                   <button 
                     className="btn btn-secondary" 
                     style={{ padding: '0.75rem 1.25rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} 
                     onClick={onBack}
-                    title="提前結束並回到 NickPocketEdu"
+                    title={lang === 'zh' ? '提前結束並回到 NickPocketEdu' : 'Return to NickPocketEdu'}
                   >
-                    <ArrowLeft size={16} /> 返回
+                    <ArrowLeft size={16} /> {lang === 'zh' ? '返回' : 'Back'}
                   </button>
                 </div>
               ) : activity.questions.length > 1 && currentQIndex === activity.questions.length - 1 ? (
@@ -2026,9 +2028,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                     background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
                   }} 
                   onClick={onBack}
-                  title="問卷全數完成，返回 NickPocketEdu"
+                  title={lang === 'zh' ? '問卷全數完成，返回 NickPocketEdu' : 'Finish survey and return to NickPocketEdu'}
                 >
-                  <CheckCircle2 size={18} /> 完成問卷調查 (Finish Survey)
+                  <CheckCircle2 size={18} /> {lang === 'zh' ? '完成問卷調查' : 'Finish Survey'}
                 </button>
               ) : (
                 <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
@@ -2036,25 +2038,25 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                     className="btn btn-secondary no-print" 
                     style={{ padding: '0.75rem 1.15rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)' }} 
                     onClick={exportSingleQuestionCSV}
-                    title="匯出本作答結果的 CSV / Excel 試算表"
+                    title={lang === 'zh' ? '匯出本作答結果的 CSV 試算表' : 'Export results to CSV'}
                   >
-                    <Download size={15} /> 匯出 CSV
+                    <Download size={15} /> {lang === 'zh' ? '匯出 CSV' : 'Export CSV'}
                   </button>
                   <button 
                     className="btn btn-secondary no-print" 
                     style={{ padding: '0.75rem 1.15rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} 
                     onClick={() => window.print()}
-                    title="列印或儲存本作答結果為 PDF"
+                    title={lang === 'zh' ? '列印或儲存本作答結果為 PDF' : 'Print or save as PDF'}
                   >
-                    <Printer size={15} /> 儲存 PDF
+                    <Printer size={15} /> {lang === 'zh' ? '列印 / 儲存 PDF' : 'Print / Save PDF'}
                   </button>
                   <button 
                     className="btn btn-secondary no-print" 
                     style={{ padding: '0.75rem 1.35rem', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }} 
                     onClick={onBack}
-                    title="結束本題並回到 NickPocketEdu"
+                    title={lang === 'zh' ? '結束本題並回到 NickPocketEdu' : 'Return to NickPocketEdu'}
                   >
-                    <ArrowLeft size={16} /> 返回 NickPocketEdu
+                    <ArrowLeft size={16} /> {lang === 'zh' ? '返回 NickPocketEdu' : 'Return'}
                   </button>
                 </div>
               )}
@@ -2085,10 +2087,10 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   </div>
                   <div>
                     <div style={{ fontSize: '0.82rem', color: '#a7f3d0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      標準正確答案 (Standard Correct Answer)
+                      {lang === 'zh' ? '標準正確答案' : 'Standard Correct Answer'}
                     </div>
                     <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ecfdf5', marginTop: '0.2rem' }}>
-                      Option {currentQuestion.correctAnswer}
+                      {lang === 'zh' ? `選項 ${currentQuestion.correctAnswer}` : `Option ${currentQuestion.correctAnswer}`}
                       {currentQuestion.options && currentQuestion.options[currentQuestion.correctAnswer.charCodeAt(0) - 65] && (
                         <span style={{ fontWeight: 500, fontSize: '1.05rem', marginLeft: '0.5rem', color: '#d1fae5' }}>
                           — {currentQuestion.options[currentQuestion.correctAnswer.charCodeAt(0) - 65]}
@@ -2099,7 +2101,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 </div>
                 <div>
                   <span className="badge badge-success" style={{ fontSize: '0.95rem', padding: '0.4rem 0.85rem', fontWeight: 700, background: 'rgba(16, 185, 129, 0.3)', border: '1px solid #10b981' }}>
-                    🎉 答對人數：{Object.values(answers).filter(a => a.questionIndex === currentQIndex && a.answer === currentQuestion.correctAnswer).length} / {Object.keys(answers).length} 人
+                    {lang === 'zh' 
+                      ? `🎉 答對人數：${Object.values(answers).filter(a => a.questionIndex === currentQIndex && a.answer === currentQuestion.correctAnswer).length} / ${Object.keys(answers).length} 人`
+                      : `🎉 Correct: ${Object.values(answers).filter(a => a.questionIndex === currentQIndex && a.answer === currentQuestion.correctAnswer).length} / ${Object.keys(answers).length}`}
                   </span>
                 </div>
               </div>

@@ -688,14 +688,16 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
         </div>
         <form onSubmit={handleJoin} className="glass-card" style={{ width: '100%', padding: '1.75rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <span className="badge badge-indigo" style={{ marginBottom: '0.5rem' }}>Student Portal</span>
-            <h1 className="text-gradient" style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Join Room</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>輸入暱稱即可加入互動</p>
+            <span className="badge badge-indigo" style={{ marginBottom: '0.5rem' }}>{lang === 'zh' ? '學生作答端' : 'Student Portal'}</span>
+            <h1 className="text-gradient" style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{lang === 'zh' ? '加入活動房間' : 'Join Room'}</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>
+              {lang === 'zh' ? '輸入姓名或使用匿名代號即可加入課堂互動' : 'Enter your name or use anonymous mode to join'}
+            </p>
           </div>
 
           <div className="form-group" style={{ marginBottom: '1.25rem' }}>
             <label className="form-label" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-              題目與房間確認 (Activity Preview)
+              {lang === 'zh' ? '題型與房間確認' : 'Activity & Room Preview'}
             </label>
             <div className="glass-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '0.85rem 1rem', border: '1px solid var(--border-glow)', borderRadius: '12px' }}>
               <div className="flex-between" style={{ marginBottom: '0.35rem' }}>
@@ -749,10 +751,10 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
               <span style={{ fontSize: '1.25rem' }}>🎭</span>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isAnonymous ? 'var(--color-indigo)' : 'var(--text-primary)' }}>
-                  匿名作答 (Anonymous Mode)
+                  {lang === 'zh' ? '匿名作答模式' : 'Anonymous Mode'}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  不顯示真實姓名，由系統自動指派匿名代號
+                  {lang === 'zh' ? '不顯示真實姓名，由系統自動指派隨機匿名代號' : 'Keep identity private with an assigned pseudonym'}
                 </div>
               </div>
             </div>
@@ -802,8 +804,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
           ) : (
             <div className="form-group" style={{ marginBottom: '1.25rem' }}>
               <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>你的姓名 / 暱稱 (Your Nickname)</span>
-                <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>🌱 專屬動植物徽章</span>
+                <span>{lang === 'zh' ? '你的姓名 / 暱稱' : 'Your Nickname'}</span>
+                <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>{lang === 'zh' ? '🌱 專屬幸運物徽章' : '🌱 Exclusive Avatar'}</span>
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <div 
@@ -829,20 +831,22 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                   className="input-field" 
                   value={rawName} 
                   onChange={(e) => setRawName(e.target.value)} 
-                  placeholder="輸入姓名，例如：小明" 
+                  placeholder={lang === 'zh' ? '輸入姓名，例如：小明' : 'Enter name, e.g. Alex'} 
                   maxLength={15}
                   required 
                   style={{ flex: 1, fontSize: '1.05rem' }}
                 />
               </div>
               <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.45rem', textAlign: 'left', lineHeight: '1.4' }}>
-                🔒 系統已為您鎖定專屬幸運物 <strong>{assignedEmoji}</strong>，加入後全班將顯示為 <strong>{assignedEmoji} {rawName.trim() || '你的名字'}</strong>。
+                {lang === 'zh' 
+                  ? <>🔒 系統已為您鎖定專屬幸運物 <strong>{assignedEmoji}</strong>，加入後全班將顯示為 <strong>{assignedEmoji} {rawName.trim() || '你的名字'}</strong>。</>
+                  : <>🔒 Locked avatar <strong>{assignedEmoji}</strong>, display name will be <strong>{assignedEmoji} {rawName.trim() || 'Your Name'}</strong>.</>}
               </p>
             </div>
           )}
 
           <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.95rem', marginTop: '0.5rem', fontSize: '1rem' }} disabled={!isAnonymous && !rawName.trim()}>
-            進入教室 Join Room <ArrowRight size={18} />
+            {lang === 'zh' ? '加入課堂活動' : 'Join Room'} <ArrowRight size={18} />
           </button>
         </form>
 
@@ -894,15 +898,22 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
 
           <div>
             <h2 style={{ fontSize: '1.3rem', marginBottom: '0.4rem', fontWeight: 600 }}>
-              {isConnecting ? 'Connecting to Room...' : 'Waiting for Instructor'}
+              {isConnecting 
+                ? (lang === 'zh' ? '正在連線至房間...' : 'Connecting to Room...') 
+                : (lang === 'zh' ? '已就緒，等待老師開始' : 'Waiting for Instructor')}
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: '1.5', margin: 0 }}>
               {isConnecting ? (
                 `Connecting to real-time server for room ${roomCode}...`
-              ) : (
+              ) : lang === 'zh' ? (
                 <>
                   已成功連線，歡迎 <strong style={{ color: 'var(--text-primary)' }}>{nickname}</strong>！<br />
                   請等待老師在投影幕開始此題目互動。
+                </>
+              ) : (
+                <>
+                  Connected! Welcome, <strong style={{ color: 'var(--text-primary)' }}>{nickname}</strong>!<br />
+                  Waiting for instructor to start this activity.
                 </>
               )}
             </p>
@@ -1125,8 +1136,17 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                   return (
                     <div style={{ marginTop: '1.75rem', textAlign: 'center' }}>
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
-                        必填選擇題進度：<strong style={{ color: 'var(--color-indigo)' }}>{answeredRequired}</strong> / {requiredCount} 題已選
-                        {surveyQuestions.length > requiredCount && `（另有 ${surveyQuestions.length - requiredCount} 題開放問答）`}
+                        {lang === 'zh' ? (
+                          <>
+                            必填選擇題進度：<strong style={{ color: 'var(--color-indigo)' }}>{answeredRequired}</strong> / {requiredCount} 題已選
+                            {surveyQuestions.length > requiredCount && `（另有 ${surveyQuestions.length - requiredCount} 題開放問答）`}
+                          </>
+                        ) : (
+                          <>
+                            Required questions: <strong style={{ color: 'var(--color-indigo)' }}>{answeredRequired}</strong> / {requiredCount} answered
+                            {surveyQuestions.length > requiredCount && ` (${surveyQuestions.length - requiredCount} optional feedback)`}
+                          </>
+                        )}
                       </div>
                       <button
                         type="button"
@@ -1136,8 +1156,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                         onClick={handleSubmitSurvey}
                       >
                         {!canSubmit 
-                          ? `請完成所有必填題 (${answeredRequired}/${requiredCount})` 
-                          : '🚀 提交整份問卷 (Submit Survey)'}
+                          ? (lang === 'zh' ? `請完成所有必填題 (${answeredRequired}/${requiredCount})` : `Please complete required choices (${answeredRequired}/${requiredCount})`)
+                          : (lang === 'zh' ? '🚀 提交整份問卷' : '🚀 Submit Survey')}
                       </button>
                     </div>
                   );
@@ -1932,7 +1952,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                      onClick={submitChoiceValue}
                      disabled={submitting || !selectedOption}
                    >
-                     Submit Answer <CornerDownRight size={18} />
+                     {lang === 'zh' ? '送出答案' : 'Submit Answer'} <CornerDownRight size={18} />
                    </button>
                  </div>
               )}

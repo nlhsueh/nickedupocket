@@ -1613,8 +1613,10 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                           return (
                             <div key={letter} className="chart-bar-container">
                               <div className="chart-bar-label">
-                                <span><strong>Option {letter}</strong> - {opt}</span>
-                                <span>{count} 票 ({pct}%)</span>
+                                <span style={{ wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.4' }}>
+                                  {String(opt || letter).replace(/^(Option\s+[A-Z][:.\-\s]*|[A-Z][:.\-]\s*)/i, '').trim() || opt}
+                                </span>
+                                <span style={{ flexShrink: 0, marginLeft: '0.5rem' }}>{count} 票 ({pct}%)</span>
                               </div>
                               <div className="chart-bar-track">
                                 <div className="chart-bar-fill" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, var(--color-indigo) 0%, var(--color-violet) 100%)' }} />
@@ -1855,11 +1857,10 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                               return (
                                 <div key={letter} className="chart-bar-container">
                                   <div className="chart-bar-label">
-                                    <span>
-                                      <strong>Option {letter}</strong>
-                                      {currentQuestion.options && currentQuestion.options[idx] && `: ${currentQuestion.options[idx]}`}
+                                    <span style={{ wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.4' }}>
+                                      {String(currentQuestion.options && currentQuestion.options[idx] ? currentQuestion.options[idx] : letter).replace(/^(Option\s+[A-Z][:.\-\s]*|[A-Z][:.\-]\s*)/i, '').trim()}
                                     </span>
-                                    <span>{count} 票 ({percentage.toFixed(0)}%)</span>
+                                    <span style={{ flexShrink: 0, marginLeft: '0.5rem' }}>{count} 票 ({percentage.toFixed(0)}%)</span>
                                   </div>
                                   <div className="chart-bar-track">
                                     <div 

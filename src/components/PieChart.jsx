@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 
 const SLICE_COLORS = [
-  '#6366f1', // A: Indigo
-  '#ec4899', // B: Pink
-  '#10b981', // C: Emerald
-  '#f59e0b', // D: Amber
-  '#8b5cf6', // E: Purple
-  '#06b6d4', // F: Cyan
-  '#f43f5e', // G: Rose
-  '#3b82f6'  // H: Blue
+  '#6366f1', // Indigo
+  '#ec4899', // Pink
+  '#10b981', // Emerald
+  '#f59e0b', // Amber
+  '#8b5cf6', // Purple
+  '#06b6d4', // Cyan
+  '#f43f5e', // Rose
+  '#3b82f6', // Blue
+  '#14b8a6', // Teal
+  '#eab308'  // Yellow
 ];
 
 export default function PieChart({ stats = {}, options = [], total = 0, isCompact = false }) {
@@ -33,6 +35,11 @@ export default function PieChart({ stats = {}, options = [], total = 0, isCompac
       currentAngle = endAngle;
     }
     const color = SLICE_COLORS[idx % SLICE_COLORS.length];
+
+    // Clean option label: remove redundant "Option A:", "A. ", "A - ", etc.
+    const rawLabel = options[idx] !== undefined && options[idx] !== '' ? options[idx] : `選項 ${key}`;
+    const cleanedLabel = String(rawLabel).replace(/^(Option\s+[A-Z][:.\-\s]*|[A-Z][:.\-]\s*)/i, '').trim() || String(rawLabel);
+
     return {
       key,
       count,
@@ -41,7 +48,7 @@ export default function PieChart({ stats = {}, options = [], total = 0, isCompac
       endAngle,
       angleSpan,
       color,
-      label: options[idx] || `Option ${key}`
+      label: cleanedLabel
     };
   });
 
@@ -65,16 +72,16 @@ export default function PieChart({ stats = {}, options = [], total = 0, isCompac
     <div 
       style={{ 
         display: 'flex', 
-        flexDirection: isCompact ? 'column' : 'row', 
+        flexDirection: 'column', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        gap: isCompact ? '1rem' : '2rem',
+        gap: isCompact ? '1.25rem' : '1.75rem',
         width: '100%',
-        padding: isCompact ? '0.5rem 0' : '1rem'
+        padding: isCompact ? '0.5rem 0' : '0.75rem 0'
       }}
     >
-      {/* SVG Donut Chart */}
-      <div style={{ position: 'relative', width: isCompact ? '180px' : '230px', height: isCompact ? '180px' : '230px', flexShrink: 0 }}>
+      {/* 1. Donut Pie Chart */}
+      <div style={{ position: 'relative', width: isCompact ? '180px' : '220px', height: isCompact ? '180px' : '220px', flexShrink: 0 }}>
         <svg 
           viewBox="0 0 240 240" 
           style={{ width: '100%', height: '100%', filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.35))' }}
@@ -161,8 +168,8 @@ export default function PieChart({ stats = {}, options = [], total = 0, isCompac
         </svg>
       </div>
 
-      {/* Legend / Breakdown List */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: '400px' }}>
+      {/* 2. Full Option List Underneath (No "Option A", Complete Text Displayed) */}
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
         {slices.map((slice) => {
           const isHovered = hoveredOpt === slice.key;
           const pctText = Math.round(slice.pct * 100);
@@ -174,18 +181,20 @@ export default function PieChart({ stats = {}, options = [], total = 0, isCompac
               onMouseLeave={() => setHoveredOpt(null)}
               className="glass-card"
               style={{
-                padding: isCompact ? '0.45rem 0.75rem' : '0.6rem 0.9rem',
+                padding: isCompact ? '0.6rem 0.85rem' : '0.8rem 1.1rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 borderRadius: '10px',
-                border: isHovered ? `1.5px solid ${slice.color}` : '1px solid rgba(255, 255, 255, 0.06)',
+                border: isHovered ? `1.5px solid ${slice.color}` : '1px solid rgba(255, 255, 255, 0.08)',
                 background: isHovered ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
                 transition: 'all 0.2s ease',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                gap: '1rem'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', overflow: 'hidden' }}>
+              {/* Option Color Indicator & Full Text */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', flex: 1, minWidth: 0 }}>
                 <span 
                   style={{ 
                     width: '14px', 
@@ -193,36 +202,35 @@ export default function PieChart({ stats = {}, options = [], total = 0, isCompac
                     borderRadius: '4px', 
                     backgroundColor: slice.color,
                     flexShrink: 0,
+                    marginTop: '4px',
                     boxShadow: `0 0 8px ${slice.color}66`
                   }} 
                 />
-                <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: isCompact ? '0.85rem' : '0.95rem', flexShrink: 0 }}>
-                  Option {slice.key}
-                </span>
                 <span 
                   style={{ 
-                    fontSize: isCompact ? '0.78rem' : '0.85rem', 
-                    color: 'var(--text-secondary)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
+                    fontSize: isCompact ? '0.9rem' : '0.98rem', 
+                    color: 'var(--text-primary)',
+                    fontWeight: 500,
+                    lineHeight: '1.5',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'normal'
                   }}
-                  title={slice.label}
                 >
-                  - {slice.label}
+                  {slice.label}
                 </span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0, marginLeft: '0.5rem' }}>
+              {/* Vote Count and Percentage */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
                 <span style={{ fontSize: isCompact ? '0.82rem' : '0.9rem', color: 'var(--text-muted)' }}>
                   {slice.count} 票
                 </span>
                 <span 
                   style={{ 
-                    fontSize: isCompact ? '0.85rem' : '0.95rem', 
+                    fontSize: isCompact ? '0.95rem' : '1.05rem', 
                     fontWeight: 800, 
                     color: slice.count > 0 ? slice.color : 'var(--text-muted)',
-                    minWidth: '40px',
+                    minWidth: '45px',
                     textAlign: 'right',
                     fontFamily: 'monospace'
                   }}

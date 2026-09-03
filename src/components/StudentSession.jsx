@@ -932,6 +932,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                     const myRank = gameResultData.leaderboard?.findIndex(p => p.name === nickname) + 1;
                     const gained = myData?.roundGain || 0;
                     const isCorrect = myData?.isCorrect;
+                    const myGainInfo = gameResultData.roundGains?.[nickname];
+                    const hasAnswered = myGainInfo?.hasAnswered;
+                    const elapsed = myGainInfo?.elapsedSec;
 
                     return (
                       <div 
@@ -941,20 +944,30 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                           marginBottom: '1.25rem', 
                           background: isCorrect 
                             ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.3) 100%)' 
-                            : 'rgba(239, 68, 68, 0.1)', 
-                          border: isCorrect ? '1.5px solid #10b981' : '1px solid rgba(239, 68, 68, 0.3)', 
+                            : (hasAnswered ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.04)'), 
+                          border: isCorrect 
+                            ? '1.5px solid #10b981' 
+                            : (hasAnswered ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-light)'), 
                           borderRadius: '12px',
                           textAlign: 'center',
                           boxShadow: isCorrect ? '0 0 15px rgba(16, 185, 129, 0.25)' : 'none'
                         }}
                       >
                         <div style={{ fontSize: '2.2rem', marginBottom: '0.2rem' }}>
-                          {isCorrect ? (myRank === 1 ? '👑 🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🎉') : '❌'}
+                          {isCorrect ? (myRank === 1 ? '👑 🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🎉') : (hasAnswered ? '❌' : '⏱️')}
                         </div>
-                        <div style={{ fontSize: '1.2rem', fontWeight: 800, color: isCorrect ? '#6ee7b7' : '#fca5a5' }}>
-                          {isCorrect ? `恭喜答對！本題 +${gained} 分` : '本題未答對 (+0 分)'}
+                        <div style={{ fontSize: '1.2rem', fontWeight: 800, color: isCorrect ? '#6ee7b7' : (hasAnswered ? '#fca5a5' : 'var(--text-secondary)') }}>
+                          {isCorrect 
+                            ? `恭喜答對！本題 +${gained} 分` 
+                            : (hasAnswered ? '回答錯誤，本題扣 300 分 (-300 pts)' : '未在時間內作答 (0 pts)')
+                          }
                         </div>
-                        <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fbbf24', marginTop: '0.35rem' }}>
+                        {elapsed && (
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.25rem', opacity: 0.8 }}>
+                            作答耗時：{elapsed} 秒
+                          </div>
+                        )}
+                        <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fbbf24', marginTop: '0.4rem' }}>
                           目前排名：第 {myRank > 0 ? myRank : '-'} 名 / 總分 {myData?.score || 0} pts
                         </div>
                       </div>

@@ -453,54 +453,57 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
   const nextQuestion = nextQuestionAndStart;
 
-  // 4. Game Score calculations
+  // 4. Game Score calculations (方案 A: 答對 850 + 速度加成最高 150，答錯扣 300，未作答 0)
   const calculateGameScores = (answersMap) => {
     const q = activity.questions[currentQIndex];
     const newScores = { ...studentScores };
     const ansMap = answersMap || answers;
     const currentRoundGains = {};
 
-    Object.keys(ansMap).forEach((studentName) => {
+    joinedStudents.forEach((studentName) => {
       const response = ansMap[studentName];
-      // Check correct
-      if (response && response.answer === q.correctAnswer) {
-        // Correct! Calculate score based on speed
-        const timeLimitMs = (q.timeLimit || 20) * 1000;
-        const elapsed = Math.max(0, response.timestamp - questionStartTime);
-        
-        // Base score 500, up to 1000 total depending on speed
-        let questionScore = 500;
-        if (timeLimitMs > 0) {
-          const ratio = Math.max(0, Math.min(1, elapsed / timeLimitMs));
-          questionScore += Math.round(500 * (1 - ratio));
-        } else {
-          questionScore = 1000;
-        }
+      const timeLimitMs = (q.timeLimit || 20) * 1000;
 
-        newScores[studentName] = (newScores[studentName] || 0) + questionScore;
-        currentRoundGains[studentName] = {
-          gained: questionScore,
-          isCorrect: true,
-          elapsedSec: (elapsed / 1000).toFixed(1)
-        };
+      if (response && response.questionIndex === currentQIndex) {
+        const elapsed = Math.max(0, response.timestamp - questionStartTime);
+        const elapsedSec = (elapsed / 1000).toFixed(1);
+
+        if (response.answer === q.correctAnswer) {
+          // 答對：基礎分 850 + 速度加成最高 150 (依作答耗時遞減)
+          let speedBonus = 150;
+          if (timeLimitMs > 0) {
+            const ratio = Math.max(0, Math.min(1, elapsed / timeLimitMs));
+            speedBonus = Math.round(150 * (1 - ratio));
+          }
+          const questionScore = 850 + speedBonus;
+
+          newScores[studentName] = (newScores[studentName] || 0) + questionScore;
+          currentRoundGains[studentName] = {
+            gained: questionScore,
+            isCorrect: true,
+            hasAnswered: true,
+            elapsedSec: elapsedSec
+          };
+        } else {
+          // 答錯：扣 300 分
+          const questionScore = -300;
+          newScores[studentName] = (newScores[studentName] || 0) + questionScore;
+          currentRoundGains[studentName] = {
+            gained: questionScore,
+            isCorrect: false,
+            hasAnswered: true,
+            elapsedSec: elapsedSec
+          };
+        }
       } else {
-        // Incorrect or no response
+        // 逾時未作答：0 分（不扣分）
         newScores[studentName] = newScores[studentName] || 0;
         currentRoundGains[studentName] = {
           gained: 0,
           isCorrect: false,
+          hasAnswered: false,
           elapsedSec: null
         };
-      }
-    });
-
-    // Make sure all joined students are in the scores object even if they didn't answer
-    joinedStudents.forEach(student => {
-      if (!(student in newScores)) {
-        newScores[student] = 0;
-      }
-      if (!(student in currentRoundGains)) {
-        currentRoundGains[student] = { gained: 0, isCorrect: false, elapsedSec: null };
       }
     });
 
@@ -1977,14 +1980,25 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                                 <div style={{ fontSize: '1.05rem', fontWeight: 700, color: isGold ? '#fef08a' : 'var(--text-primary)' }}>
                                   {p.name}
                                 </div>
-                                <div style={{ fontSize: '0.78rem', marginTop: '0.15rem' }}>
+                                <div style={{ fontSize: '0.78rem', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                                   {isCorrect ? (
                                     <span style={{ color: '#10b981', fontWeight: 700 }}>
-                                      ⚡ 本題 +{gained} pts ({elapsed}s 答對)
+                                      +{gained} pts
+                                    </span>
+                                  ) : gainInfo?.hasAnswered ? (
+                                    <span style={{ color: '#f87171', fontWeight: 700 }}>
+                                      -300 pts (答錯)
                                     </span>
                                   ) : (
                                     <span style={{ color: 'var(--text-muted)' }}>
-                                      本題未得分 (+0 pts)
+                                      0 pts (未作答)
+                                    </span>
+                                  )}
+
+                                  {/* Subtly show response time */}
+                                  {elapsed && (
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', opacity: 0.75 }}>
+                                      • ⏱️ {elapsed}s
                                     </span>
                                   )}
                                 </div>

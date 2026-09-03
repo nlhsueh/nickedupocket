@@ -1460,9 +1460,6 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                                 }}
                               >
                                 {item.text}
-                                {item.count > 1 && (
-                                  <sup style={{ fontSize: '0.6em', opacity: 0.85, marginLeft: '0.15rem' }}>({item.count})</sup>
-                                )}
                               </span>
                             );
                           });

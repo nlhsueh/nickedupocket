@@ -1349,11 +1349,6 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                               title={`${item.text}: ${item.count} 次提及`}
                             >
                               {item.text}
-                              {item.count > 1 && (
-                                <sup style={{ fontSize: '0.55em', opacity: 0.8, background: 'rgba(255,255,255,0.1)', padding: '0.1em 0.35em', borderRadius: '10px' }}>
-                                  {item.count}
-                                </sup>
-                              )}
                             </span>
                           );
                         })
@@ -2016,11 +2011,6 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                                   title={`${item.text}: ${item.count} 次提及 (${((item.count / totalWords) * 100).toFixed(1)}%)`}
                                 >
                                   {item.text}
-                                  {item.count > 1 && (
-                                    <sup style={{ fontSize: '0.55em', opacity: 0.85, background: 'rgba(255,255,255,0.12)', padding: '0.1em 0.4em', borderRadius: '10px' }}>
-                                      {item.count}
-                                    </sup>
-                                  )}
                                 </span>
                               );
                             })}

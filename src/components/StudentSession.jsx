@@ -1803,7 +1803,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                       className="input-field"
                       style={{ 
                         width: '100%', 
-                        minHeight: '120px', 
+                        minHeight: '140px', 
                         padding: '1rem', 
                         fontSize: '1rem',
                         resize: 'none',
@@ -1812,16 +1812,22 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                         background: 'rgba(255, 255, 255, 0.02)',
                         border: '1px solid var(--border-light)',
                         color: 'var(--text-primary)',
+                        lineHeight: '1.55',
                         margin: '0 0 0.5rem 0'
                       }}
                       value={textAnswer}
                       onChange={(e) => setTextAnswer(e.target.value)}
-                      placeholder="Type your answer here..."
-                      maxLength={100}
+                      placeholder="請在此輸入你的簡答內容..."
+                      maxLength={200}
                       disabled={submitting}
                     />
-                    <div style={{ textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      {textAnswer.length}/100 characters
+                    <div className="flex-between" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      <span style={{ color: (200 - textAnswer.length) <= 20 ? '#f59e0b' : 'var(--color-indigo)', fontWeight: 600 }}>
+                        ✍️ 還可輸入 <strong>{200 - textAnswer.length}</strong> 字
+                      </span>
+                      <span style={{ color: 'var(--text-muted)' }}>
+                        {textAnswer.length} / 200 字
+                      </span>
                     </div>
                   </div>
 

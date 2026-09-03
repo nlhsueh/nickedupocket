@@ -683,9 +683,12 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       .sort((a, b) => b.score - a.score);
   };
 
-  // Helper to simulate 3 students (st01, st02, st03) joining and answering
+  // Helper to simulate 10 students (st01~st10) joining and answering
   const handleSimulateStudents = () => {
-    const simStudents = ['🦊 st01', '🐼 st02', '🌻 st03'];
+    const simStudents = [
+      '🦊 st01', '🐼 st02', '🌻 st03', '🐨 st04', '🦁 st05',
+      '🐬 st06', '🌸 st07', '🦄 st08', '🐯 st09', '🦉 st10'
+    ];
     const now = Date.now();
     const q = activity.questions[currentQIndex];
 
@@ -706,32 +709,32 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     // 2. If question is active or results, simulate realistic submissions
     if (sessionStatus === 'active' || sessionStatus === 'results') {
       if (isMultiQuestionSurvey) {
-        // Simulate survey submissions across all questions
+        // Simulate survey submissions across all questions for 10 students
         const mockSurveySubs = {};
         simStudents.forEach((st, sIdx) => {
           const answersObj = {};
-          activity.questions.forEach((q, qIdx) => {
-            const opts = (q.options && q.options.length > 0)
-              ? q.options.map((_, i) => String.fromCharCode(65 + i))
+          activity.questions.forEach((qItem, qIdx) => {
+            const opts = (qItem.options && qItem.options.length > 0)
+              ? qItem.options.map((_, i) => String.fromCharCode(65 + i))
               : ['A', 'B', 'C', 'D'];
-            // Distribute answers nicely
+            // Distribute answers nicely across 10 students
             const chosen = opts[(sIdx + qIdx) % opts.length];
             answersObj[qIdx] = chosen;
           });
           mockSurveySubs[st] = {
             answers: answersObj,
-            timestamp: now - (sIdx * 1500)
+            timestamp: now - (sIdx * 800)
           };
           mqttService.publishResponse({
             event: 'submit_survey',
             studentName: st,
             answers: answersObj,
-            timestamp: now - (sIdx * 1500)
+            timestamp: now - (sIdx * 800)
           });
         });
 
         setSurveySubmissions(prev => ({ ...prev, ...mockSurveySubs }));
-        setSimulationToast('🧪 已模擬學生 🦊st01, 🐼st02, 🌻st03 填寫並送出整份問卷！');
+        setSimulationToast('🧪 已模擬 10 位學生 (st01~st10) 填寫並送出整份問卷！');
         setTimeout(() => setSimulationToast(''), 3500);
         return;
       }
@@ -744,57 +747,68 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
           : ['A', 'B', 'C', 'D'];
         const correctOpt = q.correctAnswer || opts[0];
         const otherOpts = opts.filter(o => o !== correctOpt);
-        const opt2 = otherOpts[0] || opts[1] || 'B';
-        const opt3 = otherOpts[1] || opts[0] || 'C';
 
-        mockAnswers['🦊 st01'] = {
-          answer: correctOpt,
-          timestamp: (questionStartTime || (now - 8000)) + 2150,
-          questionIndex: currentQIndex
-        };
-        mockAnswers['🐼 st02'] = {
-          answer: q.type === 'poll' ? opt2 : (Math.random() > 0.3 ? correctOpt : opt2),
-          timestamp: (questionStartTime || (now - 8000)) + 4300,
-          questionIndex: currentQIndex
-        };
-        mockAnswers['🌻 st03'] = {
-          answer: q.type === 'poll' ? opt3 : (Math.random() > 0.5 ? correctOpt : opt3),
-          timestamp: (questionStartTime || (now - 8000)) + 6800,
-          questionIndex: currentQIndex
-        };
+        simStudents.forEach((st, idx) => {
+          let chosen = correctOpt;
+          if (q.type === 'poll') {
+            // Evenly distribute poll responses across options
+            chosen = opts[idx % opts.length];
+          } else {
+            // For CCQ / Game: 70% choose correctOpt, 30% choose others
+            if (idx === 1 || idx === 4 || idx === 8) {
+              chosen = otherOpts[idx % otherOpts.length] || opts[1] || 'B';
+            }
+          }
+
+          // Spread answering timestamps between 1.5s to 9.5s
+          const elapsed = 1500 + idx * 850;
+          mockAnswers[st] = {
+            answer: chosen,
+            timestamp: (questionStartTime || (now - 10000)) + elapsed,
+            questionIndex: currentQIndex
+          };
+        });
       } else if (q.type === 'pair') {
-        mockAnswers['🦊 st01'] = {
-          answer: {
-            summary: '我們這組討論認為微服務的痛點在於服務依賴深與網路延遲，建議引入契約測試（Pact）與 Docker 容器化隔離。',
-            partnerName: '🐼 st02'
-          },
-          timestamp: now - 3000,
-          questionIndex: currentQIndex
-        };
-        mockAnswers['🌻 st03'] = {
-          answer: {
-            summary: '單體架構重構為微服務時最容易忽略資料一致性，需配合事件驅動架構與分散式追蹤（OpenTelemetry）提高可觀測性。',
-            partnerName: '🦁 st04'
-          },
-          timestamp: now - 1200,
-          questionIndex: currentQIndex
-        };
+        // 5 Pairs among 10 students
+        const pairData = [
+          { st1: '🦊 st01', st2: '🐼 st02', summary: '微服務的痛點在於跨服務呼叫延遲與依賴複雜度，建議透過契約測試（Pact）與 Docker 容器隔離提高獨立部署性。' },
+          { st1: '🌻 st03', st2: '🐨 st04', summary: '單體架構拆分時最易出現分散式事務與資料不一致，應導入事件驅動架構與 OpenTelemetry 鏈路追蹤提升可觀測性。' },
+          { st1: '🦁 st05', st2: '🐬 st06', summary: '探索式測試與腳本測試應互補並行，利用 Session-Based 測試管理能兼顧敏捷探索的彈性與覆蓋率記錄。' },
+          { st1: '🌸 st07', st2: '🦄 st08', summary: '測試金字塔應以高速且低維護成本的單元測試為底座，UI/E2E 測試鎖定核心快樂路徑，避免測試套件過於脆弱。' },
+          { st1: '🐯 st09', st2: '🦉 st10', summary: 'CI/CD 流程中建立自動化品質防護網，透過平行化執行測試套件，能在 5 分鐘內提供開發者即時回饋。' }
+        ];
+
+        pairData.forEach((p, idx) => {
+          mockAnswers[p.st1] = {
+            answer: {
+              summary: p.summary,
+              partnerName: p.st2
+            },
+            timestamp: now - ((5 - idx) * 800),
+            questionIndex: currentQIndex
+          };
+        });
       } else if (q.type === 'wordcloud') {
-        mockAnswers['🦊 st01'] = {
-          answer: '敏捷開發, 自動化測試, CI/CD',
-          timestamp: now - 3500,
-          questionIndex: currentQIndex
-        };
-        mockAnswers['🐼 st02'] = {
-          answer: '單元測試, 敏捷開發, 程式碼審查',
-          timestamp: now - 2000,
-          questionIndex: currentQIndex
-        };
-        mockAnswers['🌻 st03'] = {
-          answer: '持續重構, 自動化測試, 乾淨架構',
-          timestamp: now - 800,
-          questionIndex: currentQIndex
-        };
+        const wordSubmissions = [
+          '敏捷開發, 自動化測試, CI/CD',
+          '單元測試, 敏捷開發, 程式碼審查',
+          '持續重構, 自動化測試, 乾淨架構',
+          'TDD, 程式碼審查, 自動化測試',
+          '低耦合, 敏捷開發, 架構設計',
+          '持續重構, 單元測試, CI/CD',
+          '可測試性, 自動化測試, 敏捷開發',
+          '程式碼審查, TDD, 低耦合',
+          '乾淨架構, 自動化測試, 重構',
+          '持續整合, 單元測試, 敏捷開發'
+        ];
+
+        simStudents.forEach((st, idx) => {
+          mockAnswers[st] = {
+            answer: wordSubmissions[idx % wordSubmissions.length],
+            timestamp: now - ((10 - idx) * 500),
+            questionIndex: currentQIndex
+          };
+        });
       } else if (q.type === 'ordering') {
         const items = q.items || [];
         const swapped = [...items];
@@ -803,37 +817,37 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
           swapped[0] = swapped[1];
           swapped[1] = tmp;
         }
-        mockAnswers['🦊 st01'] = {
-          answer: items,
-          timestamp: now - 4000,
-          questionIndex: currentQIndex
-        };
-        mockAnswers['🐼 st02'] = {
-          answer: swapped,
-          timestamp: now - 2500,
-          questionIndex: currentQIndex
-        };
-        mockAnswers['🌻 st03'] = {
-          answer: items,
-          timestamp: now - 1200,
-          questionIndex: currentQIndex
-        };
+
+        simStudents.forEach((st, idx) => {
+          // Most answer correctly, some with slight swap
+          const ans = (idx === 1 || idx === 5) ? swapped : items;
+          mockAnswers[st] = {
+            answer: ans,
+            timestamp: now - ((10 - idx) * 600),
+            questionIndex: currentQIndex
+          };
+        });
       } else if (q.type === 'short') {
-        mockAnswers['🦊 st01'] = {
-          answer: '先寫失敗的測試確認規格邊界，再用最簡程式碼使其通過，最後重構優化架構。',
-          timestamp: now - 3000,
-          questionIndex: currentQIndex
-        };
-        mockAnswers['🐼 st02'] = {
-          answer: '紅綠燈循環能建立回歸防護網，及時消除壞味道並維持系統高品質與可維護性。',
-          timestamp: now - 2000,
-          questionIndex: currentQIndex
-        };
-        mockAnswers['🌻 st03'] = {
-          answer: 'TDD 能驅動模組低耦合設計，從使用者調用觀點出發定義清晰簡潔的 API 介面。',
-          timestamp: now - 1000,
-          questionIndex: currentQIndex
-        };
+        const shortAnswers = [
+          '先寫失敗的測試確認規格邊界，再用最簡程式碼使其通過，最後重構優化架構。',
+          '紅綠燈循環能建立回歸防護網，及時消除程式碼壞味道，維持系統高品質與可維護性。',
+          'TDD 能驅動模組低耦合設計，從調用端視角出發定義出最清晰簡潔的 API 介面。',
+          '紅燈代表以測試具體化需求，綠燈代表小步前進快速驗證，重構代表技術債零累積。',
+          '透過測試案例直接驗收規格行為，能減少過度設計（YAGNI），大幅提升團隊重構信心。',
+          '把除錯時間前置化，使每次程式碼提交都有高度信心，讓自動化回歸測試成為常態。',
+          '先釐清邊界條件與異常處理，再撰寫核心業務邏輯，避免事後補測試遺漏盲點。',
+          '紅綠燈反覆快節奏迭代，讓工程師保持清晰專注，維持每階段程式碼的整潔與精準。',
+          '測試即是活生生且即時驗證的規格文件，重構時能確保既有業務行為完全不被破壞。',
+          'TDD 的核心價值是設計工具而非僅是測試工具，能倒逼出更具可測試性的軟體架構。'
+        ];
+
+        simStudents.forEach((st, idx) => {
+          mockAnswers[st] = {
+            answer: shortAnswers[idx % shortAnswers.length],
+            timestamp: now - ((10 - idx) * 700),
+            questionIndex: currentQIndex
+          };
+        });
       }
 
       setAnswers(prev => {
@@ -856,10 +870,10 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         calculateGameScores(mockAnswers);
       }
 
-      setSimulationToast('🧪 已模擬學生 🦊st01, 🐼st02, 🌻st03 送出作答！');
+      setSimulationToast('🧪 已模擬 10 位學生 (st01~st10) 送出作答！');
     } else {
       broadcastLobbyState();
-      setSimulationToast('🧪 已模擬學生 🦊st01, 🐼st02, 🌻st03 加入房間大廳！');
+      setSimulationToast('🧪 已模擬 10 位學生 (st01~st10) 加入房間大廳！');
     }
 
     setTimeout(() => {
@@ -915,9 +929,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
               boxShadow: '0 2px 10px rgba(236, 72, 153, 0.15)'
             }}
             onClick={handleSimulateStudents}
-            title="模擬三個學生 st01, st02, st03 加入房間並自動作答"
+            title="模擬 10 位學生 (st01~st10) 加入房間並自動作答"
           >
-            <FlaskConical size={16} /> 模擬學生 (st01~st03)
+            <FlaskConical size={16} /> 模擬學生 (st01~st10)
           </button>
 
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
@@ -1074,9 +1088,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   className="btn btn-secondary" 
                   style={{ padding: '0.25rem 0.65rem', fontSize: '0.78rem', color: '#f472b6', borderColor: 'rgba(236, 72, 153, 0.4)' }}
                   onClick={handleSimulateStudents}
-                  title="模擬 st01, st02, st03 加入"
+                  title="模擬 10 位學生加入"
                 >
-                  <FlaskConical size={13} /> + 模擬加入
+                  <FlaskConical size={13} /> + 模擬 10 人加入
                 </button>
               </div>
               <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignContent: 'flex-start' }}>
@@ -1121,9 +1135,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   className="btn btn-secondary" 
                   style={{ padding: '0.85rem 1.25rem', color: '#f472b6', borderColor: 'rgba(236, 72, 153, 0.45)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem' }} 
                   onClick={handleSimulateStudents}
-                  title="模擬 3 位學生填寫整份問卷並提交"
+                  title="模擬 10 位學生填寫整份問卷並提交"
                 >
-                  <FlaskConical size={16} /> 模擬學生提交問卷
+                  <FlaskConical size={16} /> 模擬 10 人提交問卷
                 </button>
                 <button 
                   className="btn btn-primary animate-pulse-glow"
@@ -1467,9 +1481,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                   className="btn btn-secondary" 
                   style={{ padding: '0.85rem 1.25rem', color: '#f472b6', borderColor: 'rgba(236, 72, 153, 0.45)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem' }} 
                   onClick={handleSimulateStudents}
-                  title="模擬 st01, st02, st03 作答"
+                  title="模擬 10 位學生 (st01~st10) 作答"
                 >
-                  <FlaskConical size={16} /> 模擬學生作答
+                  <FlaskConical size={16} /> 模擬 10 人作答
                 </button>
                 <button className="btn btn-danger" style={{ padding: '1rem 2rem' }} onClick={stopQuestion}>
                   <Square size={16} fill="white" /> Stop Answering

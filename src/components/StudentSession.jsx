@@ -7,6 +7,19 @@ import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
 import { getActivityShortTitle } from '../utils/formatters';
 
+const FLORA_FAUNA_EMOJIS = [
+  // Animals (可愛動物)
+  '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', 
+  '🦁', '🐮', '🐷', '🐸', '🐵', '🐧', '🐦', '🐤', '🦆', '🦅', 
+  '🦉', '🐺', '🐗', '🐴', '🦄', '🐝', '🦋', '🐢', '🐙', '🦑', 
+  '🐬', '🐳', '🦈', '🐊', '🐆', '🦓', '🐘', '🦛', '🦒', '🦘', 
+  '🦔', '🦝', '🦥', '🦦', '🦩', '🦚', '🦜', '🕊️', '🐇', '🐕',
+  // Plants / Nature (療癒植物)
+  '🌲', '🌳', '🌴', '🌵', '🌾', '🌿', '☘️', '🍀', '🍁', '🍃', 
+  '🍄', '🌸', '🌺', '🌻', '🌹', '🌷', '🌼', '💐', '🪷', '🪴', 
+  '🎋', '🎍', '🌱', '🍎', '🍓', '🍒', '🥑'
+];
+
 export default function StudentSession({ roomCode, onLeave, activity, course, chapter }) {
   const formatTime = (secs) => {
     const s = Math.max(0, Math.floor(secs));
@@ -42,7 +55,31 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     }
   };
 
-  const [nickname, setNickname] = useState(() => localStorage.getItem('nickpocket_student_name') || '');
+  // Random Flora/Fauna Emoji (Locked, non-editable by student to avoid choice paralysis)
+  const [assignedEmoji] = useState(() => {
+    const savedEmoji = localStorage.getItem('nickpocket_student_emoji');
+    if (savedEmoji && FLORA_FAUNA_EMOJIS.includes(savedEmoji)) return savedEmoji;
+    const random = FLORA_FAUNA_EMOJIS[Math.floor(Math.random() * FLORA_FAUNA_EMOJIS.length)];
+    localStorage.setItem('nickpocket_student_emoji', random);
+    return random;
+  });
+
+  const [rawName, setRawName] = useState(() => {
+    const savedRaw = localStorage.getItem('nickpocket_student_raw_name');
+    if (savedRaw) return savedRaw;
+    const oldSaved = localStorage.getItem('nickpocket_student_name') || '';
+    return oldSaved.replace(/^[\p{Emoji}\u200d\uFE0F\s]+/u, '').trim();
+  });
+
+  const [nickname, setNickname] = useState(() => {
+    const savedRaw = localStorage.getItem('nickpocket_student_raw_name');
+    const savedEmoji = localStorage.getItem('nickpocket_student_emoji') || assignedEmoji;
+    if (savedRaw) return `${savedEmoji} ${savedRaw}`.trim();
+    const oldSaved = localStorage.getItem('nickpocket_student_name');
+    if (oldSaved) return oldSaved;
+    return '';
+  });
+
   const [isJoined, setIsJoined] = useState(false);
   const [connStatus, setConnStatus] = useState('disconnected');
   const [connError, setConnError] = useState('');
@@ -76,6 +113,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   });
   const [revealedCorrectAnswer, setRevealedCorrectAnswer] = useState(null);
 
+  // Game Leaderboard & Result data received on stop
+  const [gameResultData, setGameResultData] = useState(null);
+
   // Time tracker for game timer display
   const [timeLeft, setTimeLeft] = useState(0);
   const [questionStartMs, setQuestionStartMs] = useState(0);
@@ -84,10 +124,14 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   // Student Nickname and Join status (managed locally)
   const handleJoin = (e) => {
     e.preventDefault();
-    if (!nickname.trim()) return;
-    localStorage.setItem('nickpocket_student_name', nickname.trim());
+    const cleanRaw = rawName.trim();
+    if (!cleanRaw) return;
+    const fullNickname = `${assignedEmoji} ${cleanRaw}`;
+    setNickname(fullNickname);
+    localStorage.setItem('nickpocket_student_raw_name', cleanRaw);
+    localStorage.setItem('nickpocket_student_name', fullNickname);
     setIsJoined(true);
-    mqttService.publishResponse({ event: 'join', studentName: nickname.trim() });
+    mqttService.publishResponse({ event: 'join', studentName: fullNickname });
   };
 
   // 1. MQTT lifecycle for student connection
@@ -205,6 +249,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       setRoomState('stopped');
       if (payload.correctAnswer) {
         setRevealedCorrectAnswer(payload.correctAnswer);
+      }
+      if (payload.gameData) {
+        setGameResultData(payload.gameData);
       }
       if (payload.stats || payload.wordCloud || payload.shortAnswers || payload.pairDiscussions) {
         setLiveStats(prev => ({
@@ -631,19 +678,46 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
           </div>
 
           <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <label className="form-label">你的姓名 / 暱稱 (Your Nickname)</label>
-            <input 
-              type="text" 
-              className="input-field" 
-              value={nickname} 
-              onChange={(e) => setNickname(e.target.value)} 
-              placeholder="例如：王小明 / CodeRider" 
-              maxLength={15}
-              required 
-            />
+            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>你的姓名 / 暱稱 (Your Nickname)</span>
+              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>🌱 專屬動植物徽章</span>
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div 
+                className="glass-card" 
+                style={{ 
+                  fontSize: '1.75rem', 
+                  padding: '0.45rem 0.85rem', 
+                  borderRadius: '12px', 
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1.5px solid var(--border-glow)',
+                  userSelect: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                }}
+                title="系統為您隨機分配的專屬動植物徽章（固定不可更改，無選擇困難）"
+              >
+                {assignedEmoji}
+              </div>
+              <input 
+                type="text" 
+                className="input-field" 
+                value={rawName} 
+                onChange={(e) => setRawName(e.target.value)} 
+                placeholder="輸入姓名，例如：小明" 
+                maxLength={15}
+                required 
+                style={{ flex: 1, fontSize: '1.05rem' }}
+              />
+            </div>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.45rem', textAlign: 'left', lineHeight: '1.4' }}>
+              🔒 系統已為您鎖定專屬幸運物 <strong>{assignedEmoji}</strong>，加入後全班將顯示為 <strong>{assignedEmoji} {rawName.trim() || '你的名字'}</strong>。
+            </p>
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.95rem', marginTop: '0.5rem', fontSize: '1rem' }} disabled={!nickname.trim()}>
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.95rem', marginTop: '0.5rem', fontSize: '1rem' }} disabled={!rawName.trim()}>
             進入教室 Join Room <ArrowRight size={18} />
           </button>
         </form>
@@ -852,6 +926,41 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
               {hasSubmitted || roomState === 'stopped' ? (
                 /* Post-Submission Screen with Live Statistics */
                 <div className="animate-fade-in">
+                  {/* Personal Game Result & Rank Card for mobile */}
+                  {activeQuestion.type === 'game' && gameResultData && (() => {
+                    const myData = gameResultData.leaderboard?.find(p => p.name === nickname);
+                    const myRank = gameResultData.leaderboard?.findIndex(p => p.name === nickname) + 1;
+                    const gained = myData?.roundGain || 0;
+                    const isCorrect = myData?.isCorrect;
+
+                    return (
+                      <div 
+                        className="glass-card animate-pop" 
+                        style={{ 
+                          padding: '1rem 1.25rem', 
+                          marginBottom: '1.25rem', 
+                          background: isCorrect 
+                            ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.3) 100%)' 
+                            : 'rgba(239, 68, 68, 0.1)', 
+                          border: isCorrect ? '1.5px solid #10b981' : '1px solid rgba(239, 68, 68, 0.3)', 
+                          borderRadius: '12px',
+                          textAlign: 'center',
+                          boxShadow: isCorrect ? '0 0 15px rgba(16, 185, 129, 0.25)' : 'none'
+                        }}
+                      >
+                        <div style={{ fontSize: '2.2rem', marginBottom: '0.2rem' }}>
+                          {isCorrect ? (myRank === 1 ? '👑 🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🎉') : '❌'}
+                        </div>
+                        <div style={{ fontSize: '1.2rem', fontWeight: 800, color: isCorrect ? '#6ee7b7' : '#fca5a5' }}>
+                          {isCorrect ? `恭喜答對！本題 +${gained} 分` : '本題未答對 (+0 分)'}
+                        </div>
+                        <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fbbf24', marginTop: '0.35rem' }}>
+                          目前排名：第 {myRank > 0 ? myRank : '-'} 名 / 總分 {myData?.score || 0} pts
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Status Banner */}
                   <div 
                     className="glass-card flex-between" 

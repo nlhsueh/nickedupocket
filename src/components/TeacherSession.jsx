@@ -26,6 +26,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   
   // Game scores state
   const [studentScores, setStudentScores] = useState({}); // { studentName: score }
+  const [roundScores, setRoundScores] = useState({}); // { studentName: { gained, isCorrect, elapsedSec } }
   
   // View modes & Spotlight
   const [shortAnswerViewMode, setShortAnswerViewMode] = useState('grid'); // 'grid' or 'danmaku'
@@ -366,6 +367,25 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     if (timerRef.current) clearInterval(timerRef.current);
     setSessionStatus('results');
 
+    let gameData = null;
+    if (currentQuestion.type === 'game') {
+      const { newScores, currentRoundGains } = calculateGameScores();
+      const sortedLeaderboard = Object.entries(newScores)
+        .map(([name, score]) => ({ 
+          name, 
+          score, 
+          roundGain: currentRoundGains[name]?.gained || 0,
+          isCorrect: currentRoundGains[name]?.isCorrect || false
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      gameData = {
+        scores: newScores,
+        roundGains: currentRoundGains,
+        leaderboard: sortedLeaderboard
+      };
+    }
+
     const q = activity.questions[currentQIndex];
     const statsObj = getMultipleChoiceStats();
     const wordCloudData = (q && q.type === 'wordcloud') ? getWordCloudFrequencies() : null;
@@ -383,13 +403,9 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         freqMap: wordCloudData.freqMap,
         sortedList: wordCloudData.sortedList,
         totalWords: wordCloudData.totalWords
-      } : null
+      } : null,
+      gameData
     });
-
-    // Calculate game scores if type is Game
-    if (currentQuestion.type === 'game') {
-      calculateGameScores();
-    }
   };
 
   const nextQuestionAndStart = () => {
@@ -438,16 +454,18 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const nextQuestion = nextQuestionAndStart;
 
   // 4. Game Score calculations
-  const calculateGameScores = () => {
+  const calculateGameScores = (answersMap) => {
     const q = activity.questions[currentQIndex];
     const newScores = { ...studentScores };
+    const ansMap = answersMap || answers;
+    const currentRoundGains = {};
 
-    Object.keys(answers).forEach((studentName) => {
-      const response = answers[studentName];
+    Object.keys(ansMap).forEach((studentName) => {
+      const response = ansMap[studentName];
       // Check correct
       if (response && response.answer === q.correctAnswer) {
         // Correct! Calculate score based on speed
-        const timeLimitMs = (q.timeLimit || 15) * 1000;
+        const timeLimitMs = (q.timeLimit || 20) * 1000;
         const elapsed = Math.max(0, response.timestamp - questionStartTime);
         
         // Base score 500, up to 1000 total depending on speed
@@ -460,9 +478,19 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         }
 
         newScores[studentName] = (newScores[studentName] || 0) + questionScore;
+        currentRoundGains[studentName] = {
+          gained: questionScore,
+          isCorrect: true,
+          elapsedSec: (elapsed / 1000).toFixed(1)
+        };
       } else {
         // Incorrect or no response
         newScores[studentName] = newScores[studentName] || 0;
+        currentRoundGains[studentName] = {
+          gained: 0,
+          isCorrect: false,
+          elapsedSec: null
+        };
       }
     });
 
@@ -471,9 +499,14 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       if (!(student in newScores)) {
         newScores[student] = 0;
       }
+      if (!(student in currentRoundGains)) {
+        currentRoundGains[student] = { gained: 0, isCorrect: false, elapsedSec: null };
+      }
     });
 
     setStudentScores(newScores);
+    setRoundScores(currentRoundGains);
+    return { newScores, currentRoundGains };
   };
 
   // 5. Result Computations & Visuals
@@ -587,7 +620,7 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
   // Helper to simulate 3 students (st01, st02, st03) joining and answering
   const handleSimulateStudents = () => {
-    const simStudents = ['st01', 'st02', 'st03'];
+    const simStudents = ['🦊 st01', '🐼 st02', '🌻 st03'];
     const now = Date.now();
     const q = activity.questions[currentQIndex];
 
@@ -618,50 +651,50 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         const opt2 = otherOpts[0] || opts[1] || 'B';
         const opt3 = otherOpts[1] || opts[0] || 'C';
 
-        mockAnswers['st01'] = {
+        mockAnswers['🦊 st01'] = {
           answer: correctOpt,
           timestamp: (questionStartTime || (now - 8000)) + 2150,
           questionIndex: currentQIndex
         };
-        mockAnswers['st02'] = {
+        mockAnswers['🐼 st02'] = {
           answer: q.type === 'poll' ? opt2 : (Math.random() > 0.3 ? correctOpt : opt2),
           timestamp: (questionStartTime || (now - 8000)) + 4300,
           questionIndex: currentQIndex
         };
-        mockAnswers['st03'] = {
+        mockAnswers['🌻 st03'] = {
           answer: q.type === 'poll' ? opt3 : (Math.random() > 0.5 ? correctOpt : opt3),
           timestamp: (questionStartTime || (now - 8000)) + 6800,
           questionIndex: currentQIndex
         };
       } else if (q.type === 'pair') {
-        mockAnswers['st01'] = {
+        mockAnswers['🦊 st01'] = {
           answer: {
             summary: '我們這組討論認為微服務的痛點在於服務依賴深與網路延遲，建議引入契約測試（Pact）與 Docker 容器化隔離。',
-            partnerName: 'st02'
+            partnerName: '🐼 st02'
           },
           timestamp: now - 3000,
           questionIndex: currentQIndex
         };
-        mockAnswers['st03'] = {
+        mockAnswers['🌻 st03'] = {
           answer: {
             summary: '單體架構重構為微服務時最容易忽略資料一致性，需配合事件驅動架構與分散式追蹤（OpenTelemetry）提高可觀測性。',
-            partnerName: 'st04'
+            partnerName: '🦁 st04'
           },
           timestamp: now - 1200,
           questionIndex: currentQIndex
         };
       } else if (q.type === 'wordcloud') {
-        mockAnswers['st01'] = {
+        mockAnswers['🦊 st01'] = {
           answer: '敏捷開發, 自動化測試, CI/CD',
           timestamp: now - 3500,
           questionIndex: currentQIndex
         };
-        mockAnswers['st02'] = {
+        mockAnswers['🐼 st02'] = {
           answer: '單元測試, 敏捷開發, 程式碼審查',
           timestamp: now - 2000,
           questionIndex: currentQIndex
         };
-        mockAnswers['st03'] = {
+        mockAnswers['🌻 st03'] = {
           answer: '持續重構, 自動化測試, 乾淨架構',
           timestamp: now - 800,
           questionIndex: currentQIndex
@@ -674,33 +707,33 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
           swapped[0] = swapped[1];
           swapped[1] = tmp;
         }
-        mockAnswers['st01'] = {
+        mockAnswers['🦊 st01'] = {
           answer: items,
           timestamp: now - 4000,
           questionIndex: currentQIndex
         };
-        mockAnswers['st02'] = {
+        mockAnswers['🐼 st02'] = {
           answer: swapped,
           timestamp: now - 2500,
           questionIndex: currentQIndex
         };
-        mockAnswers['st03'] = {
+        mockAnswers['🌻 st03'] = {
           answer: items,
           timestamp: now - 1200,
           questionIndex: currentQIndex
         };
       } else if (q.type === 'short') {
-        mockAnswers['st01'] = {
+        mockAnswers['🦊 st01'] = {
           answer: '先寫失敗的測試確認規格邊界，再用最簡程式碼使其通過，最後重構優化架構。',
           timestamp: now - 3000,
           questionIndex: currentQIndex
         };
-        mockAnswers['st02'] = {
+        mockAnswers['🐼 st02'] = {
           answer: '紅綠燈循環能建立回歸防護網，及時消除壞味道並維持系統高品質與可維護性。',
           timestamp: now - 2000,
           questionIndex: currentQIndex
         };
-        mockAnswers['st03'] = {
+        mockAnswers['🌻 st03'] = {
           answer: 'TDD 能驅動模組低耦合設計，從使用者調用觀點出發定義清晰簡潔的 API 介面。',
           timestamp: now - 1000,
           questionIndex: currentQIndex
@@ -723,14 +756,14 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         });
       });
 
-      if (q.type === 'game' && sessionStatus === 'results') {
-        calculateGameScores();
+      if (q.type === 'game') {
+        calculateGameScores(mockAnswers);
       }
 
-      setSimulationToast('🧪 已模擬學生 st01, st02, st03 送出作答！');
+      setSimulationToast('🧪 已模擬學生 🦊st01, 🐼st02, 🌻st03 送出作答！');
     } else {
       broadcastLobbyState();
-      setSimulationToast('🧪 已模擬學生 st01, st02, st03 加入房間大廳！');
+      setSimulationToast('🧪 已模擬學生 🦊st01, 🐼st02, 🌻st03 加入房間大廳！');
     }
 
     setTimeout(() => {
@@ -1836,97 +1869,232 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
                 )}
               </div>
 
-              {/* Right Column: Individual Student Submissions */}
-              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', maxHeight: '350px' }}>
-                <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <h3 style={{ fontSize: '1.1rem', margin: 0 }}>
-                    Student Submissions ({joinedStudents.length})
-                  </h3>
-                  {(currentQuestion.type === 'ccq' || currentQuestion.type === 'game' || currentQuestion.type === 'ordering') && (() => {
-                    const answeredCount = Object.keys(answers).length;
-                    let correctCount = 0;
-                    if (currentQuestion.type === 'ordering') {
-                      correctCount = Object.values(answers).filter(a => a.questionIndex === currentQIndex && Array.isArray(a.answer) && a.answer.every((v, i) => v === currentQuestion.items[i])).length;
-                    } else {
-                      correctCount = Object.values(answers).filter(a => a.questionIndex === currentQIndex && a.answer === currentQuestion.correctAnswer).length;
-                    }
-                    return (
-                      <span className="badge badge-success" style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem' }}>
-                        答對率: {answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0}% ({correctCount}/{answeredCount})
-                      </span>
-                    );
-                  })()}
-                </div>
+              {/* Right Column: Game Leaderboard (Prominent) OR Student Submissions */}
+              {currentQuestion.type === 'game' ? (
+                <div 
+                  className="glass-card animate-slide-up" 
+                  style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    maxHeight: '480px',
+                    border: '1.5px solid rgba(245, 158, 11, 0.45)',
+                    boxShadow: '0 8px 32px rgba(245, 158, 11, 0.18)',
+                    background: 'linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                    padding: '1.25rem'
+                  }}
+                >
+                  <div className="flex-between" style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.35)', paddingBottom: '0.75rem', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.25rem', margin: 0, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Award size={24} /> 🏆 即時積分排行榜 (Leaderboard)
+                      </h3>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        答對且越快得分越高！每題結束名次即時洗牌
+                      </p>
+                    </div>
+                    <span className="badge badge-warning" style={{ fontWeight: 800, fontSize: '0.85rem' }}>
+                      第 {currentQIndex + 1} / {activity.questions.length} 題
+                    </span>
+                  </div>
 
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  {joinedStudents.map((stName, idx) => {
-                    const submission = answers[stName];
-                    let statusLabel = '未作答 (No Answer)';
-                    let isCorrect = false;
-                    let hasAnswered = false;
-                    
-                    if (submission && submission.questionIndex === currentQIndex) {
-                      hasAnswered = true;
-                      if (currentQuestion.type === 'ccq' || currentQuestion.type === 'game') {
-                        isCorrect = submission.answer === currentQuestion.correctAnswer;
-                        statusLabel = isCorrect 
-                          ? `🎉 答對！選了 Option ${submission.answer}` 
-                          : `❌ 答錯，選了 Option ${submission.answer}`;
-                      } else if (currentQuestion.type === 'ordering') {
-                        isCorrect = Array.isArray(submission.answer) && submission.answer.every((val, index) => val === currentQuestion.items[index]);
-                        statusLabel = isCorrect ? '🎉 排序完全正確！' : '❌ 排序未完全正確';
-                      } else if (currentQuestion.type === 'poll') {
-                        statusLabel = `已投 Option ${submission.answer}`;
-                      } else if (currentQuestion.type === 'pair') {
-                        statusLabel = `已提交雙人討論 (夥伴: ${submission.answer?.partnerName || '未填'})`;
-                      } else {
-                        statusLabel = submission.answer ? '已送出作答' : '未作答';
-                      }
-                    }
+                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.55rem', paddingRight: '0.25rem' }}>
+                    {getSortedScoreboard().map((p, idx) => {
+                      const gainInfo = roundScores[p.name];
+                      const gained = gainInfo?.gained || 0;
+                      const isCorrect = gainInfo?.isCorrect || false;
+                      const elapsed = gainInfo?.elapsedSec;
+                      const topScore = getSortedScoreboard()[0]?.score || 1;
+                      const barWidth = Math.max(10, Math.min(100, (p.score / (topScore || 1)) * 100));
 
-                    return (
-                      <div 
-                        key={idx} 
-                        className="flex-between animate-pop" 
-                        style={{ 
-                          padding: '0.45rem 0.75rem', 
-                          borderRadius: '8px',
-                          background: isCorrect 
-                            ? 'rgba(16, 185, 129, 0.15)' 
-                            : (hasAnswered ? 'rgba(255, 255, 255, 0.02)' : 'rgba(239, 68, 68, 0.05)'),
-                          border: isCorrect 
-                            ? '1.5px solid rgba(16, 185, 129, 0.6)' 
-                            : '1px solid rgba(255, 255, 255, 0.05)',
-                          boxShadow: isCorrect ? '0 0 12px rgba(16, 185, 129, 0.2)' : 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <span style={{ 
-                          fontSize: '0.92rem', 
-                          fontWeight: isCorrect ? 700 : 500,
-                          color: isCorrect ? '#6ee7b7' : 'var(--text-primary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem'
-                        }}>
-                          {isCorrect ? '✅ ' : (hasAnswered ? '👤 ' : '⚪ ')}
-                          {stName}
-                        </span>
-                        <span 
-                          className={`badge ${isCorrect ? 'badge-success' : (hasAnswered ? (currentQuestion.type === 'poll' || currentQuestion.type === 'pair' || currentQuestion.type === 'short' || currentQuestion.type === 'wordcloud' ? 'badge-indigo' : 'badge-danger') : 'badge-secondary')}`} 
+                      const isGold = idx === 0;
+                      const isSilver = idx === 1;
+                      const isBronze = idx === 2;
+
+                      return (
+                        <div 
+                          key={idx} 
+                          className="glass-card animate-pop" 
                           style={{ 
-                            fontSize: isCorrect ? '0.85rem' : '0.78rem',
-                            padding: isCorrect ? '0.3rem 0.65rem' : '0.25rem 0.5rem',
-                            fontWeight: isCorrect ? 700 : 500
+                            padding: '0.65rem 0.9rem', 
+                            borderRadius: '12px',
+                            background: isGold 
+                              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.32) 100%)' 
+                              : (isSilver 
+                                ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.18) 0%, rgba(100, 116, 139, 0.25) 100%)'
+                                : (isBronze 
+                                  ? 'linear-gradient(135deg, rgba(180, 83, 9, 0.18) 0%, rgba(146, 64, 14, 0.25) 100%)'
+                                  : 'rgba(255, 255, 255, 0.03)')),
+                            border: isGold 
+                              ? '1.5px solid #f59e0b' 
+                              : (isSilver 
+                                ? '1.5px solid #94a3b8' 
+                                : (isBronze 
+                                  ? '1.5px solid #b45309' 
+                                  : '1px solid rgba(255, 255, 255, 0.05)')),
+                            boxShadow: isGold ? '0 0 16px rgba(245, 158, 11, 0.3)' : 'none',
+                            position: 'relative',
+                            overflow: 'hidden'
                           }}
                         >
-                          {statusLabel}
-                        </span>
-                      </div>
-                    );
-                  })}
+                          {/* Background score progress track */}
+                          <div 
+                            style={{ 
+                              position: 'absolute', 
+                              left: 0, 
+                              top: 0, 
+                              bottom: 0, 
+                              width: `${barWidth}%`, 
+                              background: isGold 
+                                ? 'rgba(245, 158, 11, 0.1)' 
+                                : 'rgba(255, 255, 255, 0.03)',
+                              zIndex: 0,
+                              pointerEvents: 'none',
+                              borderRadius: '12px'
+                            }} 
+                          />
+
+                          <div className="flex-between" style={{ position: 'relative', zIndex: 1, alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                              <span 
+                                style={{ 
+                                  fontSize: isGold ? '1.2rem' : '0.95rem',
+                                  fontWeight: 800,
+                                  width: '34px',
+                                  height: '34px',
+                                  borderRadius: '50%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  background: isGold ? '#f59e0b' : (isSilver ? '#94a3b8' : (isBronze ? '#b45309' : 'rgba(255,255,255,0.08)')),
+                                  color: (isGold || isSilver || isBronze) ? '#080B11' : 'var(--text-secondary)',
+                                  boxShadow: isGold ? '0 0 12px rgba(245, 158, 11, 0.6)' : 'none'
+                                }}
+                              >
+                                {isGold ? '👑' : (isSilver ? '2' : (isBronze ? '3' : `#${idx + 1}`))}
+                              </span>
+
+                              <div>
+                                <div style={{ fontSize: '1.05rem', fontWeight: 700, color: isGold ? '#fef08a' : 'var(--text-primary)' }}>
+                                  {p.name}
+                                </div>
+                                <div style={{ fontSize: '0.78rem', marginTop: '0.15rem' }}>
+                                  {isCorrect ? (
+                                    <span style={{ color: '#10b981', fontWeight: 700 }}>
+                                      ⚡ 本題 +{gained} pts ({elapsed}s 答對)
+                                    </span>
+                                  ) : (
+                                    <span style={{ color: 'var(--text-muted)' }}>
+                                      本題未得分 (+0 pts)
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fbbf24', fontFamily: 'monospace' }}>
+                                {p.score.toLocaleString()} <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)' }}>pts</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* Regular Student Submissions for CCQ, Poll, Ordering, Short, WordCloud, Pair */
+                <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', maxHeight: '350px' }}>
+                  <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0 }}>
+                      Student Submissions ({joinedStudents.length})
+                    </h3>
+                    {(currentQuestion.type === 'ccq' || currentQuestion.type === 'ordering') && (() => {
+                      const answeredCount = Object.keys(answers).length;
+                      let correctCount = 0;
+                      if (currentQuestion.type === 'ordering') {
+                        correctCount = Object.values(answers).filter(a => a.questionIndex === currentQIndex && Array.isArray(a.answer) && a.answer.every((v, i) => v === currentQuestion.items[i])).length;
+                      } else {
+                        correctCount = Object.values(answers).filter(a => a.questionIndex === currentQIndex && a.answer === currentQuestion.correctAnswer).length;
+                      }
+                      return (
+                        <span className="badge badge-success" style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem' }}>
+                          答對率: {answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0}% ({correctCount}/{answeredCount})
+                        </span>
+                      );
+                    })()}
+                  </div>
+
+                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                    {joinedStudents.map((stName, idx) => {
+                      const submission = answers[stName];
+                      let statusLabel = '未作答 (No Answer)';
+                      let isCorrect = false;
+                      let hasAnswered = false;
+                      
+                      if (submission && submission.questionIndex === currentQIndex) {
+                        hasAnswered = true;
+                        if (currentQuestion.type === 'ccq') {
+                          isCorrect = submission.answer === currentQuestion.correctAnswer;
+                          statusLabel = isCorrect 
+                            ? `🎉 答對！選了 Option ${submission.answer}` 
+                            : `❌ 答錯，選了 Option ${submission.answer}`;
+                        } else if (currentQuestion.type === 'ordering') {
+                          isCorrect = Array.isArray(submission.answer) && submission.answer.every((val, index) => val === currentQuestion.items[index]);
+                          statusLabel = isCorrect ? '🎉 排序完全正確！' : '❌ 排序未完全正確';
+                        } else if (currentQuestion.type === 'poll') {
+                          statusLabel = `已投 Option ${submission.answer}`;
+                        } else if (currentQuestion.type === 'pair') {
+                          statusLabel = `已提交雙人討論 (夥伴: ${submission.answer?.partnerName || '未填'})`;
+                        } else {
+                          statusLabel = submission.answer ? '已送出作答' : '未作答';
+                        }
+                      }
+
+                      return (
+                        <div 
+                          key={idx} 
+                          className="flex-between animate-pop" 
+                          style={{ 
+                            padding: '0.45rem 0.75rem', 
+                            borderRadius: '8px',
+                            background: isCorrect 
+                              ? 'rgba(16, 185, 129, 0.15)' 
+                              : (hasAnswered ? 'rgba(255, 255, 255, 0.02)' : 'rgba(239, 68, 68, 0.05)'),
+                            border: isCorrect 
+                              ? '1.5px solid rgba(16, 185, 129, 0.6)' 
+                              : '1px solid rgba(255, 255, 255, 0.05)',
+                            boxShadow: isCorrect ? '0 0 12px rgba(16, 185, 129, 0.2)' : 'none',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <span style={{ 
+                            fontSize: '0.92rem', 
+                            fontWeight: isCorrect ? 700 : 500,
+                            color: isCorrect ? '#6ee7b7' : 'var(--text-primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem'
+                          }}>
+                            {isCorrect ? '✅ ' : (hasAnswered ? '👤 ' : '⚪ ')}
+                            {stName}
+                          </span>
+                          <span 
+                            className={`badge ${isCorrect ? 'badge-success' : (hasAnswered ? (currentQuestion.type === 'poll' || currentQuestion.type === 'pair' || currentQuestion.type === 'short' || currentQuestion.type === 'wordcloud' ? 'badge-indigo' : 'badge-danger') : 'badge-secondary')}`} 
+                            style={{ 
+                              fontSize: isCorrect ? '0.85rem' : '0.78rem',
+                              padding: isCorrect ? '0.3rem 0.65rem' : '0.25rem 0.5rem',
+                              fontWeight: isCorrect ? 700 : 500
+                            }}
+                          >
+                            {statusLabel}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -36,6 +36,14 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
   const [spotlightPair, setSpotlightPair] = useState(null);
   const [pairSearchQuery, setPairSearchQuery] = useState('');
   const [simulationToast, setSimulationToast] = useState('');
+
+  // Multi-question Survey state & detection
+  const isMultiQuestionSurvey = activity.questions && activity.questions.length > 1 && (
+    activity.questions.every(q => q.type === 'poll') ||
+    /問卷|survey/i.test(activity.title)
+  );
+  const [surveySubmissions, setSurveySubmissions] = useState({}); // { [studentName]: { answers: { [qIdx]: 'A' }, timestamp } }
+  const [surveyViewQIndex, setSurveyViewQIndex] = useState(0); // number or 'all'
   
   // Helper for smart default duration per question type
   const getDefaultDurationForQuestion = (q) => {
@@ -268,6 +276,15 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         return next;
       });
     }
+    else if (payload.event === 'submit_survey') {
+      setSurveySubmissions(prev => ({
+        ...prev,
+        [payload.studentName]: {
+          answers: payload.answers,
+          timestamp: payload.timestamp || Date.now()
+        }
+      }));
+    }
   };
 
   const broadcastLobbyState = () => {
@@ -302,6 +319,23 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
     setSessionStatus('active');
     setQuestionStartTime(Date.now());
 
+    if (isMultiQuestionSurvey) {
+      // Multi-question survey: broadcast full survey, no auto-stop countdown timer
+      broadcastState({
+        event: 'survey_start',
+        isSurvey: true,
+        activityTitle: activity.title,
+        questions: activity.questions.map((q, idx) => ({
+          index: idx,
+          type: q.type,
+          questionText: q.questionText,
+          options: q.options || [],
+          description: q.description || ''
+        }))
+      });
+      return;
+    }
+
     // Determine duration: configuredDuration set by teacher, or smart default
     const q = activity.questions[currentQIndex];
     const duration = configuredDuration || getDefaultDurationForQuestion(q);
@@ -324,6 +358,32 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         return prev - 1;
       });
     }, 1000);
+  };
+
+  const stopSurvey = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setSessionStatus('results');
+
+    // Compute stats for all survey questions
+    const allSurveyStats = activity.questions.map((q, qIdx) => {
+      const stats = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
+      let total = 0;
+      Object.values(surveySubmissions).forEach(sub => {
+        const choice = sub.answers?.[qIdx];
+        if (choice && stats[choice] !== undefined) {
+          stats[choice]++;
+          total++;
+        }
+      });
+      return { questionIndex: qIdx, stats, total };
+    });
+
+    broadcastState({
+      event: 'survey_stop',
+      allSurveyStats,
+      totalSubmissions: Object.keys(surveySubmissions).length,
+      totalStudents: joinedStudents.length
+    });
   };
 
   const extendTime = (addSecs = 30) => {
@@ -645,6 +705,37 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
 
     // 2. If question is active or results, simulate realistic submissions
     if (sessionStatus === 'active' || sessionStatus === 'results') {
+      if (isMultiQuestionSurvey) {
+        // Simulate survey submissions across all questions
+        const mockSurveySubs = {};
+        simStudents.forEach((st, sIdx) => {
+          const answersObj = {};
+          activity.questions.forEach((q, qIdx) => {
+            const opts = (q.options && q.options.length > 0)
+              ? q.options.map((_, i) => String.fromCharCode(65 + i))
+              : ['A', 'B', 'C', 'D'];
+            // Distribute answers nicely
+            const chosen = opts[(sIdx + qIdx) % opts.length];
+            answersObj[qIdx] = chosen;
+          });
+          mockSurveySubs[st] = {
+            answers: answersObj,
+            timestamp: now - (sIdx * 1500)
+          };
+          mqttService.publishResponse({
+            event: 'submit_survey',
+            studentName: st,
+            answers: answersObj,
+            timestamp: now - (sIdx * 1500)
+          });
+        });
+
+        setSurveySubmissions(prev => ({ ...prev, ...mockSurveySubs }));
+        setSimulationToast('🧪 已模擬學生 🦊st01, 🐼st02, 🌻st03 填寫並送出整份問卷！');
+        setTimeout(() => setSimulationToast(''), 3500);
+        return;
+      }
+
       const mockAnswers = {};
 
       if (q.type === 'ccq' || q.type === 'poll' || q.type === 'game') {
@@ -1007,7 +1098,115 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         )}
 
         {/* ACTIVE QUESTION PANEL (Teacher Screen) */}
-        {sessionStatus === 'active' && (
+        {sessionStatus === 'active' && isMultiQuestionSurvey ? (
+          /* Multi-question Survey Live Dashboard (Teacher Screen) */
+          <div className="glass-card animate-slide-up" style={{ flex: 1, padding: '2.5rem', display: 'flex', flexDirection: 'column' }}>
+            <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1.25rem', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                  <span className="badge badge-purple" style={{ fontSize: '0.85rem' }}>
+                    📋 全班問卷自由填寫中 (Survey in Progress)
+                  </span>
+                  <span className="badge badge-indigo">共 {activity.questions.length} 題</span>
+                </div>
+                <h2 style={{ fontSize: '1.8rem', margin: 0 }}>{activity.title}</h2>
+                <p style={{ color: 'var(--text-secondary)', margin: '0.4rem 0 0 0', fontSize: '0.9rem' }}>
+                  學生可在手機端自由切換各題並整份提交。老師可觀察回收進度，隨時點擊右側按鈕截止並觀看圓餅圖結果。
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  style={{ padding: '0.85rem 1.25rem', color: '#f472b6', borderColor: 'rgba(236, 72, 153, 0.45)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem' }} 
+                  onClick={handleSimulateStudents}
+                  title="模擬 3 位學生填寫整份問卷並提交"
+                >
+                  <FlaskConical size={16} /> 模擬學生提交問卷
+                </button>
+                <button 
+                  className="btn btn-primary animate-pulse-glow"
+                  style={{ 
+                    padding: '0.85rem 1.75rem', 
+                    fontSize: '1.05rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.6rem',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)'
+                  }}
+                  onClick={stopSurvey}
+                  title="截止問卷並進入結果統計畫面"
+                >
+                  <BarChart2 size={20} /> 截止作答並觀看結果 (Stop & View Results)
+                </button>
+              </div>
+            </div>
+
+            {/* Recovery Progress Metrics */}
+            <div className="grid-2" style={{ gap: '2rem', marginBottom: '2rem', alignItems: 'stretch' }}>
+              <div className="glass-card flex-center" style={{ padding: '2.5rem', flexDirection: 'column', textAlign: 'center', background: 'rgba(99, 102, 241, 0.05)', borderColor: 'rgba(99, 102, 241, 0.3)', borderRadius: '16px' }}>
+                <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600 }}>
+                  問卷即時回收進度 (Submission Progress)
+                </span>
+                <div style={{ fontSize: '4.2rem', fontWeight: 900, color: '#818cf8', fontFamily: 'monospace', lineHeight: 1 }}>
+                  {Object.keys(surveySubmissions).length} 
+                  <span style={{ fontSize: '2rem', color: 'var(--text-secondary)', fontWeight: 500, marginLeft: '0.2rem' }}>
+                    / {joinedStudents.length}
+                  </span>
+                </div>
+                
+                <div style={{ width: '85%', height: '12px', background: 'rgba(255,255,255,0.06)', borderRadius: '6px', overflow: 'hidden', marginTop: '1.25rem' }}>
+                  <div 
+                    style={{ 
+                      height: '100%', 
+                      width: `${joinedStudents.length > 0 ? (Object.keys(surveySubmissions).length / joinedStudents.length) * 100 : 0}%`,
+                      background: 'linear-gradient(90deg, #6366f1 0%, #10b981 100%)',
+                      transition: 'width 0.4s ease'
+                    }} 
+                  />
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 700, marginTop: '0.65rem' }}>
+                  回收率：{joinedStudents.length > 0 ? Math.round((Object.keys(surveySubmissions).length / joinedStudents.length) * 100) : 0}%
+                </div>
+              </div>
+
+              {/* Student Status Grid */}
+              <div className="glass-card" style={{ padding: '1.5rem', borderRadius: '16px', display: 'flex', flexDirection: 'column' }}>
+                <div className="flex-between" style={{ marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.5rem' }}>
+                  <h4 style={{ fontSize: '1rem', margin: 0, color: 'var(--text-primary)' }}>
+                    全班學生名單 ({joinedStudents.length} 人在線)
+                  </h4>
+                  <span className="badge badge-indigo" style={{ fontSize: '0.8rem' }}>
+                    {Object.keys(surveySubmissions).length} 人已交
+                  </span>
+                </div>
+
+                <div style={{ flex: 1, overflowY: 'auto', maxHeight: '220px', display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignContent: 'flex-start' }}>
+                  {joinedStudents.length === 0 ? (
+                    <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      尚無學生加入房間
+                    </div>
+                  ) : (
+                    joinedStudents.map((st, idx) => {
+                      const isSub = !!surveySubmissions[st];
+                      return (
+                        <span 
+                          key={idx} 
+                          className={`badge ${isSub ? 'badge-success animate-pop' : 'badge-secondary'}`}
+                          style={{ fontSize: '0.88rem', padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                        >
+                          {isSub ? '✅ ' : '⏳ '} {st}
+                        </span>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : sessionStatus === 'active' && (
           <div className="glass-card animate-slide-up" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '2rem' }}>
             <div>
               {/* Clickable breadcrumb title to return to NickPocketEdu */}
@@ -1286,7 +1485,151 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
         )}
 
         {/* RESULTS SCREEN */}
-        {sessionStatus === 'results' && (
+        {sessionStatus === 'results' && isMultiQuestionSurvey ? (
+          /* Multi-question Survey Results Screen */
+          <div className="glass-card animate-slide-up" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column' }}>
+            <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                  <span onClick={onBack} style={{ cursor: 'pointer', fontSize: '0.88rem', color: 'var(--color-indigo)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <ArrowLeft size={14} /> NickPocketEdu
+                  </span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>/</span>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{activity.title}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className="badge badge-success">問卷已截止</span>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0 }}>問卷統計總覽 ({Object.keys(surveySubmissions).length} 份回收)</h2>
+                </div>
+              </div>
+
+              <div>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: '0.75rem 1.5rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
+                  onClick={onBack}
+                  title="回到 NickPocketEdu"
+                >
+                  <ArrowLeft size={16} /> 返回 NickPocketEdu
+                </button>
+              </div>
+            </div>
+
+            {/* Question Tabs */}
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.35rem' }}>
+              {activity.questions.map((q, idx) => (
+                <button
+                  key={idx}
+                  className={`btn ${surveyViewQIndex === idx ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ padding: '0.5rem 1.1rem', fontSize: '0.9rem', whiteSpace: 'nowrap' }}
+                  onClick={() => setSurveyViewQIndex(idx)}
+                >
+                  第 {idx + 1} 題
+                </button>
+              ))}
+              <button
+                className={`btn ${surveyViewQIndex === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '0.5rem 1.1rem', fontSize: '0.9rem', whiteSpace: 'nowrap' }}
+                onClick={() => setSurveyViewQIndex('all')}
+              >
+                📊 全部題目一覽 (All)
+              </button>
+            </div>
+
+            {/* Tab View Content */}
+            {surveyViewQIndex === 'all' ? (
+              /* All Questions Grid */
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem', overflowY: 'auto' }}>
+                {activity.questions.map((q, qIdx) => {
+                  const stats = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+                  let total = 0;
+                  Object.values(surveySubmissions).forEach(sub => {
+                    const choice = sub.answers?.[qIdx];
+                    if (choice && stats[choice] !== undefined) {
+                      stats[choice]++;
+                      total++;
+                    }
+                  });
+
+                  return (
+                    <div key={qIdx} className="glass-card animate-pop" style={{ padding: '1.5rem', borderRadius: '14px', background: 'rgba(255,255,255,0.02)' }}>
+                      <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '1rem', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.6rem' }}>
+                        <span className="badge badge-indigo" style={{ marginRight: '0.5rem' }}>第 {qIdx + 1} 題</span>
+                        {q.questionText}
+                      </div>
+                      <PieChart stats={stats} options={q.options} total={total} isCompact={true} />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Single Question Tab View */
+              activity.questions[surveyViewQIndex] && (() => {
+                const q = activity.questions[surveyViewQIndex];
+                const stats = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+                let total = 0;
+                Object.values(surveySubmissions).forEach(sub => {
+                  const choice = sub.answers?.[surveyViewQIndex];
+                  if (choice && stats[choice] !== undefined) {
+                    stats[choice]++;
+                    total++;
+                  }
+                });
+
+                return (
+                  <div className="animate-fade-in">
+                    <div style={{ fontWeight: 700, fontSize: '1.25rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
+                      <span className="badge badge-indigo" style={{ marginRight: '0.6rem', fontSize: '0.9rem' }}>第 {surveyViewQIndex + 1} 題</span>
+                      <FormattedMarkdown text={q.questionText} />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                      <button 
+                        className={`btn ${pollViewMode === 'pie' ? 'btn-primary' : 'btn-secondary'}`}
+                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
+                        onClick={() => setPollViewMode('pie')}
+                      >
+                        🥧 圓餅圖 (Pie Chart)
+                      </button>
+                      <button 
+                        className={`btn ${pollViewMode === 'bar' ? 'btn-primary' : 'btn-secondary'}`}
+                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
+                        onClick={() => setPollViewMode('bar')}
+                      >
+                        📊 長條圖 (Bar Chart)
+                      </button>
+                    </div>
+
+                    {pollViewMode === 'pie' ? (
+                      <div className="glass-card" style={{ padding: '2rem', borderRadius: '14px', background: 'rgba(255,255,255,0.02)', maxWidth: '750px' }}>
+                        <PieChart stats={stats} options={q.options} total={total} />
+                      </div>
+                    ) : (
+                      <div className="glass-card" style={{ padding: '1.5rem', maxWidth: '650px', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                        {(q.options || []).map((opt, optIdx) => {
+                          const letter = String.fromCharCode(65 + optIdx);
+                          const count = stats[letter] || 0;
+                          const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                          return (
+                            <div key={letter} className="chart-bar-container">
+                              <div className="chart-bar-label">
+                                <span><strong>Option {letter}</strong> - {opt}</span>
+                                <span>{count} 票 ({pct}%)</span>
+                              </div>
+                              <div className="chart-bar-track">
+                                <div className="chart-bar-fill" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, var(--color-indigo) 0%, var(--color-violet) 100%)' }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
+            )}
+          </div>
+        ) : sessionStatus === 'results' && (
           <div className="glass-card animate-slide-up" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column' }}>
             <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div>

@@ -81,6 +81,18 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     return '';
   });
 
+  // Anonymous toggle and auto-generated name
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [anonymousName, setAnonymousName] = useState(() => `匿名${Math.floor(Math.random() * 89 + 11)}`);
+
+  // Multi-question Survey state
+  const [surveyQuestions, setSurveyQuestions] = useState([]);
+  const [surveyAnswers, setSurveyAnswers] = useState({});
+  const [surveyTitle, setSurveyTitle] = useState('');
+  const [surveyResults, setSurveyResults] = useState([]);
+  const [surveyTotalSubmissions, setSurveyTotalSubmissions] = useState(0);
+  const [studentSurveyTab, setStudentSurveyTab] = useState(0);
+
   const [isJoined, setIsJoined] = useState(false);
   const [connStatus, setConnStatus] = useState('disconnected');
   const [connError, setConnError] = useState('');
@@ -125,14 +137,30 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   // Student Nickname and Join status (managed locally)
   const handleJoin = (e) => {
     e.preventDefault();
-    const cleanRaw = rawName.trim();
-    if (!cleanRaw) return;
-    const fullNickname = `${assignedEmoji} ${cleanRaw}`;
+    let fullNickname = '';
+    if (isAnonymous) {
+      fullNickname = `🎭 ${anonymousName}`;
+    } else {
+      const cleanRaw = rawName.trim();
+      if (!cleanRaw) return;
+      fullNickname = `${assignedEmoji} ${cleanRaw}`;
+      localStorage.setItem('nickpocket_student_raw_name', cleanRaw);
+      localStorage.setItem('nickpocket_student_name', fullNickname);
+    }
     setNickname(fullNickname);
-    localStorage.setItem('nickpocket_student_raw_name', cleanRaw);
-    localStorage.setItem('nickpocket_student_name', fullNickname);
     setIsJoined(true);
     mqttService.publishResponse({ event: 'join', studentName: fullNickname });
+  };
+
+  // Submit multi-question survey
+  const handleSubmitSurvey = () => {
+    mqttService.publishResponse({
+      event: 'submit_survey',
+      studentName: nickname,
+      answers: surveyAnswers,
+      timestamp: Date.now()
+    });
+    setHasSubmitted(true);
   };
 
   // 1. MQTT lifecycle for student connection
@@ -245,6 +273,18 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
           setRevealedCorrectAnswer(payload.correctAnswer);
         }
       }
+    }
+    else if (payload.event === 'survey_start') {
+      setRoomState('survey_answering');
+      setSurveyQuestions(payload.questions || []);
+      setSurveyAnswers({});
+      setHasSubmitted(false);
+      setSurveyTitle(payload.activityTitle || '');
+    }
+    else if (payload.event === 'survey_stop') {
+      setRoomState('survey_results');
+      setSurveyResults(payload.allSurveyStats || []);
+      setSurveyTotalSubmissions(payload.totalSubmissions || 0);
     }
     else if (payload.event === 'question_stop' || payload.event === 'results') {
       setRoomState('stopped');
@@ -678,47 +718,125 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>你的姓名 / 暱稱 (Your Nickname)</span>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>🌱 專屬動植物徽章</span>
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div 
-                className="glass-card" 
-                style={{ 
-                  fontSize: '1.75rem', 
-                  padding: '0.45rem 0.85rem', 
-                  borderRadius: '12px', 
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1.5px solid var(--border-glow)',
-                  userSelect: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-                }}
-                title="系統為您隨機分配的專屬動植物徽章（固定不可更改，無選擇困難）"
-              >
-                {assignedEmoji}
+          {/* Anonymous Option Toggle Card */}
+          <div 
+            className="glass-card" 
+            style={{ 
+              padding: '0.75rem 1rem', 
+              marginBottom: '1rem', 
+              borderRadius: '10px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              background: isAnonymous ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+              border: isAnonymous ? '1.5px solid var(--color-indigo)' : '1px solid var(--border-light)',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              const nextAnon = !isAnonymous;
+              setIsAnonymous(nextAnon);
+              if (nextAnon && !anonymousName) {
+                setAnonymousName(`匿名${Math.floor(Math.random() * 89 + 11)}`);
+              }
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <span style={{ fontSize: '1.25rem' }}>🎭</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isAnonymous ? 'var(--color-indigo)' : 'var(--text-primary)' }}>
+                  匿名作答 (Anonymous Mode)
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  不顯示真實姓名，由系統自動指派匿名代號
+                </div>
               </div>
-              <input 
-                type="text" 
-                className="input-field" 
-                value={rawName} 
-                onChange={(e) => setRawName(e.target.value)} 
-                placeholder="輸入姓名，例如：小明" 
-                maxLength={15}
-                required 
-                style={{ flex: 1, fontSize: '1.05rem' }}
-              />
             </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.45rem', textAlign: 'left', lineHeight: '1.4' }}>
-              🔒 系統已為您鎖定專屬幸運物 <strong>{assignedEmoji}</strong>，加入後全班將顯示為 <strong>{assignedEmoji} {rawName.trim() || '你的名字'}</strong>。
-            </p>
+            <input 
+              type="checkbox" 
+              checked={isAnonymous} 
+              onChange={(e) => setIsAnonymous(e.target.checked)} 
+              style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--color-indigo)' }}
+            />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.95rem', marginTop: '0.5rem', fontSize: '1rem' }} disabled={!rawName.trim()}>
+          {isAnonymous ? (
+            <div className="form-group animate-pop" style={{ marginBottom: '1.25rem' }}>
+              <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>系統已為您隨機指派匿名代號</span>
+                <button 
+                  type="button" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setAnonymousName(`匿名${Math.floor(Math.random() * 89 + 11)}`);
+                  }}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-indigo)', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem', fontWeight: 600 }}
+                >
+                  🎲 換一個匿名號
+                </button>
+              </label>
+              <div 
+                className="input-field" 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.6rem', 
+                  fontSize: '1.15rem', 
+                  fontWeight: 700, 
+                  color: 'var(--color-indigo)',
+                  background: 'rgba(99, 102, 241, 0.08)',
+                  borderColor: 'rgba(99, 102, 241, 0.35)',
+                  padding: '0.75rem 1rem'
+                }}
+              >
+                <span>🎭</span> {anonymousName}
+              </div>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.45rem', textAlign: 'left', lineHeight: '1.4' }}>
+                🔒 您將以 <strong>🎭 {anonymousName}</strong> 加入並填寫問卷，保護您的個人隱私。
+              </p>
+            </div>
+          ) : (
+            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+              <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>你的姓名 / 暱稱 (Your Nickname)</span>
+                <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>🌱 專屬動植物徽章</span>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div 
+                  className="glass-card" 
+                  style={{ 
+                    fontSize: '1.75rem', 
+                    padding: '0.45rem 0.85rem', 
+                    borderRadius: '12px', 
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1.5px solid var(--border-glow)',
+                    userSelect: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                  }}
+                  title="系統為您隨機分配的專屬動植物徽章（固定不可更改，無選擇困難）"
+                >
+                  {assignedEmoji}
+                </div>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={rawName} 
+                  onChange={(e) => setRawName(e.target.value)} 
+                  placeholder="輸入姓名，例如：小明" 
+                  maxLength={15}
+                  required 
+                  style={{ flex: 1, fontSize: '1.05rem' }}
+                />
+              </div>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.45rem', textAlign: 'left', lineHeight: '1.4' }}>
+                🔒 系統已為您鎖定專屬幸運物 <strong>{assignedEmoji}</strong>，加入後全班將顯示為 <strong>{assignedEmoji} {rawName.trim() || '你的名字'}</strong>。
+              </p>
+            </div>
+          )}
+
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.95rem', marginTop: '0.5rem', fontSize: '1rem' }} disabled={!isAnonymous && !rawName.trim()}>
             進入教室 Join Room <ArrowRight size={18} />
           </button>
         </form>
@@ -878,6 +996,161 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
 
       {/* RENDER BASED ON ROOM STATE */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+
+        {/* MULTI-QUESTION SURVEY ANSWERING SCREEN */}
+        {roomState === 'survey_answering' && (
+          <div className="animate-slide-up" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {hasSubmitted ? (
+              <div className="glass-card flex-center animate-pop" style={{ padding: '3rem 1.5rem', flexDirection: 'column', textAlign: 'center', minHeight: '380px' }}>
+                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
+                <h2 style={{ fontSize: '1.5rem', color: '#10b981', margin: '0 0 0.5rem 0' }}>問卷已成功提交！</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '340px', margin: '0 0 1.5rem 0', lineHeight: '1.5' }}>
+                  感謝您的認真填寫！老師正統計全班回收進度，完成後將在投影幕與手機同步公佈統計圓餅圖。
+                </p>
+                <span className="badge badge-purple" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}>
+                  已作答 {Object.keys(surveyAnswers).length} / {surveyQuestions.length} 題
+                </span>
+              </div>
+            ) : (
+              <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+                <div style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                  <span className="badge badge-purple" style={{ marginBottom: '0.4rem', fontSize: '0.8rem' }}>📋 多題問卷自由作答</span>
+                  <h2 style={{ fontSize: '1.35rem', margin: 0 }}>{surveyTitle || '問卷調查'}</h2>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.35rem 0 0 0' }}>
+                    請自由填寫下列各題，全部勾選完畢後點擊底部「提交整份問卷」：
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {surveyQuestions.map((q, qIdx) => (
+                    <div key={qIdx} className="glass-card" style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '1.02rem', marginBottom: '0.75rem', color: 'var(--text-primary)', lineHeight: '1.45' }}>
+                        <span className="badge badge-indigo" style={{ marginRight: '0.5rem', fontSize: '0.75rem' }}>第 {qIdx + 1} 題</span>
+                        <FormattedMarkdown text={q.questionText} />
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {(q.options || []).map((opt, optIdx) => {
+                          const letter = String.fromCharCode(65 + optIdx);
+                          const isSelected = surveyAnswers[qIdx] === letter;
+                          return (
+                            <div
+                              key={letter}
+                              onClick={() => setSurveyAnswers(prev => ({ ...prev, [qIdx]: letter }))}
+                              className="glass-card animate-pop"
+                              style={{
+                                padding: '0.65rem 0.9rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.75rem',
+                                textAlign: 'left',
+                                background: isSelected ? 'linear-gradient(90deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.35) 100%)' : 'rgba(255,255,255,0.02)',
+                                border: isSelected ? '1.5px solid var(--color-indigo)' : '1px solid rgba(255,255,255,0.06)',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              <span 
+                                style={{ 
+                                  width: '24px', 
+                                  height: '24px', 
+                                  borderRadius: '50%', 
+                                  background: isSelected ? 'var(--color-indigo)' : 'rgba(255,255,255,0.08)',
+                                  color: isSelected ? '#fff' : 'var(--text-secondary)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 700,
+                                  fontSize: '0.8rem',
+                                  flexShrink: 0
+                                }}
+                              >
+                                {letter}
+                              </span>
+                              <span style={{ fontSize: '0.9rem', color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: isSelected ? 600 : 400 }}>
+                                <FormattedMarkdown text={opt} />
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ marginTop: '1.75rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
+                    填寫進度：<strong style={{ color: 'var(--color-indigo)' }}>{Object.keys(surveyAnswers).length}</strong> / {surveyQuestions.length} 題已選
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem', boxShadow: '0 4px 15px rgba(99, 102, 241, 0.35)' }}
+                    disabled={Object.keys(surveyAnswers).length < surveyQuestions.length}
+                    onClick={handleSubmitSurvey}
+                  >
+                    {Object.keys(surveyAnswers).length < surveyQuestions.length 
+                      ? `請完成所有題目 (${Object.keys(surveyAnswers).length}/${surveyQuestions.length})` 
+                      : '🚀 提交整份問卷 (Submit Survey)'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MULTI-QUESTION SURVEY RESULTS SCREEN */}
+        {roomState === 'survey_results' && (
+          <div className="glass-card animate-slide-up" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+            <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.15rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                🥧 全班問卷結果統計
+              </h3>
+              <span className="badge badge-purple">共 {surveyTotalSubmissions} 份回收</span>
+            </div>
+
+            {/* Question Navigation Tabs */}
+            <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1.25rem' }}>
+              {surveyQuestions.map((q, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={`btn ${studentSurveyTab === idx ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
+                  onClick={() => setStudentSurveyTab(idx)}
+                >
+                  第 {idx + 1} 題
+                </button>
+              ))}
+            </div>
+
+            {surveyQuestions[studentSurveyTab] && (() => {
+              const q = surveyQuestions[studentSurveyTab];
+              const qStat = surveyResults.find(r => r.questionIndex === studentSurveyTab) || { stats: {}, total: 0 };
+              const myChoice = surveyAnswers[studentSurveyTab];
+
+              return (
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.98rem', marginBottom: '0.75rem', color: 'var(--text-primary)', lineHeight: '1.45' }}>
+                    <span className="badge badge-indigo" style={{ marginRight: '0.4rem' }}>第 {studentSurveyTab + 1} 題</span>
+                    <FormattedMarkdown text={q.questionText} />
+                  </div>
+
+                  {myChoice && (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--color-indigo)', marginBottom: '1rem', fontWeight: 600 }}>
+                      你的選擇：Option {myChoice}
+                    </div>
+                  )}
+
+                  <div className="glass-card" style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px' }}>
+                    <PieChart stats={qStat.stats} options={q.options} total={qStat.total} isCompact={true} />
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
         {/* LOBBY / WAITING SCREEN */}
         {roomState === 'waiting' && (

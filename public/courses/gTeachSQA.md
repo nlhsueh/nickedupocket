@@ -510,63 +510,232 @@
 **解析**：* 若要測試多組不同的輸入值與預期輸出值（參數化測試），應該使用 **`Scenario Outline`（情境大綱）** 搭配 **`Examples`（範例表格）**，而非 `Scenario` 搭配 `Background`。`Background` 是用於在每個情境執行前設定共同的前置步驟（例如登入系統），無法實現表格化的參數對照測試。
 </details>
 
-## Ch 9: IntelliJ IDEA 介紹與專案設定指南
+## Unit 1: AI 程式碼破壞實驗 (AI Code Attack & Reliability Lab)
 
-### [Activity: sqa-u01-game1] IntelliJ IDEA 與 Maven 實戰問答 (Game 1)
-#### [Game] **第 1 題：專案目錄與 Git 版本控制規範** 當你在團隊協作中使用 Git 管理 IntelliJ IDEA + Maven 專案時，下列哪一個目錄或檔案**絕對不應該**被 Commit 提交到 Git 儲存庫中？
-- `pom.xml`（定義專案相依套件與建置外掛的核心檔案）
-- `src/test/java`（存放單元測試與整合測試程式碼的目錄）
-- `target/`（Maven 執行編譯與打包所輸出的二進位產物目錄） (Correct)
-- `.gitignore`（定義專案排除追蹤清單的設定檔）
-#### [Game] **第 2 題：JDK 版本對齊與編譯錯誤排除** 在 IntelliJ IDEA 中載入別人的 Maven 專案時，若編譯器回報 `java: error: release version 21 not supported` 或類別版本不相容的錯誤，最可能的原因與標準排除步驟為何？
-- 電腦硬碟空間不足，需刪除作業系統暫存檔後重啟電腦
-- `pom.xml` 宣告使用了 Java 21，但 IntelliJ 的 Project SDK 或 Java Compiler Target Bytecode Version 仍設定在較舊版本的 JDK，需至 Project Structure 與 Settings 中對齊版本 (Correct)
-- 網路連線中斷導致 Maven 無法連線至中央儲存庫下載依賴
-- Java 21 不是 LTS（長期支援）版本，因此 IntelliJ 原生不支援其語法
-#### [Game] **第 3 題：安全重構（Refactoring）與最佳實踐** 在 IntelliJ IDEA 中進行程式碼重構時，若要修改一個核心類別（Class）或變數名稱，並確保整個專案所有引用該名稱的地方皆同步安全更新，應該採取哪一種做法？
-- 使用全域文字搜尋取代（Replace in Files）直接暴力更換字串
-- 在作業系統的檔案總管中手動修改 `.java` 檔名後重新編譯
-- 使用 IntelliJ 內建的 `Refactor -> Rename`（快捷鍵 `Shift + F6`），由 IDE 進行語法樹（AST）語意分析並自動同步更新所有引用點 (Correct)
-- 直接刪除原類別，重新撰寫一個新類別並手動修改報錯的地方
-
-## Unit 1: IntelliJ IDEA 介紹與專案設定指南
-
-### [Activity: sqa-u01-game1] IntelliJ IDEA 與 Maven 開發實戰搶答
-#### [Game] **第 1 題：專案目錄與 Git 版本控制規範** 當你在團隊協作中使用 Git 管理 IntelliJ IDEA + Maven 專案時，下列哪一個目錄或檔案**絕對不應該**被 Commit 提交到 Git 儲存庫中？
-- `pom.xml`（定義專案相依套件與建置外掛的核心檔案）
-- `src/test/java`（存放單元測試與整合測試程式碼的目錄）
-- `target/`（Maven 執行編譯與打包所輸出的二進位產物目錄） (Correct)
-- `.gitignore`（定義專案排除追蹤清單的設定檔）
+### [Activity: sqa-u01-codebreak-ccq1] AI 寫程式與單元測試的「自我印證盲區」
+#### [CCQ] 工程師使用 LLM 快速生成了電子錢包扣款邏輯，接著又請同一個 AI 為該方法生成單元測試。測試執行結果呈現 100% 綠燈通過，且涵蓋率高達 100%。然而一上線面對促銷搶購的高並發情境，帳戶卻瞬間被超賣穿透、餘額變成負數破產。依據軟體測試與 SQA 原則，這主要體現了何種核心問題？
+- 殺蟲劑悖論與 Happy Path 偏誤：AI 依據自身單執行緒、循序的靜態語意設計測試，導致測試案例與被測程式碼「共同錯在同一個並發與時間交錯盲區」，帶來極度危險的假安全感 (Correct)
+- 測試原則宣告「窮盡測試是不可能的」，因此線上故障純屬無法預防的偶發機率
+- 單元測試執行次數太少，若在單執行緒環境下重複跑 10 萬次 Happy Path 就必定能測出並發問題
+- 這是作業系統與 CPU 硬體的暫存器故障，與軟體測試品質無關
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
-**正確答案**：C
-**解析**：`target/` 目錄存放的是 Maven 編譯輸出的 `.class` 檔、打包後的 `.jar` 檔及測試覆蓋率報告，可以透過 `mvn clean` 隨時清除並重新生成。將二進位產物提交至 Git 會導致儲存庫膨脹與嚴重的合併衝突，因此必須在 `.gitignore` 中明確排除。
+**正確答案**：A
+**解析**：* **選項 A 正確**：這正是 AI 輔助開發最嚴重的技術債盲區。AI 生成的程式碼在單執行緒（Happy Path）下看似無懈可擊，若再由 AI 自己出測試，AI 只會針對它所預想的正常路徑設計測試案例。測試與程式碼存在相同的盲點，產生「100% 綠燈的假安全感」，唯有人類工程師主動注入多執行緒競爭（Race Condition）與邊界攻擊，才能破除此盲區。
+  * **選項 B/C/D 錯誤**：並發問題需要專門的並發測試（如利用 `CountDownLatch` 瞬間鳴槍起跑）才能觸發，單純重複單執行緒 Happy Path 永遠無法重現問題。
 </details>
-#### [Game] **第 2 題：JDK 版本對齊與編譯錯誤排除** 在 IntelliJ IDEA 中載入別人的 Maven 專案時，若編譯器回報 `java: error: release version 21 not supported` 或類別版本不相容的錯誤，最可能的原因與標準排除步驟為何？
-- 電腦硬碟空間不足，需刪除作業系統暫存檔後重啟電腦
-- `pom.xml` 宣告使用了 Java 21，但 IntelliJ 的 Project SDK 或 Java Compiler Target Bytecode Version 仍設定在較舊版本的 JDK，需至 Project Structure 與 Settings 中對齊版本 (Correct)
-- 網路連線中斷導致 Maven 無法連線至中央儲存庫下載依賴
-- Java 21 不是 LTS（長期支援）版本，因此 IntelliJ 原生不支援其語法
+
+### [Activity: sqa-u01-codebreak-ccq2] 並發防禦順序（Check-Then-Act 與 TOCTOU 漏洞）
+#### [CCQ] 在修復 `WalletService` 的並發扣款缺陷時，某同學將程式碼改成如下： ```java public boolean withdraw(double amount) { if (amount <= 0) return false; if (balance >= amount) { // 👈 步驟 1：先在鎖定外面檢查餘額 synchronized (this) { // 👈 步驟 2：只在扣款瞬間加鎖 balance -= amount; return true; } } return false; } ``` 請問這段程式碼在面對多執行緒並發攻擊時，能否有效防止帳戶餘額被扣成負數？
+- 可以，因為 `balance -= amount` 已經被 `synchronized` 區塊保護，保證了記憶體寫入的原子性
+- 不能，因為「檢查餘額」發生在取得鎖定之前，多個執行緒仍可同時通過 `balance >= amount` 的檢查，隨後依序排隊進去把餘額扣成負數（典型 TOCTOU 漏洞） (Correct)
+- 可以，因為 JVM 會自動將外層的 `if` 條件與內層的 `synchronized` 區塊智慧合併鎖定
+- 不能，因為 `synchronized` 只能修飾整個方法，不能以程式碼區塊（Block）形式使用
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：B
-**解析**：Maven 的 `pom.xml` 宣告與 IntelliJ 的 IDE 設定必須完全對齊。如果 `pom.xml` 指定 Java 21，但 Project SDK 或 Module 的 Target Bytecode Version 停留在舊版（如 11 或 17），編譯器便會拋出版本不支援的錯誤。
+**解析**：* **選項 B 正確**：這屬於經典的 **TOCTOU（Time-of-Check to Time-of-Use）** 漏洞。當帳戶餘額為 $100，有 5 個執行緒同時進入該方法時，大家都在鎖定區之外檢查並判定「餘額 >= $100 成立」；接著這 5 個執行緒雖然排隊進入 `synchronized`，但因為已經通過檢查，每個執行緒都會扣款一次，最終餘額變成 -$400！**正確做法必須「先鎖定 ➔ 再檢查 ➔ 後修改」**，將檢查與修改完整包進同一個臨界區段。
+  * **選項 A 錯誤**：雖然扣款本身不會有變數寫入衝突，但業務邏輯狀態（餘額不為負）已被破壞。
+  * **選項 C/D 錯誤**：JVM 不會自動合併鎖定；`synchronized (this)` 是合法且標準的區塊語法。
 </details>
-#### [Game] **第 3 題：安全重構（Refactoring）與最佳實踐** 在 IntelliJ IDEA 中進行程式碼重構時，若要修改一個核心類別（Class）或變數名稱，並確保整個專案所有引用該名稱的地方皆同步安全更新，應該採取哪一種做法？
-- 使用全域文字搜尋取代（Replace in Files）直接暴力更換字串
-- 在作業系統的檔案總管中手動修改 `.java` 檔名後重新編譯
-- 使用 IntelliJ 內建的 `Refactor -> Rename`（快捷鍵 `Shift + F6`），由 IDE 進行語法樹（AST）語意分析並自動同步更新所有引用點 (Correct)
-- 直接刪除原類別，重新撰寫一個新類別並手動修改報錯的地方
+
+### [Activity: sqa-u01-codebreak-ccq3] 金融數值精度與型別防禦
+#### [CCQ] 在 Java 金融交易、電子錢包與電商購物車系統中，處理金額加減與結算時，為什麼業界軟體工程標準「強烈禁止」直接使用 `double` 或 `float`？其品質工程防禦方案為何？
+- 因為 `double` 只能儲存正數，無法表示扣款後的負數餘額
+- 因為 IEEE 754 二進位浮點數無法精確表示 `0.1` 等十進位小數，頻繁累加會產生微小截斷偏差導致帳目不平；應全面改採 `BigDecimal`（且須使用字串建構子 `new BigDecimal("0.1")`）或以最小貨幣單位（如整數分、厘）的 `long` 儲存 (Correct)
+- 因為 `double` 運算需要龐大 CPU 浮點數處理單元，在高並發時會導致作業系統當機
+- 因為主流關聯式資料庫（如 PostgreSQL、MySQL）不支援儲存任何小數型別
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：十進位小數（如 0.1、0.2）轉換成二進位時是無限循環小數，以 `double`（64-bit IEEE 754）儲存必定存在微小的截斷捨入誤差。百萬次累加或跨幣別換算後會產生實質差額，造成嚴重的稽核帳目不符。防禦方案是使用專門的高精度數值類別 `BigDecimal`，或是統一將金額以最小貨幣單位（例如：台幣以「元」、美金以「分 (Cent)」）轉為整數 `long` 進行計算。
+  * **選項 A/C/D 錯誤**：皆非禁止使用浮點數的真實原因。
+</details>
+
+## Unit 1: Google Antigravity IDE 介紹與 Java Maven 開發實務指南
+
+### [Activity: sqa-u01-antigravity-ccq1] Agentic AI 與傳統 Copilot 的核心本質區別
+#### [CCQ] 傳統的程式碼輔助工具（如早期 GitHub Copilot）與 Google Antigravity 的「Agentic 代理人協作模式」相比，後者最關鍵的架構突破為何？
+- 代理人模式能將程式碼直接轉換為機器碼以提升 CPU 執行效率
+- 具備環境感測能力（全局索引專案、讀取編譯與測試日誌）與自主工具調用能力（檔案精準讀寫、執行終端機指令、形成自動修復閉環） (Correct)
+- 代理人模式完全不需要人類工程師參與或下達 Prompt，就會自主開發完成系統並發布上線
+- 代理人模式只能在雲端伺服器運作，無法在本機 IDE 編輯器中執行
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：傳統 Copilot 多停留在「被動程式碼補全」或「聊天室問答」，開發者仍須手動複製貼上與編譯排查；而 Agentic AI 具備感知工作區狀態（讀取 `pom.xml`、終端機報錯）、自主操作工具（檔案修改、執行 `mvn test`）的能力，能形成「修改 ➔ 測試 ➔ 偵錯 ➔ 再驗證」的主動自主閉環。
+  * **選項 A 錯誤**：編譯為機器碼是 JVM / JIT 編譯器的職責，非 AI 模型的功能。
+  * **選項 C 錯誤**：AI 代理人仍需人類工程師提供需求目標，且重大操作需人類審查核准（Human-in-the-Loop）。
+  * **選項 D 錯誤**：Antigravity IDE 為整合於本機桌面的原生開發環境。
+</details>
+
+### [Activity: sqa-u01-antigravity-ccq2] 三大 AI 互動模式之情境選用
+#### [CCQ] 工程師正在檢視 `GCD.java`，發現其中一個輔助函式邏輯巢狀太深。他只想針對「選取的這 10 行程式碼」進行原地重構與加入 JavaDoc 說明，不想改動或干擾工作區的其他任何檔案。請問下列哪一種互動模式最迅速且最合適？
+- 啟動 Planning Mode 生成全局架構實作計畫書
+- 使用 Inline Command 行內指引模式（按下 <kbd>Cmd</kbd> + <kbd>I</kbd> / <kbd>Ctrl</kbd> + <kbd>I</kbd>） (Correct)
+- 呼叫 Browser Subagent 開啟無頭瀏覽器
+- 切換至全域終端機執行 `agy` 命令列背景排程
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：**Inline Command（<kbd>Cmd</kbd> + <kbd>I</kbd>）** 專門用於「局部程式碼修改與重構」，它直接針對游標選取的區域進行原地優化、解說或修正，輕量迅速且完全不影響檔案外的其他邏輯。
+  * **選項 A 錯誤**：Planning Mode 適合跨檔案、多步驟或具有架構影響的複合型任務，局部修改使用它會顯得過於繁瑣。
+  * **選項 C/D 錯誤**：Browser Subagent 用於 Web E2E 介面測試驗收，非編輯器內重構工具。
+</details>
+
+### [Activity: sqa-u01-antigravity-ccq3] 安全沙盒與指令執行審查
+#### [CCQ] 在 Antigravity 預設的「標準沙盒隔離模式（Standard Sandbox Mode）」下，當 Agent 為了修復 Bug 而嘗試在終端機執行可能影響系統環境或高風險的指令時，系統會如何處理？
+- 為了追求最高自主效率，IDE 會一律自動靜默執行，不通知使用者
+- 系統會直接強制關閉 IDE 並鎖死作業系統
+- 指令會被安全攔截並彈出審查提示，清楚呈現即將執行的完整指令，必須由開發者手動點擊核准（Approve）後方可執行 (Correct)
+- 沙盒模式下嚴禁執行任何終端機指令，即使是 `git status` 或 `mvn compile` 等唯讀指令也會被永久阻斷
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：C
-**解析**：IntelliJ 具備強大的 AST 語意分析引擎，使用 `Shift + F6` 重構命名不僅能改檔名，還會自動更新所有 import、方法呼叫與註解引用，避免全域字串取代時誤傷其他同名字串。
+**解析**：* **選項 C 正確**：Antigravity 設計了嚴格的人機協同安全防護（Human-in-the-Loop）。在沙盒防護下，可能危害系統或逃逸沙盒的指令均須經過開發者透明審查與顯式授權，確保 Agent 的自主操作完全在人類的掌控邊界之內。
+  * **選項 A 錯誤**：靜默執行重大風險指令會帶來極大的安全隱患。
+  * **選項 B/D 錯誤**：無此極端行為；一般讀取與安全指令可依設定自動放行或受控執行。
+</details>
+
+### [Activity: sqa-u01-antigravity-ccq4] Java 專案開啟根目錄與 Classpath 解析
+#### [CCQ] 在 Antigravity / VS Code 開發 Java Maven 專案時，指引特別強調「必須直接開啟包含 `pom.xml` 的專案資料夾（如 `LabDemo/`），而不要開啟最外層的父目錄（如 `gTeachSQA/`）」。其背後最關鍵的技術原因為何？
+- 開啟外層目錄會超過作業系統的檔案路徑長度限制
+- Java Language Server 必須以開啟的資料夾根目錄為基準定位 `pom.xml`，才能正確解析相依套件庫並建立編譯 Classpath；若開外層目錄會導致語法提示失效甚至執行時報出 `ClassNotFoundException` (Correct)
+- Maven 專案規格強制規定一個資料夾內只能有一個檔案，外層有多個子目錄會破壞規範
+- 外層目錄通常包含 Git 版本控制，IDE 禁止載入含有 `.git` 的資料夾
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：VS Code 與 Antigravity 的 Java Language Server 依賴根目錄的 `pom.xml` 來辨識專案結構與建立 Classpath。若開啟外層目錄，IDE 會將內部子資料夾視為普通資料夾而非 Java 專案，無法正確下載並掛載依賴庫，導致主程式無法執行並報出 `ClassNotFoundException`。
+  * **選項 A/C/D 錯誤**：皆非技術事實。
+</details>
+
+## Unit 1: 除錯實務與科學假設檢驗 (Debug Lab)
+
+### [Activity: sqa-u01-debug-ccq1] 中斷點暫停時機與變數狀態
+#### [CCQ] 在 Java 程式碼中： ```java int a = 100; a = a + 1; // 👈 在此行設定中斷點 ``` 當除錯器執行到該行並高亮暫停時，在 Variables 變數監視視窗中，變數 `a` 此時呈現的值是多少？
+- `100` (Correct)
+- `101`
+- `0`
+- 尚未宣告，無法查看
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：A
+**解析**：* **選項 A 正確**：中斷點的機制是「在該行指令**執行之前**暫停（Pause before execution）」。因此，當程式停在 `a = a + 1;` 這一行時，加法與賦值運算尚未發生，變數 `a` 的值仍保留為前一行賦予的 `100`。
+  * **選項 B 錯誤**：必須按下 Step Over（單步執行下一行）之後，`a` 的值才會被更新為 `101`。
+  * **選項 C/D 錯誤**：變數 `a` 已經在前一行完成宣告與初始化。
+</details>
+
+### [Activity: sqa-u01-debug-ccq2] 單步執行操作（Step Over vs. Step Into）
+#### [CCQ] 工程師在 `main` 方法中除錯，目前程式暫停於呼叫自訂函式的敘述： ```java computeArea(); // 👈 目前停在這一行 ``` 若工程師希望「跟隨執行流程，進入 `computeArea()` 函式內部逐行追蹤其邏輯」，應在除錯工具列上選擇哪一項操作？
+- **Step Over (單步跳過 / F10)**：直接執行完該行並跳到下一行指令
+- **Step Into (單步進入 / F11)**：進入被呼叫函式內部追蹤 (Correct)
+- **Step Out (單步跳出 / Shift + F11)**：跳出當前函式返回呼叫端
+- **Resume / Continue (繼續執行 / F5)**：忽略所有中斷點執行到程式結束
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：**Step Into** 的功能是跟隨呼叫流程進入函式內部，適合排查特定副程式內部的詳細運算。
+  * **選項 A 錯誤**：**Step Over** 會將 `computeArea()` 作為一整個步驟直接在背景執行完畢，停在 `main` 的下一行，不會走進該函式內部。
+  * **選項 C 錯誤**：**Step Out** 是當你已經在函式內部時，執行完剩餘邏輯並直接跳回外層呼叫點。
+  * **選項 D 錯誤**：**Resume** 會讓程式全力跑動，直到撞到下一個中斷點或程式終止。
+</details>
+
+### [Activity: sqa-u01-debug-ccq3] 整數除法截斷缺陷分析
+#### [CCQ] 檢視本單元 Demo 中的圓面積計算程式碼： ```java int diameter = input.nextInt(); // 使用者輸入直徑 double area = Math.PI * Math.pow(diameter / 2, 2); ``` 當使用者輸入奇數直徑（例如 `diameter = 5`，正確半徑應為 `2.5`，面積應約為 `19.63`）時，計算出的面積卻只有 `12.56`。透過除錯器查看發現半徑被算成了 `2.0`。這屬於下列何種根本原因？
+- `Math.pow()` 只支援整數運算，不支援小數運算
+- `Math.PI` 精度遺失導致截斷
+- `diameter / 2` 屬於整數除法（Integer Division），小數部分在運算當下被強制捨去截斷 (Correct)
+- `Scanner.nextInt()` 無法讀取大於 4 的數值
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：C
+**解析**：* **選項 C 正確**：在 Java 語法中，當運算元兩者皆為整數型別（`int / int`）時，運算結果強制為 `int`，小數點直接被截斷（`5 / 2 = 2`），隨後傳入 `Math.pow(2, 2)` 計算出的半徑平方為 `4.0` 而非預期的 `6.25`。修復方式是讓除數為浮點數（例如 `diameter / 2.0`）以觸發浮點數除法。
+  * **選項 A/B/D 錯誤**：皆非引發此問題的原因。
+</details>
+
+## Unit 1: Maven 與 `pom.xml` 完整指南：生命週期、依賴管理與 SQA 實務
+
+### [Activity: sqa-u01-maven-ccq1] Maven 生命週期執行順序
+#### [CCQ] 工程師在終端機輸入 `mvn package` 指令試圖將專案打包成 JAR 檔。依據 Maven 預設的建置生命週期（Default Lifecycle），下列敘述何者正確？
+- Maven 會直接將程式碼打包成 JAR，不會編譯也不會執行單元測試
+- Maven 會依序執行 `compile` ➔ `test-compile` ➔ `test`，只有在所有單元測試皆通過（綠燈）的情況下，才會進入 `package` 打包產出 JAR (Correct)
+- `package` 階段會在 `test` 階段之前執行，以確保打包失敗時不會浪費時間跑測試
+- 只有手動執行 `mvn test` 才會跑測試，`mvn package` 預設完全跳過測試
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：Maven 的生命週期具有相依遞進特性，呼叫特定階段時，Maven 會自動依序執行其前面所有的階段。因此執行 `mvn package` 一定會先執行主程式編譯（`compile`）、測試編譯（`test-compile`）與單元測試（`test`）；若有任何測試失敗，Maven 會立即中斷構建（Build Failure），阻止產生包含缺陷的 JAR 檔。
+  * **選項 A/C/D 錯誤**：皆違背 Maven 生命週期的前置順序與品質把關機制。
+</details>
+
+### [Activity: sqa-u01-maven-ccq2] 依賴範圍（Scope）與發行環境安全
+#### [CCQ] 在 `pom.xml` 中引入單元測試框架（如 JUnit 5）或模擬物件庫（如 Mockito）時，若工程師漏寫了 `<scope>test</scope>`，導致其採用預設的 `<scope>compile</scope>`。從軟體品質與維運安全的角度來看，這會造成何種不良影響？
+- 專案完全無法編譯，Maven 會回傳語法錯誤
+- 測試程式碼無法引用 JUnit 的 `@Test` 註解
+- 測試用程式庫會被打包進正式生產環境（Production）的發行 JAR 檔中，徒增成品體積並擴大潛在資安攻擊面 (Correct)
+- CI 伺服器在執行 `mvn test` 時會找不到測試類別
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：C
+**解析**：* **選項 C 正確**：`compile` 是 Maven 的預設範圍，意味著主程式編譯、測試與最終打包發行皆包含此套件。測試專用的程式庫（如 JUnit、Mockito、AssertJ）僅供研發階段檢驗品質使用，若誤打包進生產環境，除了膨脹部署包大小，還可能因測試工具內部開放的反射或偵錯通道引入非預期的安全漏洞。
+  * **選項 A/B/D 錯誤**：`compile` 範圍在編譯與測試時皆能正常運作，因此功能上不會報錯，但違反了最小權限與乾淨依賴原則。
+</details>
+
+### [Activity: sqa-u01-maven-ccq3] 跳過測試指令的品質風險
+#### [CCQ] 在緊急部署修復時，某工程師在 CI/CD 管道中使用 `mvn package -DskipTests` 來加速構建與發布。關於此行為在軟體品質保證 (SQA) 中的評述，何者最為精準？
+- 這是業界推薦的最佳實務，因為生產環境只需要可執行檔，不需要測試程式碼
+- `-DskipTests` 會編譯測試程式但跳過執行，這代表人為繞過了自動化回歸測試防線，可能將未察覺的回歸缺陷（Regression Bug）直接推上線 (Correct)
+- `-DskipTests` 會自動將測試報告全部標記為 100% 通過，並產出完美的 JaCoCo 覆蓋率報告
+- `-DskipTests` 會強制刪除所有測試原始碼以節省雲端伺服器磁碟空間
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：`-DskipTests` 雖然能節省測試執行時間，但它直接關閉了最關鍵的「自動化驗證防護網」。在 SQA 體系中，未經測試通過的發行物具有極高風險，除非經過嚴格授權且有替代性驗證，否則在正式 CI/CD 流程中嚴禁預設跳過測試。
+  * **選項 A 錯誤**：此舉屬高風險捷徑，非推薦實務。
+  * **選項 C/D 錯誤**：跳過測試不會產出執行報告，亦不會刪除程式碼。
+</details>
+
+### [Activity: sqa-u01-maven-ccq4] JaCoCo 覆蓋率外掛與品質守門員（Build Breaker）
+#### [CCQ] 團隊希望落實品質把關機制：「若單元測試的程式碼涵蓋率（Code Coverage）未達到 80%，Maven 構建必須直接中斷失敗（Build Failure），並拒絕程式碼合併到 `main` 分支」。請問這項覆蓋率門檻檢核應該綁定在 Maven 生命週期的哪一個階段最合適？
+- `clean`（清除階段）
+- `compile`（主程式編譯階段）
+- `verify`（驗證階段，於 `test` 之後執行） (Correct)
+- `deploy`（遠端倉庫部署階段）
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：C
+**解析**：* **選項 C 正確**：程式碼涵蓋率必須等單元測試（`test`）全數執行完畢、收集到執行探針數據後才能計算與判定。Maven 的 `verify` 階段專門用於執行整合測試與品質檢查，透過 `jacoco-maven-plugin` 的 `check` goal 綁定至 `verify`，一旦未達標便觸發 Build Breaker 中斷流程。
+  * **選項 A/B 錯誤**：此時單元測試根本尚未執行，無法獲得覆蓋率數據。
+  * **選項 D 錯誤**：`deploy` 是最後發布階段，此時才檢查為時已晚。
 </details>
 
 ## Chapter X01: 課程起點與學習背景調查 (Chapter X01: Course Orientation & Survey)

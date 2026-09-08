@@ -10,7 +10,7 @@ import FormattedMarkdown from '../utils/formatMarkdown';
 import PieChart from './PieChart';
 import { useThemeLang, ThemeLangControls } from '../context/ThemeLangContext';
 import QuickQuestionModal from './QuickQuestionModal';
-import { sendReportViaGAS, GOOGLE_APPS_SCRIPT_TEMPLATE, DEFAULT_RECIPIENT } from '../utils/gasMailer';
+import { sendReportViaGAS, GOOGLE_APPS_SCRIPT_TEMPLATE, DEFAULT_RECIPIENT, DEFAULT_GAS_URL } from '../utils/gasMailer';
 
 export default function TeacherSession({ activity, roomCode, onBack, onLaunchInstant }) {
   const { t, lang } = useThemeLang();
@@ -764,12 +764,12 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
   const [emailStatus, setEmailStatus] = useState('idle'); // 'idle' | 'sending' | 'success' | 'error'
   const [emailStatusMsg, setEmailStatusMsg] = useState('');
   const [showGasModal, setShowGasModal] = useState(false);
-  const [gasUrl, setGasUrl] = useState(() => localStorage.getItem('nickpocket_gas_url') || '');
+  const [gasUrl, setGasUrl] = useState(() => localStorage.getItem('nickpocket_gas_url') || DEFAULT_GAS_URL);
   const [gasInputTemp, setGasInputTemp] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
 
   const handleSendEmailReport = async (type = 'survey') => {
-    const currentGasUrl = gasUrl || localStorage.getItem('nickpocket_gas_url');
+    const currentGasUrl = gasUrl || localStorage.getItem('nickpocket_gas_url') || DEFAULT_GAS_URL;
     if (!currentGasUrl) {
       setGasInputTemp('');
       setShowGasModal(true);

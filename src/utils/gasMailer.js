@@ -5,6 +5,7 @@
 
 export const DEFAULT_RECIPIENT = 'nlhsueh@gmail.com';
 export const GAS_SECRET_TOKEN = 'nick_pocket_secret_2026';
+export const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwSgbE0FhvB_nvsbHDZrZQ7pBH4IncKCr8uUtFEaiY3ge_VjK5GvQ7fII9LpYY-3H7hPA/exec';
 
 /**
  * 發送報表至 Google Apps Script Webhook

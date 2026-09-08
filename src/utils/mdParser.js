@@ -9,10 +9,18 @@ export function parseMarkdownCourse(mdText, fileId = '') {
   let currentChapter = null;
   let currentActivity = null;
   let currentQuestion = null;
+  let inDetails = false;
+  let inExplanation = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
+
+    // Reset section/details state on any header
+    if (line.startsWith('#')) {
+      inDetails = false;
+      inExplanation = false;
+    }
 
     // 1. Course title: # Title
     if (line.startsWith('# ')) {
@@ -97,7 +105,8 @@ export function parseMarkdownCourse(mdText, fileId = '') {
             correctAnswer: '',
             items: [],
             timeLimit: qType === 'game' ? 15 : (qType === 'pair' ? 300 : (qType === 'wordcloud' ? 60 : 0)),
-            description: ''
+            description: '',
+            explanation: ''
           };
           
           currentActivity.questions.push(currentQuestion);
@@ -157,7 +166,8 @@ export function parseMarkdownCourse(mdText, fileId = '') {
           correctAnswer: '',
           items: [],
           timeLimit: qType === 'game' ? 15 : (qType === 'pair' ? 300 : (qType === 'wordcloud' ? 60 : 0)),
-          description: ''
+          description: '',
+          explanation: ''
         };
 
         currentActivity.questions.push(currentQuestion);
@@ -165,8 +175,59 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       continue;
     }
 
-    // 5. Question properties (options, answers, timers)
+    // 5. Question properties (options, answers, timers, explanations)
     if (currentQuestion) {
+      // Check for <details> tags
+      if (/<details[\s>]/i.test(line)) {
+        inDetails = true;
+        inExplanation = true;
+        continue;
+      }
+      if (/<\/details>/i.test(line)) {
+        inDetails = false;
+        inExplanation = false;
+        continue;
+      }
+      if (/<summary[\s>]/i.test(line) || /<\/summary>/i.test(line)) {
+        continue;
+      }
+
+      // Check for answer headers: **正確答案**：B, Correct Answer: B, etc.
+      const cleanForCheck = line.replace(/^[-*]\s+/, '').replace(/^>\s*/, '').trim();
+      const ansMatch = cleanForCheck.match(/^\*?\*?(?:正確答案|標準答案|Correct\s*Answer)[:：\s*]+([A-Za-z0-9])/i);
+      if (ansMatch) {
+        inExplanation = true;
+        const val = ansMatch[1].trim().toUpperCase();
+        if (!currentQuestion.correctAnswer && ['A', 'B', 'C', 'D', 'E'].includes(val)) {
+          currentQuestion.correctAnswer = val;
+        }
+        continue;
+      }
+
+      // Check for explanation headers or bullet points: **解析**：..., Option explanations, etc.
+      if (
+        /^\*?\*?(?:解析|Explanation|詳細解析|答案解析|說明)[:：]/i.test(cleanForCheck) ||
+        /^\*?\*?選項\s*[A-Za-z0-9/、\s]+\s*(正確|錯誤|說明)[:：]/i.test(cleanForCheck)
+      ) {
+        inExplanation = true;
+        if (cleanForCheck) {
+          currentQuestion.explanation = currentQuestion.explanation
+            ? `${currentQuestion.explanation}\n${cleanForCheck}`
+            : cleanForCheck;
+        }
+        continue;
+      }
+
+      // If we are within a details block or an explanation section, do not parse as options
+      if (inDetails || inExplanation) {
+        if (cleanForCheck && !cleanForCheck.startsWith('<') && !cleanForCheck.startsWith('---')) {
+          currentQuestion.explanation = currentQuestion.explanation
+            ? `${currentQuestion.explanation}\n${cleanForCheck}`
+            : cleanForCheck;
+        }
+        continue;
+      }
+
       if (line.toLowerCase().startsWith('time:')) {
         const sec = parseInt(line.substring(5).trim());
         if (!isNaN(sec)) {
@@ -199,6 +260,18 @@ export function parseMarkdownCourse(mdText, fileId = '') {
 
       if (line.startsWith('- ') || line.startsWith('* ')) {
         const optionText = line.substring(2).trim();
+
+        // Extra safety guard: If the bullet is an explanation line
+        if (
+          /^\*?\*?(?:正確答案|標準答案|Correct\s*Answer|解析|Explanation|詳細解析|答案解析)[:：]/i.test(optionText) ||
+          /^\*?\*?選項\s*[A-Za-z0-9/、\s]+\s*(正確|錯誤|說明)[:：]/i.test(optionText)
+        ) {
+          inExplanation = true;
+          currentQuestion.explanation = currentQuestion.explanation
+            ? `${currentQuestion.explanation}\n${optionText}`
+            : optionText;
+          continue;
+        }
         
         if (currentQuestion.type === 'game' || currentQuestion.type === 'poll' || currentQuestion.type === 'ccq') {
           // If CCQ has custom options defined, clear the default True/False/50-50 array on the first option parsed.

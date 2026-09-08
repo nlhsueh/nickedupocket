@@ -1,4 +1,4 @@
-# 導生交流與班級經營 (Nick's Advisory Class)
+# Nick Class
 
 ## Chapter 1: 導生關懷與學習適應調查 (Student Mentoring & Adaptation)
 

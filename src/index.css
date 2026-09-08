@@ -834,8 +834,8 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  min-width: 0;
-  flex: 1;
+  min-width: 260px;
+  flex: 1 1 auto;
 }
 
 .teacher-header-nav-row {
@@ -890,6 +890,34 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   flex-wrap: wrap;
   flex-shrink: 0;
+}
+
+/* Tablet & Intermediate Desktop (769px - 1200px) */
+@media (max-width: 1200px) {
+  .teacher-session-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+  }
+
+  .teacher-header-left {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    min-width: 0 !important;
+  }
+
+  .teacher-header-right {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.6rem !important;
+  }
+
+  .teacher-header-activity-title {
+    max-width: 600px !important;
+  }
 }
 
 @media (max-width: 900px) {

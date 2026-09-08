@@ -18,12 +18,12 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
   const [tfCorrect, setTfCorrect] = useState('A'); // 'A' (True), 'B' (False), '' (Survey / No correct)
   const [tfLabelStyle, setTfLabelStyle] = useState('tf'); // 'tf' (正確/錯誤) | 'yn' (是/否)
 
-  // 4. Multiple Choice settings
-  const [mcOptions, setMcOptions] = useState(['選項 A', '選項 B', '選項 C', '選項 D']);
+  // 4. Multiple Choice settings (empty by default so placeholder shows and clicking allows direct typing without deleting)
+  const [mcOptions, setMcOptions] = useState(['', '', '', '']);
   const [mcCorrect, setMcCorrect] = useState('A'); // 'A', 'B', 'C', 'D', '' (No correct)
 
-  // 5. Time Limit
-  const [timeLimit, setTimeLimit] = useState(60); // 0 (unlimited), 30, 60, 90, 120
+  // 5. Time Limit (default to 0: unlimited/manual stop)
+  const [timeLimit, setTimeLimit] = useState(0); // 0 (unlimited), 30, 60, 90, 120
 
   if (!isOpen) return null;
 
@@ -34,8 +34,7 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
 
   const handleAddMcOption = () => {
     if (mcOptions.length >= 6) return;
-    const nextLetter = String.fromCharCode(65 + mcOptions.length);
-    setMcOptions(prev => [...prev, `選項 ${nextLetter}`]);
+    setMcOptions(prev => [...prev, '']);
   };
 
   const handleRemoveMcOption = (idx) => {
@@ -74,10 +73,10 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
       finalCorrect = tfCorrect;
       finalType = tfCorrect ? 'ccq' : 'poll';
     } else if (questionType === 'mc') {
-      finalOptions = mcOptions.map(opt => opt.trim()).filter(Boolean);
-      if (finalOptions.length === 0) {
-        finalOptions = ['選項 A', '選項 B', '選項 C', '選項 D'];
-      }
+      finalOptions = mcOptions.map((opt, idx) => {
+        const trimmed = (opt || '').trim();
+        return trimmed || `選項 ${String.fromCharCode(65 + idx)}`;
+      });
       finalCorrect = mcCorrect;
       finalType = mcCorrect ? 'ccq' : 'poll';
     } else if (questionType === 'short') {
@@ -508,6 +507,18 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
                         style={{ margin: 0, padding: '0.4rem 0.65rem', fontSize: '0.88rem', flex: 1 }}
                         value={opt}
                         onChange={(e) => handleMcOptionChange(idx, e.target.value)}
+                        onFocus={(e) => {
+                          const val = e.target.value.trim();
+                          if (/^選項\s*[A-Za-z0-9一二三四五六]?$/i.test(val) || val === `選項 ${letter}` || val === `選項${letter}`) {
+                            handleMcOptionChange(idx, '');
+                          }
+                        }}
+                        onClick={(e) => {
+                          const val = e.target.value.trim();
+                          if (/^選項\s*[A-Za-z0-9一二三四五六]?$/i.test(val) || val === `選項 ${letter}` || val === `選項${letter}`) {
+                            handleMcOptionChange(idx, '');
+                          }
+                        }}
                         placeholder={`選項 ${letter}`}
                       />
 

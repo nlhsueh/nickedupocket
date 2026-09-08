@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wifi, WifiOff, Hourglass, CheckCircle2, AlertCircle, 
   ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud, GripVertical, Users, MessageSquare,
-  Award, Trophy, Star, QrCode, Copy, Check
+  Award, Trophy, Star, QrCode, Copy, Check, Lock, Eye, EyeOff, X
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import mqttService from '../utils/mqtt';
@@ -856,14 +856,168 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     return ((submitTime - questionStartMs) / 1000).toFixed(2);
   };
 
+  const [showTeacherAuthModal, setShowTeacherAuthModal] = useState(false);
+  const [teacherAuthInput, setTeacherAuthInput] = useState('');
+  const [teacherAuthError, setTeacherAuthError] = useState(false);
+  const [showTeacherAuthText, setShowTeacherAuthText] = useState(false);
+
   const handleTeacherLaunch = () => {
-    const password = prompt(lang === 'zh' ? '請輸入教師管理密碼：' : 'Enter Teacher Access Password:');
-    if (password === 'nick007') {
-      sessionStorage.setItem('nickpocket_teacher_auth', 'true');
+    if (sessionStorage.getItem('nickpocket_teacher_auth') === 'true') {
       window.location.hash = `#/teacher/${roomCode}`;
-    } else if (password !== null) {
-      alert(lang === 'zh' ? '密碼錯誤！' : 'Incorrect password.');
+      return;
     }
+    setTeacherAuthInput('');
+    setTeacherAuthError(false);
+    setShowTeacherAuthText(false);
+    setShowTeacherAuthModal(true);
+  };
+
+  const handleTeacherAuthSubmit = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = teacherAuthInput.trim();
+    if (trimmed === 'nick007' || trimmed === 'Nick007') {
+      sessionStorage.setItem('nickpocket_teacher_auth', 'true');
+      setShowTeacherAuthModal(false);
+      window.location.hash = `#/teacher/${roomCode}`;
+    } else {
+      setTeacherAuthError(true);
+    }
+  };
+
+  const renderTeacherAuthModal = () => {
+    if (!showTeacherAuthModal) return null;
+    return (
+      <div 
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem'
+        }}
+        onClick={() => setShowTeacherAuthModal(false)}
+      >
+        <div 
+          className="glass-card animate-pop" 
+          style={{ 
+            maxWidth: '380px', 
+            width: '100%', 
+            padding: '2rem 1.5rem', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            gap: '1.25rem',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+            position: 'relative',
+            background: 'var(--card-bg)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => setShowTeacherAuthModal(false)}
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              padding: '4px'
+            }}
+            title={lang === 'zh' ? '關閉' : 'Close'}
+          >
+            <X size={20} />
+          </button>
+
+          <div style={{ width: '54px', height: '54px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-indigo)' }}>
+            <Lock size={26} />
+          </div>
+
+          <div style={{ textAlign: 'center' }}>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.4rem', fontWeight: 700 }}>
+              {lang === 'zh' ? '教師管理密碼驗證' : 'Teacher Access Verification'}
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0, lineHeight: 1.5 }}>
+              {lang === 'zh' ? '請輸入教師密碼以啟動活動（密碼以 * 遮罩保護）' : 'Enter teacher password to launch activity (masked)'}
+            </p>
+          </div>
+
+          <form onSubmit={handleTeacherAuthSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div style={{ position: 'relative', width: '100%' }}>
+              <input
+                type={showTeacherAuthText ? 'text' : 'password'}
+                className="input-field"
+                placeholder={lang === 'zh' ? '請輸入密碼...' : 'Enter password...'}
+                value={teacherAuthInput}
+                onChange={(e) => {
+                  setTeacherAuthInput(e.target.value);
+                  setTeacherAuthError(false);
+                }}
+                autoFocus
+                style={{ 
+                  width: '100%', 
+                  padding: '0.8rem 2.75rem 0.8rem 1rem', 
+                  textAlign: 'center', 
+                  fontSize: '1.15rem', 
+                  letterSpacing: showTeacherAuthText ? '1px' : '4px',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowTeacherAuthText(!showTeacherAuthText)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                title={showTeacherAuthText ? '隱藏密碼 (*)' : '顯示密碼'}
+              >
+                {showTeacherAuthText ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {teacherAuthError && (
+              <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', fontWeight: 500, textAlign: 'center' }}>
+                {lang === 'zh' ? '密碼錯誤，請重新輸入！（支援 nick007 或 Nick007）' : 'Incorrect password! (nick007 or Nick007)'}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.35rem' }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                style={{ flex: 1, padding: '0.75rem' }}
+                onClick={() => setShowTeacherAuthModal(false)}
+              >
+                {lang === 'zh' ? '取消' : 'Cancel'}
+              </button>
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                style={{ flex: 2, padding: '0.75rem' }}
+              >
+                {lang === 'zh' ? '驗證並啟動' : 'Verify & Launch'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
   };
 
   // --- RENDERS ---
@@ -1081,6 +1235,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
         <footer className="footer-branding" style={{ marginTop: '1.25rem', width: '100%' }}>
           designed by <span>Nien-Lin Hsueh, Feng Chia University</span>
         </footer>
+
+        {renderTeacherAuthModal()}
       </div>
     );
   }
@@ -1184,6 +1340,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             Teacher Host Launch
           </button>
 
+          {renderTeacherAuthModal()}
         </div>
       </div>
     );

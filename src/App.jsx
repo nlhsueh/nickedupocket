@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Lock, Eye, EyeOff, X } from 'lucide-react';
 import { DEFAULT_SE_MD, DEFAULT_ST_MD } from './utils/demoData';
 import { parseMarkdownCourse } from './utils/mdParser';
 import TeacherDashboard from './components/TeacherDashboard';
 import TeacherSession from './components/TeacherSession';
 import StudentSession from './components/StudentSession';
+
+// Helper to validate teacher password (accepts both nick007 and Nick007)
+export const isTeacherPasswordValid = (pwd) => {
+  if (!pwd) return false;
+  const trimmed = pwd.trim();
+  return trimmed === 'nick007' || trimmed === 'Nick007';
+};
 
 // Parse Hash Helper for Static Router
 const parseHash = (hash) => {
@@ -132,47 +140,67 @@ export default function App() {
 
   const allCourses = [...defaultCourses, ...customCourses];
 
-  const TEACHER_PASSWORD = 'nick007';
-
   const [isTeacherAuth, setIsTeacherAuth] = useState(
     () => sessionStorage.getItem('nickpocket_teacher_auth') === 'true'
   );
   const [authInput, setAuthInput] = useState('');
   const [authError, setAuthError] = useState(false);
+  const [showRoutePwdText, setShowRoutePwdText] = useState(false);
 
-  const checkTeacherAuthPrompt = () => {
+  // Modal-based masked password prompt (replaces prompt() so input is hidden with asterisks)
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [modalPwd, setModalPwd] = useState('');
+  const [modalPwdError, setModalPwdError] = useState(false);
+  const [showModalPwdText, setShowModalPwdText] = useState(false);
+
+  const requestTeacherAuth = (actionCallback) => {
     if (sessionStorage.getItem('nickpocket_teacher_auth') === 'true' || isTeacherAuth) {
-      return true;
+      actionCallback();
+      return;
     }
-    const pwd = prompt('請輸入教師管理密碼 (Enter Teacher Access Password):');
-    if (pwd === TEACHER_PASSWORD) {
+    setPendingAction(() => actionCallback);
+    setModalPwd('');
+    setModalPwdError(false);
+    setShowModalPwdText(false);
+    setShowAuthModal(true);
+  };
+
+  const handleModalAuthSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (isTeacherPasswordValid(modalPwd)) {
       sessionStorage.setItem('nickpocket_teacher_auth', 'true');
       setIsTeacherAuth(true);
-      return true;
+      setShowAuthModal(false);
+      setModalPwdError(false);
+      if (pendingAction) {
+        pendingAction();
+        setPendingAction(null);
+      }
+    } else {
+      setModalPwdError(true);
     }
-    if (pwd !== null) {
-      alert('密碼錯誤 (Incorrect password)');
-    }
-    return false;
   };
 
   const handleLaunchActivity = (roomCode) => {
-    if (!checkTeacherAuthPrompt()) return;
-    window.location.hash = `#/teacher/${roomCode}`;
+    requestTeacherAuth(() => {
+      window.location.hash = `#/teacher/${roomCode}`;
+    });
   };
 
   const handleLaunchInstant = ({ roomCode, activityData }) => {
-    if (!checkTeacherAuthPrompt()) return;
-    setInstantActivities(prev => {
-      const next = { ...prev, [activityData.id]: activityData, [roomCode]: activityData };
-      try {
-        sessionStorage.setItem('nickpocket_instant_activities', JSON.stringify(next));
-      } catch (e) {
-        console.warn('Failed to save instant activity to sessionStorage:', e);
-      }
-      return next;
+    requestTeacherAuth(() => {
+      setInstantActivities(prev => {
+        const next = { ...prev, [activityData.id]: activityData, [roomCode]: activityData };
+        try {
+          sessionStorage.setItem('nickpocket_instant_activities', JSON.stringify(next));
+        } catch (e) {
+          console.warn('Failed to save instant activity to sessionStorage:', e);
+        }
+        return next;
+      });
+      window.location.hash = `#/teacher/${roomCode}`;
     });
-    window.location.hash = `#/teacher/${roomCode}`;
   };
 
   const handleBackToDashboard = () => {
@@ -184,7 +212,7 @@ export default function App() {
     if (!isTeacherAuth && sessionStorage.getItem('nickpocket_teacher_auth') !== 'true') {
       const handleAuthSubmit = (e) => {
         e.preventDefault();
-        if (authInput === TEACHER_PASSWORD) {
+        if (isTeacherPasswordValid(authInput)) {
           sessionStorage.setItem('nickpocket_teacher_auth', 'true');
           setIsTeacherAuth(true);
           setAuthError(false);
@@ -196,33 +224,63 @@ export default function App() {
       return (
         <div className="container animate-slide-up flex-center" style={{ minHeight: '80vh', flexDirection: 'column', textAlign: 'center' }}>
           <div className="glass-card animate-pop" style={{ maxWidth: '420px', width: '100%', padding: '2.5rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>
-              🔒
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-indigo)' }}>
+              <Lock size={30} />
             </div>
             <div>
               <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', fontWeight: 600 }}>
                 教師管理密碼驗證
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: 0, lineHeight: 1.5 }}>
-                此為課堂主持控制介面，請輸入教師密碼以啟動並主持活動。
+                此為課堂主持控制介面，請輸入教師密碼以啟動並主持活動（支援 nick007 或 Nick007）。
               </p>
             </div>
             <form onSubmit={handleAuthSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              <input
-                type="password"
-                className="input-field"
-                placeholder="請輸入教師密碼..."
-                value={authInput}
-                onChange={(e) => {
-                  setAuthInput(e.target.value);
-                  setAuthError(false);
-                }}
-                autoFocus
-                style={{ width: '100%', padding: '0.8rem 1rem', textAlign: 'center', fontSize: '1.1rem', letterSpacing: '2px' }}
-              />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  type={showRoutePwdText ? 'text' : 'password'}
+                  className="input-field"
+                  placeholder="請輸入教師密碼..."
+                  value={authInput}
+                  onChange={(e) => {
+                    setAuthInput(e.target.value);
+                    setAuthError(false);
+                  }}
+                  autoFocus
+                  style={{ 
+                    width: '100%', 
+                    padding: '0.8rem 2.75rem 0.8rem 1rem', 
+                    textAlign: 'center', 
+                    fontSize: '1.1rem', 
+                    letterSpacing: showRoutePwdText ? '1px' : '4px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowRoutePwdText(!showRoutePwdText)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  title={showRoutePwdText ? '隱藏密碼 (*)' : '顯示密碼'}
+                >
+                  {showRoutePwdText ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
               {authError && (
                 <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', fontWeight: 500 }}>
-                  密碼錯誤，請重新輸入！
+                  密碼錯誤，請重新輸入！（支援 nick007 或 Nick007）
                 </div>
               )}
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.85rem', fontSize: '1rem' }}>
@@ -290,18 +348,156 @@ export default function App() {
   }
 
   return (
-    <TeacherDashboard 
-      courses={allCourses} 
-      customCourses={customCourses}
-      setCustomCourses={setCustomCourses} 
-      onLaunch={handleLaunchActivity} 
-      onLaunchInstant={handleLaunchInstant}
-      selectedCourseId={selectedCourseId}
-      setSelectedCourseId={setSelectedCourseId}
-      selectedChapterId={selectedChapterId}
-      setSelectedChapterId={setSelectedChapterId}
-      selectedActivityId={selectedActivityId}
-      setSelectedActivityId={setSelectedActivityId}
-    />
+    <>
+      <TeacherDashboard 
+        courses={allCourses} 
+        customCourses={customCourses}
+        setCustomCourses={setCustomCourses} 
+        onLaunch={handleLaunchActivity} 
+        onLaunchInstant={handleLaunchInstant}
+        selectedCourseId={selectedCourseId}
+        setSelectedCourseId={setSelectedCourseId}
+        selectedChapterId={selectedChapterId}
+        setSelectedChapterId={setSelectedChapterId}
+        selectedActivityId={selectedActivityId}
+        setSelectedActivityId={setSelectedActivityId}
+      />
+
+      {/* Teacher Password Prompt Modal */}
+      {showAuthModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0, 0, 0, 0.72)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+          onClick={() => setShowAuthModal(false)}
+        >
+          <div 
+            className="glass-card animate-pop" 
+            style={{ 
+              maxWidth: '420px', 
+              width: '100%', 
+              padding: '2.25rem 1.75rem', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: '1.25rem',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+              position: 'relative',
+              background: 'var(--card-bg)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowAuthModal(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="關閉"
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ width: '58px', height: '58px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-indigo)' }}>
+              <Lock size={28} />
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '0.4rem', fontWeight: 700 }}>
+                教師管理密碼驗證
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0, lineHeight: 1.5 }}>
+                請輸入密碼以啟動活動（密碼預設以 * 遮罩保護）
+              </p>
+            </div>
+
+            <form onSubmit={handleModalAuthSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  type={showModalPwdText ? 'text' : 'password'}
+                  className="input-field"
+                  placeholder="請輸入教師密碼..."
+                  value={modalPwd}
+                  onChange={(e) => {
+                    setModalPwd(e.target.value);
+                    setModalPwdError(false);
+                  }}
+                  autoFocus
+                  style={{ 
+                    width: '100%', 
+                    padding: '0.8rem 2.75rem 0.8rem 1rem', 
+                    textAlign: 'center', 
+                    fontSize: '1.15rem', 
+                    letterSpacing: showModalPwdText ? '1px' : '4px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowModalPwdText(!showModalPwdText)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  title={showModalPwdText ? '隱藏密碼 (*)' : '顯示密碼'}
+                >
+                  {showModalPwdText ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              {modalPwdError && (
+                <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', fontWeight: 500, textAlign: 'center' }}>
+                  密碼錯誤，請重新輸入！（支援 nick007 或 Nick007）
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.35rem' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1, padding: '0.8rem' }}
+                  onClick={() => setShowAuthModal(false)}
+                >
+                  取消
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  style={{ flex: 2, padding: '0.8rem' }}
+                >
+                  驗證並啟動
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -580,7 +580,7 @@
 ### [Activity: sqa-u01-antigravity-ccq2] 三大 AI 互動模式之情境選用
 #### [CCQ] 工程師正在檢視 `GCD.java`，發現其中一個輔助函式邏輯巢狀太深。他只想針對「選取的這 10 行程式碼」進行原地重構與加入 JavaDoc 說明，不想改動或干擾工作區的其他任何檔案。請問下列哪一種互動模式最迅速且最合適？
 - 啟動 Planning Mode 生成全局架構實作計畫書
-- 使用 Inline Command 行內指引模式（按下 <kbd>Cmd</kbd> + <kbd>I</kbd> / <kbd>Ctrl</kbd> + <kbd>I</kbd>） (Correct)
+- 使用 Inline Command 行內指引模式（按下 `Cmd + I` / `Ctrl + I`） (Correct)
 - 呼叫 Browser Subagent 開啟無頭瀏覽器
 - 切換至全域終端機執行 `agy` 命令列背景排程
 
@@ -588,7 +588,7 @@
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：B
-**解析**：* **選項 B 正確**：**Inline Command（<kbd>Cmd</kbd> + <kbd>I</kbd>）** 專門用於「局部程式碼修改與重構」，它直接針對游標選取的區域進行原地優化、解說或修正，輕量迅速且完全不影響檔案外的其他邏輯。
+**解析**：* **選項 B 正確**：**Inline Command（`Cmd + I` / `Ctrl + I`）** 專門用於「局部程式碼修改與重構」，它直接針對游標選取的區域進行原地優化、解說或修正，輕量迅速且完全不影響檔案外的其他邏輯。
   * **選項 A 錯誤**：Planning Mode 適合跨檔案、多步驟或具有架構影響的複合型任務，局部修改使用它會顯得過於繁瑣。
   * **選項 C/D 錯誤**：Browser Subagent 用於 Web E2E 介面測試驗收，非編輯器內重構工具。
 </details>

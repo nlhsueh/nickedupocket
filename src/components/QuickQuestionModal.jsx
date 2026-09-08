@@ -92,11 +92,12 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
     const actId = `quick-${randCode}`;
     const roomCode = cleanPrefix ? `${cleanPrefix}-${actId}` : actId;
 
+    const isSurvey = !finalCorrect;
     const defaultTitle = questionType === 'tf' 
-      ? (lang === 'zh' ? '即時是非題' : 'Quick True/False')
+      ? (isSurvey ? (lang === 'zh' ? '即時是非問卷' : 'Quick True/False Survey') : (lang === 'zh' ? '即時是非測驗' : 'Quick True/False Quiz'))
       : questionType === 'mc'
-        ? (lang === 'zh' ? '即時選擇題' : 'Quick Multiple Choice')
-        : (lang === 'zh' ? '即時簡答題' : 'Quick Short Answer');
+        ? (isSurvey ? (lang === 'zh' ? '即時課堂問卷投票' : 'Quick Multiple Choice Survey') : (lang === 'zh' ? '即時選擇測驗' : 'Quick Multiple Choice Quiz'))
+        : (lang === 'zh' ? '即時簡答問卷' : 'Quick Short Answer');
 
     const activityData = {
       id: actId,
@@ -188,6 +189,14 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
         {/* Modal Body Form */}
         <form onSubmit={handleLaunch} style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           
+          {/* Survey Mode Hint Banner */}
+          <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(99, 102, 241, 0.08)', borderRadius: '10px', border: '1px solid rgba(99, 102, 241, 0.25)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Sparkles size={16} style={{ color: 'var(--color-indigo)', flexShrink: 0 }} />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+              💡 <strong>支援問卷模式</strong>：若不設定標準答案，系統自動作為<strong>課堂問卷/調查/投票</strong>，學生自由作答，投影幕展示圓餅圖分佈，不評分。
+            </span>
+          </div>
+
           {/* STEP 1: Select Type (3 Choices only) */}
           <div>
             <label className="form-label" style={{ fontSize: '0.88rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -335,15 +344,27 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
               </div>
 
               <div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.45rem' }}>
-                  標準答案 (選填)：
-                </span>
+                <div className="flex-between" style={{ marginBottom: '0.45rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                    標準答案（點選設定，不選即為問卷）：
+                  </span>
+                  {tfCorrect ? (
+                    <span className="badge badge-success" style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem' }}>
+                      🎯 測驗模式 (正解: {tfCorrect})
+                    </span>
+                  ) : (
+                    <span className="badge badge-purple" style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem' }}>
+                      📊 問卷調查模式 (無標準答案)
+                    </span>
+                  )}
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem' }}>
                   <button
                     type="button"
                     className={`btn ${tfCorrect === 'A' ? 'btn-success' : 'btn-secondary'}`}
                     style={{ padding: '0.5rem', fontSize: '0.82rem' }}
-                    onClick={() => setTfCorrect('A')}
+                    onClick={() => setTfCorrect(tfCorrect === 'A' ? '' : 'A')}
                   >
                     {tfLabelStyle === 'tf' ? 'A. 正確 ✅' : 'A. 是 (Yes) ✅'}
                   </button>
@@ -351,18 +372,29 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
                     type="button"
                     className={`btn ${tfCorrect === 'B' ? 'btn-success' : 'btn-secondary'}`}
                     style={{ padding: '0.5rem', fontSize: '0.82rem' }}
-                    onClick={() => setTfCorrect('B')}
+                    onClick={() => setTfCorrect(tfCorrect === 'B' ? '' : 'B')}
                   >
                     {tfLabelStyle === 'tf' ? 'B. 錯誤 ❌' : 'B. 否 (No) ❌'}
                   </button>
                   <button
                     type="button"
                     className={`btn ${tfCorrect === '' ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ padding: '0.5rem', fontSize: '0.82rem' }}
+                    style={{ 
+                      padding: '0.5rem', 
+                      fontSize: '0.82rem',
+                      background: tfCorrect === '' ? 'var(--color-indigo)' : 'rgba(255,255,255,0.04)',
+                      borderColor: tfCorrect === '' ? 'var(--color-indigo)' : 'var(--border-light)'
+                    }}
                     onClick={() => setTfCorrect('')}
                   >
-                    無標準答案 (調查)
+                    📊 無標準答案 (問卷調查)
                   </button>
+                </div>
+
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                  {tfCorrect 
+                    ? `🎯 測驗題：學生作答後系統將判定對錯並計分。` 
+                    : `📊 問卷調查：不評分，投影幕將統計全班選擇比例。`}
                 </div>
               </div>
             </div>
@@ -371,8 +403,63 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
           {/* Type B: Multiple Choice Settings */}
           {questionType === 'mc' && (
             <div className="glass-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-              <div className="flex-between" style={{ marginBottom: '0.65rem' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>選項列表與標準答案：</span>
+              
+              {/* Quick Standard Answer Selection Bar */}
+              <div style={{ marginBottom: '0.75rem', padding: '0.65rem 0.8rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--border-light)' }}>
+                <div className="flex-between" style={{ marginBottom: '0.45rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                    標準答案設定（不選即為問卷）：
+                  </span>
+                  {mcCorrect ? (
+                    <span className="badge badge-success" style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem' }}>
+                      🎯 測驗題 (正解: {mcCorrect})
+                    </span>
+                  ) : (
+                    <span className="badge badge-purple" style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem' }}>
+                      📊 問卷/投票模式 (無標準答案)
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {mcOptions.map((_, idx) => {
+                    const letter = String.fromCharCode(65 + idx);
+                    const isCorrect = mcCorrect === letter;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        className={`btn ${isCorrect ? 'btn-success' : 'btn-secondary'}`}
+                        style={{ padding: '0.3rem 0.65rem', fontSize: '0.82rem', borderRadius: '8px', minWidth: '36px' }}
+                        onClick={() => setMcCorrect(isCorrect ? '' : letter)}
+                        title={isCorrect ? '點擊取消正解，轉為問卷模式' : `設定 ${letter} 為標準答案`}
+                      >
+                        {letter} {isCorrect ? '✅' : ''}
+                      </button>
+                    );
+                  })}
+                  
+                  <button
+                    type="button"
+                    className={`btn ${mcCorrect === '' ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ 
+                      padding: '0.3rem 0.75rem', 
+                      fontSize: '0.82rem', 
+                      borderRadius: '8px',
+                      background: mcCorrect === '' ? 'var(--color-indigo)' : 'rgba(255,255,255,0.04)',
+                      borderColor: mcCorrect === '' ? 'var(--color-indigo)' : 'var(--border-light)',
+                      color: mcCorrect === '' ? '#fff' : 'var(--text-secondary)'
+                    }}
+                    onClick={() => setMcCorrect('')}
+                  >
+                    📊 無標準答案 (問卷/投票)
+                  </button>
+                </div>
+              </div>
+
+              {/* Options Editing List */}
+              <div className="flex-between" style={{ marginBottom: '0.55rem' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)' }}>選項文字內容：</span>
                 {mcOptions.length < 6 && (
                   <button
                     type="button"
@@ -385,7 +472,7 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
                 )}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '0.65rem' }}>
                 {mcOptions.map((opt, idx) => {
                   const letter = String.fromCharCode(65 + idx);
                   const isCorrect = mcCorrect === letter;
@@ -410,7 +497,7 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
                           flexShrink: 0
                         }}
                         onClick={() => setMcCorrect(isCorrect ? '' : letter)}
-                        title={isCorrect ? '已設為標準答案 (點擊取消)' : `點擊設為正確答案 (${letter})`}
+                        title={isCorrect ? '已設為標準答案 (點擊取消轉為問卷)' : `點擊設為正確答案 (${letter})`}
                       >
                         {letter}
                       </button>
@@ -440,10 +527,15 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
                 })}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                <span>* 點選左側英文字母按鈕，可直接設定該選項為正確答案。</span>
-                {mcCorrect && (
-                  <span style={{ color: '#10b981', fontWeight: 600 }}>正確答案：{mcCorrect}</span>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                {mcCorrect ? (
+                  <span style={{ color: '#10b981', fontWeight: 600 }}>
+                    🎯 測驗題：標準答案為【{mcCorrect}】，學生作答將判定對錯。
+                  </span>
+                ) : (
+                  <span style={{ color: '#818cf8', fontWeight: 600 }}>
+                    📊 問卷模式：未設定標準答案，學生作答後將以圓餅圖/長條圖展示全班意見分佈，不計分。
+                  </span>
                 )}
               </div>
             </div>
@@ -454,7 +546,7 @@ export default function QuickQuestionModal({ isOpen, onClose, onLaunchInstant, t
             <div className="glass-card" style={{ padding: '0.85rem 1rem', background: 'rgba(99, 102, 241, 0.08)', borderRadius: '12px', border: '1px solid rgba(99, 102, 241, 0.3)', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
               <Sparkles size={20} style={{ color: 'var(--color-indigo)', flexShrink: 0 }} />
               <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                學生端將提供開放式文字輸入框。學生提交後，老師投影幕將以卡片瀑布流即時展示所有人的作答內容。
+                💬 <strong>開放式簡答問卷</strong>：不需設定標準答案。學生端自由輸入文字想法提交，老師投影幕將以卡片瀑布流即時展示全班回答。
               </span>
             </div>
           )}

@@ -1147,37 +1147,38 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
   return (
     <div className="container animate-slide-up" style={{ minHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
       {/* Session Header */}
-      <div className="flex-between glass-card" style={{ marginBottom: '1.5rem', padding: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <button className="btn btn-secondary btn-icon" onClick={onBack} title={lang === 'zh' ? '回到 NickPocketEdu' : 'Return to NickPocketEdu'}>
-            <ArrowLeft size={18} /> {lang === 'zh' ? '離開' : 'Exit'}
-          </button>
+      {/* Session Header */}
+      <div className="flex-between glass-card teacher-session-header" style={{ marginBottom: '1.5rem', padding: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="teacher-header-left">
+          <div className="teacher-header-nav-row">
+            <button className="btn btn-secondary btn-icon teacher-exit-btn" onClick={onBack} title={lang === 'zh' ? '回到 NickPocketEdu' : 'Return to NickPocketEdu'}>
+              <ArrowLeft size={18} /> {lang === 'zh' ? '離開' : 'Exit'}
+            </button>
+            <div 
+              onClick={onBack}
+              className="teacher-header-brand"
+              title={lang === 'zh' ? '點擊回到 NickPocketEdu' : 'Click to return to NickPocketEdu'}
+            >
+              <span className="text-gradient teacher-brand-text">NickPocketEdu</span>
+            </div>
+          </div>
           <div 
             onClick={onBack}
-            style={{ 
-              cursor: 'pointer', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem',
-              userSelect: 'none',
-              padding: '0.2rem 0.5rem',
-              borderRadius: '8px'
-            }}
+            className="teacher-header-title-box"
             title={lang === 'zh' ? '點擊回到 NickPocketEdu' : 'Click to return to NickPocketEdu'}
           >
-            <span className="text-gradient" style={{ fontSize: '1.35rem', fontWeight: 800 }}>NickPocketEdu</span>
-            <span style={{ color: 'var(--border-light)', fontSize: '1.1rem' }}>|</span>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', fontWeight: 600, maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={activity.title}>
+            <span className="teacher-header-sep">|</span>
+            <span className="teacher-header-activity-title" title={activity.title}>
               {activity.title}
             </span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="teacher-header-right">
           {/* Quick Instant In-Class Question Button */}
           {onLaunchInstant && (
             <button 
               type="button"
-              className="btn btn-secondary" 
+              className="btn btn-secondary teacher-header-btn" 
               style={{ 
                 background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(168, 85, 247, 0.18))',
                 border: '1px solid rgba(99, 102, 241, 0.5)',
@@ -1202,7 +1203,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
           {/* Test Simulation Button */}
           <button 
             type="button"
-            className="btn btn-secondary" 
+            className="btn btn-secondary teacher-header-btn" 
             style={{ 
               background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.15))',
               border: '1px solid rgba(236, 72, 153, 0.45)',
@@ -1234,14 +1235,14 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
               <span className="badge badge-danger" title={connectionError}><WifiOff size={14} /> {lang === 'zh' ? '離線' : 'Offline'}</span>
             )}
           </div>
-          <div className="glass-card" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div>
+          <div className="glass-card teacher-room-code-badge" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ wordBreak: 'break-all' }}>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginRight: '0.5rem' }}>{lang === 'zh' ? '活動代碼：' : 'Activity Code:'}</span>
               <strong style={{ fontSize: '1.2rem', color: 'var(--color-indigo)', letterSpacing: '1px' }}>{roomCode}</strong>
             </div>
             
             {/* Small thumbnail QR code that expands on hover */}
-            <div className="qr-thumbnail-container" style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="qr-thumbnail-container" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
               <div style={{ background: 'white', padding: '2px', borderRadius: '4px', display: 'flex', alignItems: 'center' }}>
                 <QRCodeSVG value={studentUrl} size={28} bgColor="#ffffff" fgColor="#080B11" />
               </div>
@@ -1258,20 +1259,20 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
       </div>
 
       {/* Main session content area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', minWidth: 0 }}>
         
         {/* LOBBY / SCAN TO JOIN SECTION */}
         {sessionStatus === 'lobby' && (
-          <div className="grid-2" style={{ flex: 1 }}>
+          <div className="grid-2 session-lobby-grid" style={{ flex: 1, width: '100%', minWidth: 0 }}>
             {/* Left card: QR and Join Info */}
-            <div className="glass-card flex-center" style={{ flexDirection: 'column', padding: '2rem', textAlign: 'center' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
+            <div className="glass-card flex-center teacher-lobby-left-card" style={{ flexDirection: 'column', padding: '2rem', textAlign: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <span className="badge badge-indigo">{lang === 'zh' ? '課堂互動大廳' : 'Join the Interaction'}</span>
                 <span className="badge badge-warning" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <Hourglass size={14} className="animate-spin" /> {lang === 'zh' ? '大廳等候逾時：' : 'Lobby Timeout: '} <strong style={{ fontFamily: 'monospace' }}>{formatTime(lobbyTimeLeft)}</strong>
                 </span>
               </div>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
+              <h2 className="teacher-lobby-title" style={{ fontSize: '1.5rem', marginBottom: '1.5rem', wordBreak: 'break-word' }}>
                 {lang === 'zh' ? '手機掃描 QR Code 或輸入網址加入' : 'Scan QR Code or Enter URL to Join'}
               </h2>
               
@@ -1279,8 +1280,8 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                 <QRCodeSVG value={studentUrl} size={180} bgColor="#ffffff" fgColor="#080B11" includeMargin={false} />
               </div>
               
-              <p style={{ marginTop: '1.25rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                {lang === 'zh' ? '學生端連結：' : 'Direct Link: '}<a href={studentUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-indigo)', textDecoration: 'underline' }}>{studentUrl}</a>
+              <p style={{ marginTop: '1.25rem', fontSize: '0.9rem', color: 'var(--text-secondary)', wordBreak: 'break-all', maxWidth: '100%' }}>
+                {lang === 'zh' ? '學生端連結：' : 'Direct Link: '}<a href={studentUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-indigo)', textDecoration: 'underline', wordBreak: 'break-all' }}>{studentUrl}</a>
               </p>
               
               {/* Pre-start Timer Duration Setting Panel */}
@@ -1371,8 +1372,8 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
             </div>
 
             {/* Right card: Connected Students list */}
-            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', maxHeight: '450px' }}>
-              <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+            <div className="glass-card teacher-lobby-right-card" style={{ display: 'flex', flexDirection: 'column', maxHeight: '450px' }}>
+              <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <h3 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Users size={20} /> {lang === 'zh' ? `已加入學生 (${joinedStudents.length} 人)` : `Students Connected (${joinedStudents.length})`}
                 </h3>
@@ -1407,16 +1408,16 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         {/* ACTIVE QUESTION PANEL (Teacher Screen) */}
         {sessionStatus === 'active' && isMultiQuestionSurvey ? (
           /* Multi-question Survey Live Dashboard (Teacher Screen) */
-          <div className="glass-card animate-slide-up" style={{ flex: 1, padding: '2.5rem', display: 'flex', flexDirection: 'column' }}>
+          <div className="glass-card animate-slide-up teacher-session-card" style={{ flex: 1, padding: '2.5rem', display: 'flex', flexDirection: 'column' }}>
             <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1.25rem', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+              <div style={{ maxWidth: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
                   <span className="badge badge-purple" style={{ fontSize: '0.85rem' }}>
                     📋 全班問卷自由填寫中 (Survey in Progress)
                   </span>
                   <span className="badge badge-indigo">共 {activity.questions.length} 題</span>
                 </div>
-                <h2 style={{ fontSize: '1.8rem', margin: 0 }}>{activity.title}</h2>
+                <h2 className="teacher-session-main-title" style={{ fontSize: '1.8rem', margin: 0, wordBreak: 'break-word' }}>{activity.title}</h2>
                 <p style={{ color: 'var(--text-secondary)', margin: '0.4rem 0 0 0', fontSize: '0.9rem' }}>
                   學生可在手機端自由切換各題並整份提交。老師可觀察回收進度，隨時點擊右側按鈕截止並觀看圓餅圖結果。
                 </p>
@@ -1514,10 +1515,10 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
             </div>
           </div>
         ) : sessionStatus === 'active' && (
-          <div className="glass-card animate-slide-up" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '2rem' }}>
+          <div className="glass-card animate-slide-up teacher-session-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '2rem' }}>
             <div>
               {/* Clickable breadcrumb title to return to NickPocketEdu */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                 <span 
                   onClick={onBack}
                   style={{ 
@@ -1540,7 +1541,9 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                     cursor: 'pointer', 
                     fontSize: '0.88rem', 
                     color: 'var(--text-secondary)',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    wordBreak: 'break-word',
+                    maxWidth: '100%'
                   }}
                   title="點擊回到 NickPocketEdu"
                 >
@@ -1565,7 +1568,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                 </div>
               </div>
               
-              <h1 style={{ fontSize: '1.85rem', lineHeight: '1.45', marginBottom: '2rem' }}>
+              <h1 className="session-question-title" style={{ fontSize: '1.85rem', lineHeight: '1.45', marginBottom: '2rem', wordBreak: 'break-word' }}>
                 <FormattedMarkdown text={currentQuestion.questionText} />
               </h1>
 
@@ -1792,19 +1795,19 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         {/* RESULTS SCREEN */}
         {sessionStatus === 'results' && isMultiQuestionSurvey ? (
           /* Multi-question Survey Results Screen */
-          <div className="glass-card animate-slide-up" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column' }}>
+          <div className="glass-card animate-slide-up teacher-session-card" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column' }}>
             <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+              <div style={{ maxWidth: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
                   <span onClick={onBack} style={{ cursor: 'pointer', fontSize: '0.88rem', color: 'var(--color-indigo)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                     <ArrowLeft size={14} /> NickPocketEdu
                   </span>
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>/</span>
-                  <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{activity.title}</span>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: 600, wordBreak: 'break-word', maxWidth: '100%' }}>{activity.title}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span className="badge badge-success">問卷已截止</span>
-                  <h2 style={{ fontSize: '1.5rem', margin: 0 }}>問卷統計總覽 ({Object.keys(surveySubmissions).length} 份回收)</h2>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0, wordBreak: 'break-word' }}>問卷統計總覽 ({Object.keys(surveySubmissions).length} 份回收)</h2>
                 </div>
               </div>
 
@@ -2064,11 +2067,11 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
             </div>
           </div>
         ) : sessionStatus === 'results' && (
-          <div className="glass-card animate-slide-up" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column' }}>
+          <div className="glass-card animate-slide-up teacher-session-card" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column' }}>
             <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
+              <div style={{ maxWidth: '100%' }}>
                 {/* Clickable breadcrumb title to return to NickPocketEdu */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
                   <span 
                     onClick={onBack}
                     style={{ 
@@ -2091,16 +2094,18 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                       cursor: 'pointer', 
                       fontSize: '0.88rem', 
                       color: 'var(--text-secondary)',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      wordBreak: 'break-word',
+                      maxWidth: '100%'
                     }}
                     title="點擊回到 NickPocketEdu"
                   >
                     {activity.title}
                   </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span className="badge badge-success">{lang === 'zh' ? '作答已截止' : 'Answering Stopped'}</span>
-                  <h2 style={{ fontSize: '1.5rem', margin: 0 }}>{lang === 'zh' ? '作答結果統計' : 'Question Results'}</h2>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0, wordBreak: 'break-word' }}>{lang === 'zh' ? '作答結果統計' : 'Question Results'}</h2>
                 </div>
               </div>
 

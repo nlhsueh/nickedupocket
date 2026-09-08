@@ -815,6 +815,330 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ==========================================================================
+   RESPONSIVE MOBILE & TABLET DESIGN SYSTEM
+   ========================================================================== */
+
+.dashboard-course-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Teacher Session Header Base Rules */
+.teacher-session-header {
+  box-sizing: border-box;
+}
+
+.teacher-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.teacher-header-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.teacher-header-brand {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  border-radius: 8px;
+}
+
+.teacher-brand-text {
+  font-size: 1.35rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.teacher-header-title-box {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.teacher-header-sep {
+  color: var(--border-light);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.teacher-header-activity-title {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teacher-header-right {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .dashboard-course-layout {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem 0.75rem !important;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .glass-card {
+    padding: 1.15rem 1rem !important;
+    border-radius: 14px !important;
+  }
+
+  /* Header Panel on Mobile */
+  .header-panel {
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .dashboard-title {
+    font-size: 1.4rem !important;
+  }
+
+  .dashboard-subtitle {
+    font-size: 0.8rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .header-controls {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem !important;
+  }
+
+  .header-controls .btn {
+    flex: 1 1 auto;
+    font-size: 0.82rem !important;
+    padding: 0.5rem 0.75rem !important;
+    justify-content: center;
+  }
+
+  /* Course Navigation Sidebar on Mobile */
+  .dashboard-sidebar-nav {
+    background: var(--card-bg);
+    padding: 1rem !important;
+    border-radius: 14px;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-premium);
+  }
+
+  .dashboard-sidebar-nav h4 {
+    margin-bottom: 0.4rem !important;
+  }
+
+  /* Activity Header & Action Buttons on Mobile */
+  .activity-action-bar {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem !important;
+    margin-top: 0.5rem;
+  }
+
+  .activity-action-bar .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 0.75rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  /* Share block on mobile */
+  .activity-share-block {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 1.25rem !important;
+  }
+
+  .activity-share-block > div:last-child {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+
+  /* Activity cards in Chapter Overview on Mobile */
+  .activity-card-buttons {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  .activity-card-buttons .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    font-size: 0.78rem !important;
+    padding: 0.45rem 0.5rem !important;
+  }
+
+  /* Filter chips on mobile */
+  .filter-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem !important;
+  }
+
+  .filter-chips-container .btn {
+    font-size: 0.75rem !important;
+    padding: 0.35rem 0.65rem !important;
+  }
+
+  /* ==========================================================================
+     Teacher Session Mobile Responsiveness (Screen <= 768px)
+     ========================================================================== */
+  .teacher-session-header {
+    padding: 0.85rem 0.75rem !important;
+    gap: 0.75rem !important;
+    margin-bottom: 1rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden;
+  }
+
+  .teacher-header-left {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.6rem !important;
+  }
+
+  .teacher-header-nav-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  .teacher-exit-btn {
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .teacher-brand-text {
+    font-size: 1.15rem !important;
+  }
+
+  .teacher-header-sep {
+    display: none !important;
+  }
+
+  .teacher-header-title-box {
+    display: block !important;
+    width: 100% !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: 10px !important;
+    padding: 0.5rem 0.75rem !important;
+    box-sizing: border-box !important;
+    cursor: pointer;
+  }
+
+  .teacher-header-activity-title {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    font-size: 0.92rem !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+  }
+
+  .teacher-header-right {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    align-items: center !important;
+  }
+
+  .teacher-header-btn {
+    flex: 1 1 calc(50% - 0.25rem) !important;
+    justify-content: center !important;
+    font-size: 0.8rem !important;
+    padding: 0.45rem 0.5rem !important;
+    text-align: center !important;
+  }
+
+  .teacher-room-code-badge {
+    width: 100% !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    margin-top: 0.25rem !important;
+    padding: 0.5rem 0.85rem !important;
+  }
+
+  .teacher-room-code-badge strong {
+    word-break: break-all;
+    font-size: 1.1rem !important;
+  }
+
+  .teacher-lobby-left-card,
+  .teacher-lobby-right-card,
+  .teacher-session-card {
+    padding: 1.25rem 0.85rem !important;
+  }
+
+  .teacher-lobby-title {
+    font-size: 1.2rem !important;
+    line-height: 1.35 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .teacher-session-main-title {
+    font-size: 1.35rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .session-question-title {
+    font-size: 1.35rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 1.25rem !important;
+    word-break: break-word !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .activity-card-buttons {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ==========================================================================
    PRINT STYLES FOR EXPORTING CLEAN PDF REPORTS
    ========================================================================== */
 .print-only-report {

@@ -247,16 +247,16 @@ export default function TeacherDashboard({
     <div className="container animate-slide-up" style={{ minHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
       
       {/* Header Panel */}
-      <div className="glass-card" style={{ marginBottom: '2rem', padding: '1.5rem 2rem' }}>
-        <div className="flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="glass-card header-panel" style={{ marginBottom: '1.5rem', padding: '1.25rem 1.5rem' }}>
+        <div className="flex-between" style={{ flexWrap: 'wrap', gap: '0.85rem' }}>
           <div>
-            <h1 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>{t('appName')}</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            <h1 className="text-gradient dashboard-title" style={{ fontSize: '1.85rem', marginBottom: '0.2rem' }}>{t('appName')}</h1>
+            <p className="dashboard-subtitle" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
               {t('appSubtitle')}
             </p>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+          <div className="header-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             {/* Quick Instant In-Class Question Button */}
             <button
               type="button"
@@ -392,23 +392,22 @@ export default function TeacherDashboard({
         /* VIEW 2: COURSE EXPANDED (Chapter Sidebar + Activity details + Static QR Code sharing) */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', flex: 1 }}>
           
-          <div className="flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="flex-between" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               <button className="btn btn-secondary btn-icon" onClick={() => { setSelectedCourseId(null); setSelectedChapterId(null); setSelectedActivityId(null); }}>
-                <ChevronLeft size={20} /> {t('back')}
+                <ChevronLeft size={18} /> {t('back')}
               </button>
               <div>
-                <span className="badge badge-indigo">{currentCourse.id.startsWith('custom_') ? 'Custom Markdown' : 'System Course'}</span>
-                <h2 style={{ fontSize: '1.5rem', marginTop: '0.2rem' }}>{currentCourse.courseTitle}</h2>
+                <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>{currentCourse.id.startsWith('custom_') ? 'Custom Markdown' : 'System Course'}</span>
+                <h2 style={{ fontSize: '1.4rem', marginTop: '0.15rem' }}>{currentCourse.courseTitle}</h2>
               </div>
             </div>
-            <ThemeLangControls />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.5rem', alignItems: 'start' }}>
+          <div className="dashboard-course-layout">
             
             {/* Chapters navigation */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="dashboard-sidebar-nav" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div>
                 <h4 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
                   {lang === 'zh' ? '章節清單' : 'Chapters'}
@@ -513,13 +512,13 @@ export default function TeacherDashboard({
               <div className="glass-card animate-slide-up" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 
                 {/* Header row */}
-                <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
+                <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                   <div>
                     <span className="badge badge-success">{lang === 'zh' ? '已選取活動' : 'Activity Selected'}</span>
                     <h3 style={{ fontSize: '1.4rem', marginTop: '0.2rem' }}>{getActivityShortTitle(currentActivity, currentChapter)}</h3>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ID: {currentActivity.id}</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <div className="activity-action-bar" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <button 
                       className="btn btn-secondary" 
                       style={{ 
@@ -550,14 +549,14 @@ export default function TeacherDashboard({
 
                 {/* Sharing Block (URL + QR Code) */}
                 <div 
-                  className="glass-card" 
+                  className="glass-card activity-share-block" 
                   style={{ 
                     padding: '1.25rem', 
                     background: 'rgba(255,255,255,0.01)', 
                     display: 'flex', 
                     flexWrap: 'wrap', 
                     alignItems: 'center', 
-                    gap: '2rem',
+                    gap: '1.5rem',
                     border: '1px solid var(--border-glow)'
                   }}
                 >
@@ -715,7 +714,7 @@ export default function TeacherDashboard({
                   <h4 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>
                     {lang === 'zh' ? '依題型篩選活動：' : 'Filter Activities by Type:'}
                   </h4>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div className="filter-chips-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {['all', 'ccq', 'poll', 'ordering', 'game', 'wordcloud', 'pair', 'short'].map((type) => {
                       const isActive = activityTypeFilter === type;
                       return (
@@ -796,7 +795,7 @@ export default function TeacherDashboard({
                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{lang === 'zh' ? '活動代碼：' : 'Activity: '}{roomCodeForAct}</span>
                               </div>
 
-                              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              <div className="activity-card-buttons" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                 <button 
                                   className="btn btn-secondary"
                                   style={{ padding: '0.5rem 0.75rem', gap: '0.25rem', fontSize: '0.75rem', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Play, Book, FileText, ChevronRight, ChevronLeft, Trash2, 
-  Upload, HelpCircle, BarChart2, ListOrdered, Gamepad2, AlertCircle, Copy, Check, QrCode, Users, Cloud, MessageSquare, Eye
+  Upload, HelpCircle, BarChart2, ListOrdered, Gamepad2, AlertCircle, Copy, Check, QrCode, Users, Cloud, MessageSquare, Eye, Zap
 } from 'lucide-react';
 import { parseMarkdownCourse } from '../utils/mdParser';
 import { formatChapterTitle, getActivityShortTitle } from '../utils/formatters';
@@ -9,9 +9,10 @@ import { QRCodeCanvas } from 'qrcode.react';
 import FormattedMarkdown from '../utils/formatMarkdown';
 import { useThemeLang, ThemeLangControls } from '../context/ThemeLangContext';
 import StudentPreviewModal from './StudentPreviewModal';
+import QuickQuestionModal from './QuickQuestionModal';
 
 export default function TeacherDashboard({ 
-  courses, customCourses, setCustomCourses, onLaunch,
+  courses, customCourses, setCustomCourses, onLaunch, onLaunchInstant,
   selectedCourseId, setSelectedCourseId,
   selectedChapterId, setSelectedChapterId,
   selectedActivityId, setSelectedActivityId
@@ -24,6 +25,7 @@ export default function TeacherDashboard({
   const [copiedId, setCopiedId] = useState(null);
   const [qrCopiedId, setQrCopiedId] = useState(null);
   const [previewActivity, setPreviewActivity] = useState(null);
+  const [showQuickQuestion, setShowQuickQuestion] = useState(false);
   
   // Track recently accessed courses
   const [recentCourseIds, setRecentCourseIds] = useState(() => {
@@ -255,6 +257,30 @@ export default function TeacherDashboard({
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+            {/* Quick Instant In-Class Question Button */}
+            <button
+              type="button"
+              className="btn btn-primary animate-pulse-glow"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                fontWeight: 700,
+                fontSize: '0.92rem',
+                padding: '0.55rem 1.1rem',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)',
+                border: 'none',
+                boxShadow: '0 4px 16px rgba(99, 102, 241, 0.4)',
+                cursor: 'pointer'
+              }}
+              onClick={() => setShowQuickQuestion(true)}
+              title={lang === 'zh' ? '在課堂上即時出題（是非/選擇/簡答），無需存檔，立即發佈' : 'Instant in-class question (True/False, Choice, Short QA)'}
+            >
+              <Zap size={17} fill="currentColor" />
+              {lang === 'zh' ? '課堂即時出題' : 'Quick Question'}
+            </button>
+
             <ThemeLangControls />
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Teacher ID:</span>
@@ -906,6 +932,14 @@ export default function TeacherDashboard({
           onClose={() => setPreviewActivity(null)}
         />
       )}
+
+      {/* Quick Instant In-Class Question Modal */}
+      <QuickQuestionModal
+        isOpen={showQuickQuestion}
+        onClose={() => setShowQuickQuestion(false)}
+        onLaunchInstant={onLaunchInstant}
+        teacherPrefix={teacherPrefix}
+      />
     </div>
   );
 }

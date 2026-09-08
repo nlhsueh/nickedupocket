@@ -3,15 +3,18 @@ import { QRCodeSVG } from 'qrcode.react';
 import { 
   Play, Square, ChevronRight, ArrowLeft, Users, Wifi, WifiOff, 
   CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud, FlaskConical, CheckCircle2,
-  Printer, Download, Trophy, BookOpen
+  Printer, Download, Trophy, BookOpen, Zap
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
 import PieChart from './PieChart';
 import { useThemeLang, ThemeLangControls } from '../context/ThemeLangContext';
+import QuickQuestionModal from './QuickQuestionModal';
 
-export default function TeacherSession({ activity, roomCode, onBack }) {
+export default function TeacherSession({ activity, roomCode, onBack, onLaunchInstant }) {
   const { t, lang } = useThemeLang();
+  const teacherPrefix = localStorage.getItem('nickpocket_teacher_prefix') || '';
+  const [showQuickModal, setShowQuickModal] = useState(false);
   const formatTime = (secs) => {
     const s = Math.max(0, Math.floor(secs));
     const m = Math.floor(s / 60);
@@ -1169,7 +1172,33 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
             </span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Quick Instant In-Class Question Button */}
+          {onLaunchInstant && (
+            <button 
+              type="button"
+              className="btn btn-secondary" 
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(168, 85, 247, 0.18))',
+                border: '1px solid rgba(99, 102, 241, 0.5)',
+                color: '#c7d2fe',
+                padding: '0.45rem 0.85rem',
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                boxShadow: '0 2px 10px rgba(99, 102, 241, 0.2)'
+              }}
+              onClick={() => setShowQuickModal(true)}
+              title={lang === 'zh' ? '在課堂上即時出題（是非/選擇/簡答），無需存檔，立即發佈' : 'Instant in-class question (True/False, Choice, Short QA)'}
+            >
+              <Zap size={16} fill="currentColor" /> {lang === 'zh' ? '課堂即時出題' : 'Quick Question'}
+            </button>
+          )}
+
           {/* Test Simulation Button */}
           <button 
             type="button"
@@ -3580,6 +3609,21 @@ export default function TeacherSession({ activity, roomCode, onBack }) {
       <footer className="footer-branding" style={{ marginTop: '3rem' }}>
         designed by <span>Nien-Lin Hsueh, Feng Chia University</span>
       </footer>
+
+      {/* Quick Instant In-Class Question Modal */}
+      {showQuickModal && (
+        <QuickQuestionModal
+          isOpen={showQuickModal}
+          onClose={() => setShowQuickModal(false)}
+          onLaunchInstant={(data) => {
+            setShowQuickModal(false);
+            if (onLaunchInstant) {
+              onLaunchInstant(data);
+            }
+          }}
+          teacherPrefix={teacherPrefix}
+        />
+      )}
     </div>
   );
 }

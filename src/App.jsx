@@ -27,10 +27,25 @@ const parseHash = (hash) => {
 };
 
 // Helper to lookup course/chapter/activity from a given room code (case-insensitive)
-const findActivityByRoomCode = (courses, roomCode) => {
+const findActivityByRoomCode = (courses, roomCode, instantActivities = {}) => {
   if (!roomCode) return null;
   const cleanCode = roomCode.toLowerCase().trim();
   
+  // 1. Check instant activities created on the fly
+  if (instantActivities) {
+    for (const [key, act] of Object.entries(instantActivities)) {
+      const actKey = key.toLowerCase();
+      if (cleanCode === actKey || cleanCode.endsWith(`-${actKey}`)) {
+        return {
+          course: { id: 'instant_course', courseTitle: '⚡ 課堂即時題目' },
+          chapter: { id: 'instant_chap', title: '即時互動' },
+          activity: act
+        };
+      }
+    }
+  }
+
+  // 2. Check course markdown chapters
   for (const course of courses) {
     if (!course.chapters) continue;
     for (const chap of course.chapters) {
@@ -54,6 +69,16 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
   
+  // Instant in-class activities (in-memory / sessionStorage, no file persistence)
+  const [instantActivities, setInstantActivities] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('nickpocket_instant_activities');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [selectedChapterId, setSelectedChapterId] = useState(null);
   const [selectedActivityId, setSelectedActivityId] = useState(null);
@@ -70,6 +95,7 @@ export default function App() {
         { id: 'gTeachPython', file: 'gTeachPython.md', fallback: null },
         { id: 'gTeachUX', file: 'gTeachUX.md', fallback: null },
         { id: 'gJustTest', file: 'gJustTest.md', fallback: null },
+        { id: 'gNickClass', file: 'gNickClass.md', fallback: null },
       ];
 
       const loaded = [];
@@ -110,13 +136,26 @@ export default function App() {
     window.location.hash = `#/teacher/${roomCode}`;
   };
 
+  const handleLaunchInstant = ({ roomCode, activityData }) => {
+    setInstantActivities(prev => {
+      const next = { ...prev, [activityData.id]: activityData, [roomCode]: activityData };
+      try {
+        sessionStorage.setItem('nickpocket_instant_activities', JSON.stringify(next));
+      } catch (e) {
+        console.warn('Failed to save instant activity to sessionStorage:', e);
+      }
+      return next;
+    });
+    window.location.hash = `#/teacher/${roomCode}`;
+  };
+
   const handleBackToDashboard = () => {
     window.location.hash = '#/';
   };
 
   // Route views
   if (route.path === 'teacher') {
-    const match = findActivityByRoomCode(allCourses, route.roomCode);
+    const match = findActivityByRoomCode(allCourses, route.roomCode, instantActivities);
     
     if (!match) {
       return (
@@ -135,7 +174,7 @@ export default function App() {
     const { course, chapter, activity } = match;
     const sessionActivity = {
       ...activity,
-      title: `${course.courseTitle} - ${activity.title}`,
+      title: activity.isInstant ? activity.title : `${course.courseTitle} - ${activity.title}`,
       courseId: course.id
     };
 
@@ -144,12 +183,13 @@ export default function App() {
         activity={sessionActivity} 
         roomCode={route.roomCode} 
         onBack={handleBackToDashboard} 
+        onLaunchInstant={handleLaunchInstant}
       />
     );
   }
 
   if (route.path === 'student') {
-    const match = findActivityByRoomCode(allCourses, route.roomCode);
+    const match = findActivityByRoomCode(allCourses, route.roomCode, instantActivities);
     return (
       <StudentSession 
         roomCode={route.roomCode} 
@@ -169,6 +209,7 @@ export default function App() {
       customCourses={customCourses}
       setCustomCourses={setCustomCourses} 
       onLaunch={handleLaunchActivity} 
+      onLaunchInstant={handleLaunchInstant}
       selectedCourseId={selectedCourseId}
       setSelectedCourseId={setSelectedCourseId}
       selectedChapterId={selectedChapterId}

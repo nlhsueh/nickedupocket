@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wifi, WifiOff, Hourglass, CheckCircle2, AlertCircle, 
   ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud, GripVertical, Users, MessageSquare,
-  Award, Trophy, Star
+  Award, Trophy, Star, QrCode, Copy, Check
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
 import { getActivityShortTitle } from '../utils/formatters';
@@ -138,6 +139,121 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
 
   // Game Leaderboard & Result data received on stop
   const [gameResultData, setGameResultData] = useState(null);
+
+  // Invite Classmates QR & Link
+  const [copiedLink, setCopiedLink] = useState(false);
+  const studentJoinUrl = `${window.location.origin}${window.location.pathname}#/student/${(roomCode || '').trim()}`;
+
+  const handleCopyLink = () => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(studentJoinUrl).then(() => {
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2000);
+      }).catch(() => {
+        fallbackCopyText(studentJoinUrl);
+      });
+    } else {
+      fallbackCopyText(studentJoinUrl);
+    }
+  };
+
+  const fallbackCopyText = (text) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch (err) {
+      console.error('Fallback copy failed', err);
+    }
+    document.body.removeChild(textArea);
+  };
+
+  const renderInviteQrCard = () => (
+    <div 
+      className="glass-card" 
+      style={{ 
+        width: '100%', 
+        padding: '1.1rem 1rem', 
+        borderRadius: '16px', 
+        background: 'rgba(255, 255, 255, 0.03)', 
+        border: '1px solid var(--border-glow)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.65rem',
+        marginTop: '0.25rem',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-indigo)', fontSize: '0.92rem', fontWeight: 700 }}>
+        <QrCode size={18} />
+        <span>{lang === 'zh' ? '邀請身邊同學掃描加入' : 'Invite Classmates to Join'}</span>
+      </div>
+
+      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+        {lang === 'zh' ? '讓旁邊同學掃描 QR Code 或複製連結一起加入！' : 'Let nearby classmates scan QR Code or copy link to join!'}
+      </p>
+
+      <div style={{ 
+        background: '#ffffff', 
+        padding: '10px', 
+        borderRadius: '12px', 
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.18)' 
+      }}>
+        <QRCodeSVG value={studentJoinUrl} size={140} bgColor="#ffffff" fgColor="#080B11" includeMargin={false} />
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', maxWidth: '280px', marginTop: '0.2rem' }}>
+        <div 
+          style={{ 
+            flex: 1, 
+            fontSize: '0.75rem', 
+            color: 'var(--text-secondary)', 
+            background: 'rgba(0, 0, 0, 0.25)', 
+            padding: '0.45rem 0.6rem', 
+            borderRadius: '8px', 
+            border: '1px solid var(--border-light)', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            whiteSpace: 'nowrap', 
+            fontFamily: 'monospace',
+            textAlign: 'left'
+          }}
+          title={studentJoinUrl}
+        >
+          {studentJoinUrl}
+        </div>
+        <button 
+          type="button" 
+          className="btn btn-secondary" 
+          style={{ 
+            padding: '0.45rem 0.65rem', 
+            fontSize: '0.75rem', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.3rem', 
+            whiteSpace: 'nowrap',
+            cursor: 'pointer' 
+          }} 
+          onClick={handleCopyLink}
+          title={lang === 'zh' ? '複製連結' : 'Copy link'}
+        >
+          {copiedLink ? <Check size={13} style={{ color: 'var(--color-success)' }} /> : <Copy size={13} />}
+          <span>{copiedLink ? (lang === 'zh' ? '已複製' : 'Copied') : (lang === 'zh' ? '複製' : 'Copy')}</span>
+        </button>
+      </div>
+    </div>
+  );
   const [finalGameSummary, setFinalGameSummary] = useState(null);
   const [studentAnswersMap, setStudentAnswersMap] = useState({});
   const [allQuestionsReview, setAllQuestionsReview] = useState(null);
@@ -1037,6 +1153,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             </div>
           )}
 
+          {renderInviteQrCard()}
+
           <button 
             className="btn btn-secondary" 
             style={{ width: '100%', padding: '0.85rem' }} 
@@ -1345,6 +1463,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                 {lang === 'zh' ? '等待老師開始課堂活動...' : 'Waiting for instructor to start...'}
               </span>
             </div>
+
+            {renderInviteQrCard()}
           </div>
         )}
 

@@ -98,7 +98,14 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
 
   // Multi-question Survey state
   const [surveyQuestions, setSurveyQuestions] = useState([]);
-  const [surveyAnswers, setSurveyAnswers] = useState({});
+  const [surveyAnswers, setSurveyAnswers] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(`nickpocket_survey_${roomCode}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [surveyTitle, setSurveyTitle] = useState('');
   const [surveyResults, setSurveyResults] = useState([]);
   const [surveyTotalSubmissions, setSurveyTotalSubmissions] = useState(0);
@@ -121,7 +128,13 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   const [orderingItems, setOrderingItems] = useState([]);
   const [partnerName, setPartnerName] = useState('');
   const [pairSummary, setPairSummary] = useState('');
-  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(() => {
+    try {
+      return sessionStorage.getItem(`nickpocket_survey_submitted_${roomCode}`) === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [submitting, setSubmitting] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(null);
   const [submitTime, setSubmitTime] = useState(null);
@@ -282,6 +295,17 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     mqttService.publishResponse({ event: 'join', studentName: fullNickname });
   };
 
+  // Update single answer in multi-question survey and persist to sessionStorage
+  const updateSurveyAnswer = (qIdx, val) => {
+    setSurveyAnswers(prev => {
+      const next = { ...prev, [qIdx]: val };
+      try {
+        sessionStorage.setItem(`nickpocket_survey_${roomCode}`, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
   // Submit multi-question survey
   const handleSubmitSurvey = () => {
     mqttService.publishResponse({
@@ -291,6 +315,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       timestamp: Date.now()
     });
     setHasSubmitted(true);
+    try {
+      sessionStorage.setItem(`nickpocket_survey_submitted_${roomCode}`, 'true');
+    } catch {}
   };
 
   // Preview mode auto-initialization for teacher manual testing
@@ -367,6 +394,11 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       setOrderingItems([]);
       setRevealedCorrectAnswer(null);
       setGameResultData(null);
+      setSurveyAnswers({});
+      try {
+        sessionStorage.removeItem(`nickpocket_survey_${roomCode}`);
+        sessionStorage.removeItem(`nickpocket_survey_submitted_${roomCode}`);
+      } catch {}
       setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [], pairDiscussions: [] });
       // Announce presence only if the event is not a teacher acknowledgment broadcast (prevents loops)
       if (!payload.acknowledged) {
@@ -374,6 +406,15 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       }
     } 
     else if (payload.event === 'question_start') {
+      // Guard 1: If student is currently answering a multi-question survey, ignore single question broadcasts
+      if (roomState === 'survey_answering' || roomState === 'survey_results') {
+        return;
+      }
+      // Guard 2: If student is already answering THIS EXACT question, do NOT wipe answers or reset timer
+      if (activeQuestion && activeQuestion.index === payload.questionIndex && roomState === 'answering') {
+        return;
+      }
+
       setRoomState('answering');
       setHasSubmitted(false);
       setSelectedOption(null);
@@ -432,8 +473,24 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     else if (payload.event === 'survey_start') {
       setRoomState('survey_answering');
       setSurveyQuestions(payload.questions || []);
-      setSurveyAnswers({});
-      setHasSubmitted(false);
+      // Preserve existing survey answers and do not reset hasSubmitted if already submitted
+      setSurveyAnswers(prev => {
+        if (Object.keys(prev).length > 0) return prev;
+        try {
+          const saved = sessionStorage.getItem(`nickpocket_survey_${roomCode}`);
+          return saved ? JSON.parse(saved) : {};
+        } catch {
+          return {};
+        }
+      });
+      setHasSubmitted(prev => {
+        if (prev) return true;
+        try {
+          return sessionStorage.getItem(`nickpocket_survey_submitted_${roomCode}`) === 'true';
+        } catch {
+          return false;
+        }
+      });
       setSurveyTitle(payload.activityTitle || '');
     }
     else if (payload.event === 'survey_stop') {
@@ -1435,7 +1492,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                               resize: 'vertical'
                             }}
                             value={surveyAnswers[qIdx] || ''}
-                            onChange={(e) => setSurveyAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
+                            onChange={(e) => updateSurveyAnswer(qIdx, e.target.value)}
                             placeholder="請在此輸入你的想法、期許或建議（選填）..."
                             maxLength={300}
                           />
@@ -1452,7 +1509,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                             return (
                               <div
                                 key={letter}
-                                onClick={() => setSurveyAnswers(prev => ({ ...prev, [qIdx]: letter }))}
+                                onClick={() => updateSurveyAnswer(qIdx, letter)}
                                 className="glass-card animate-pop"
                                 style={{
                                   padding: '0.65rem 0.9rem',

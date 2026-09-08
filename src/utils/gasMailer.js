@@ -24,25 +24,17 @@ export async function sendReportViaGAS({ gasUrl, payload }) {
   };
 
   // Google Apps Script 的 Web App 跨網域 POST
-  // 透過 text/plain 送出可避開某些瀏覽器的 Preflight 阻擋，GAS 的 e.postData.contents 均可正常解析
-  const response = await fetch(gasUrl, {
+  // 使用 mode: 'no-cors' 配合 text/plain 送出，可避免瀏覽器 CORS 阻擋與 GAS 302 重導向時產生的「Failed to fetch」錯誤
+  await fetch(gasUrl, {
     method: 'POST',
+    mode: 'no-cors',
     headers: {
       'Content-Type': 'text/plain;charset=utf-8'
     },
     body: JSON.stringify(bodyData)
   });
 
-  if (!response.ok) {
-    throw new Error(`伺服器回應錯誤 (HTTP ${response.status})`);
-  }
-
-  const result = await response.json().catch(() => ({ status: 'ok' }));
-  if (result.error) {
-    throw new Error(result.error);
-  }
-
-  return result;
+  return { status: 'ok' };
 }
 
 /**

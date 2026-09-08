@@ -52,6 +52,8 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     /問卷|survey/i.test(activity.title)
   );
   const [surveySubmissions, setSurveySubmissions] = useState({}); // { [studentName]: { answers: { [qIdx]: 'A' }, timestamp } }
+  const surveySubmissionsRef = useRef({});
+  const joinBroadcastTimeoutRef = useRef(null);
   const [surveyViewQIndex, setSurveyViewQIndex] = useState(0); // number or 'all'
   
   // Helper for smart default duration per question type
@@ -285,8 +287,11 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         joinedStudentsRef.current = updated;
         return updated;
       });
-      // Acknowledge join and tell student the current room status
-      broadcastLobbyState();
+      // Debounce join acknowledgments to prevent flooding the network when 40+ students join simultaneously
+      if (joinBroadcastTimeoutRef.current) clearTimeout(joinBroadcastTimeoutRef.current);
+      joinBroadcastTimeoutRef.current = setTimeout(() => {
+        broadcastLobbyState();
+      }, 250);
     } 
     else if (payload.event === 'submit_answer') {
       setAnswers(prev => {
@@ -322,13 +327,25 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
       });
     }
     else if (payload.event === 'submit_survey') {
-      setSurveySubmissions(prev => ({
-        ...prev,
-        [payload.studentName]: {
-          answers: payload.answers,
-          timestamp: payload.timestamp || Date.now()
-        }
-      }));
+      setSurveySubmissions(prev => {
+        const next = {
+          ...prev,
+          [payload.studentName]: {
+            answers: payload.answers,
+            timestamp: payload.timestamp || Date.now()
+          }
+        };
+        surveySubmissionsRef.current = next;
+        return next;
+      });
+
+      // Ensure submitting student is registered in joined students list
+      setJoinedStudents(prev => {
+        if (prev.includes(payload.studentName)) return prev;
+        const updated = [...prev, payload.studentName];
+        joinedStudentsRef.current = updated;
+        return updated;
+      });
     }
   };
 
@@ -338,21 +355,60 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     if (status === 'lobby') {
       broadcastState({ event: 'lobby', acknowledged: true, activityTitle: activityRef.current.title, lobbyTimeLeft: lobbyTimeLeftRef.current });
     } else if (status === 'active') {
-      broadcastActiveQuestion(qIndex);
-      broadcastCurrentStats();
+      if (isMultiQuestionSurvey) {
+        // Multi-question survey: broadcast full survey questions, do not send single question_start
+        broadcastState({
+          event: 'survey_start',
+          isSurvey: true,
+          activityTitle: activity.title,
+          questions: activity.questions.map((q, idx) => ({
+            index: idx,
+            type: q.type,
+            questionText: q.questionText,
+            options: q.options || [],
+            description: q.description || ''
+          }))
+        });
+      } else {
+        broadcastActiveQuestion(qIndex);
+        broadcastCurrentStats();
+      }
     } else if (status === 'stopped' || status === 'results') {
-      const q = activityRef.current.questions[qIndex];
-      const statsObj = getMultipleChoiceStats();
-      broadcastState({ 
-        event: 'question_stop', 
-        questionIndex: qIndex,
-        correctAnswer: q ? q.correctAnswer : null,
-        stats: statsObj.stats,
-        totalSubmissions: statsObj.total,
-        totalStudents: joinedStudentsRef.current.length || joinedStudents.length,
-        shortAnswers: getShortAnswers(),
-        gameData: lastGameDataRef.current
-      });
+      if (isMultiQuestionSurvey) {
+        const currentSubs = surveySubmissionsRef.current || surveySubmissions;
+        const allSurveyStats = activity.questions.map((q, idx) => {
+          const stats = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
+          let total = 0;
+          Object.values(currentSubs).forEach(sub => {
+            const choice = sub.answers?.[idx];
+            if (choice && stats[choice] !== undefined) {
+              stats[choice]++;
+              total++;
+            }
+          });
+          return { questionIndex: idx, stats, total };
+        });
+        broadcastState({
+          event: 'survey_stop',
+          isSurvey: true,
+          allSurveyStats,
+          totalSubmissions: Object.keys(currentSubs).length,
+          totalStudents: joinedStudentsRef.current.length || joinedStudents.length
+        });
+      } else {
+        const q = activityRef.current.questions[qIndex];
+        const statsObj = getMultipleChoiceStats();
+        broadcastState({ 
+          event: 'question_stop', 
+          questionIndex: qIndex,
+          correctAnswer: q ? q.correctAnswer : null,
+          stats: statsObj.stats,
+          totalSubmissions: statsObj.total,
+          totalStudents: joinedStudentsRef.current.length || joinedStudents.length,
+          shortAnswers: getShortAnswers(),
+          gameData: lastGameDataRef.current
+        });
+      }
     } else if (status === 'finished') {
       const sorted = getSortedScoreboard();
       const finalGameData = {
@@ -433,12 +489,15 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
   const stopSurvey = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     setSessionStatus('results');
+    sessionStatusRef.current = 'results';
+
+    const currentSubs = surveySubmissionsRef.current || surveySubmissions;
 
     // Compute stats for all survey questions
     const allSurveyStats = activity.questions.map((q, qIdx) => {
       const stats = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
       let total = 0;
-      Object.values(surveySubmissions).forEach(sub => {
+      Object.values(currentSubs).forEach(sub => {
         const choice = sub.answers?.[qIdx];
         if (choice && stats[choice] !== undefined) {
           stats[choice]++;
@@ -450,9 +509,10 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
 
     broadcastState({
       event: 'survey_stop',
+      isSurvey: true,
       allSurveyStats,
-      totalSubmissions: Object.keys(surveySubmissions).length,
-      totalStudents: joinedStudents.length
+      totalSubmissions: Object.keys(currentSubs).length,
+      totalStudents: joinedStudentsRef.current.length || joinedStudents.length
     });
   };
 

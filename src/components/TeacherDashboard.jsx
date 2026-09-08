@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Play, Book, FileText, ChevronRight, ChevronLeft, Trash2, 
-  Upload, HelpCircle, BarChart2, ListOrdered, Gamepad2, AlertCircle, Copy, Check, QrCode, Users, Cloud, MessageSquare
+  Upload, HelpCircle, BarChart2, ListOrdered, Gamepad2, AlertCircle, Copy, Check, QrCode, Users, Cloud, MessageSquare, Eye
 } from 'lucide-react';
 import { parseMarkdownCourse } from '../utils/mdParser';
 import { formatChapterTitle, getActivityShortTitle } from '../utils/formatters';
 import { QRCodeCanvas } from 'qrcode.react';
 import FormattedMarkdown from '../utils/formatMarkdown';
 import { useThemeLang, ThemeLangControls } from '../context/ThemeLangContext';
+import StudentPreviewModal from './StudentPreviewModal';
 
 export default function TeacherDashboard({ 
   courses, customCourses, setCustomCourses, onLaunch,
@@ -22,6 +23,7 @@ export default function TeacherDashboard({
   const { t, lang } = useThemeLang();
   const [copiedId, setCopiedId] = useState(null);
   const [qrCopiedId, setQrCopiedId] = useState(null);
+  const [previewActivity, setPreviewActivity] = useState(null);
   
   // Track recently accessed courses
   const [recentCourseIds, setRecentCourseIds] = useState(() => {
@@ -491,13 +493,33 @@ export default function TeacherDashboard({
                     <h3 style={{ fontSize: '1.4rem', marginTop: '0.2rem' }}>{getActivityShortTitle(currentActivity, currentChapter)}</h3>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ID: {currentActivity.id}</span>
                   </div>
-                  <button 
-                    className="btn btn-success animate-pulse-glow" 
-                    style={{ padding: '1rem 2rem', fontSize: '1.05rem' }} 
-                    onClick={() => onLaunch(getRoomCode(currentActivity.id))}
-                  >
-                    <Play size={18} fill="white" /> {lang === 'zh' ? '啟動課堂活動 (Launch)' : 'Launch Activity'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ 
+                        padding: '0.85rem 1.4rem', 
+                        fontSize: '0.95rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.45rem', 
+                        color: '#c084fc', 
+                        borderColor: 'rgba(168, 85, 247, 0.4)',
+                        background: 'rgba(168, 85, 247, 0.08)'
+                      }} 
+                      onClick={() => setPreviewActivity(currentActivity)}
+                      title={lang === 'zh' ? '預覽學生作答畫面（人工檢測）' : 'Preview Student Answering View'}
+                      type="button"
+                    >
+                      <Eye size={16} /> {lang === 'zh' ? '測試作答 (學生端)' : 'Test Student View'}
+                    </button>
+                    <button 
+                      className="btn btn-success animate-pulse-glow" 
+                      style={{ padding: '1rem 2rem', fontSize: '1.05rem' }} 
+                      onClick={() => onLaunch(getRoomCode(currentActivity.id))}
+                    >
+                      <Play size={18} fill="white" /> {lang === 'zh' ? '啟動課堂活動 (Launch)' : 'Launch Activity'}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Sharing Block (URL + QR Code) */}
@@ -748,7 +770,7 @@ export default function TeacherDashboard({
                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{lang === 'zh' ? '活動代碼：' : 'Activity: '}{roomCodeForAct}</span>
                               </div>
 
-                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                 <button 
                                   className="btn btn-secondary"
                                   style={{ padding: '0.5rem 0.75rem', gap: '0.25rem', fontSize: '0.75rem', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -767,6 +789,28 @@ export default function TeacherDashboard({
                                 >
                                   {isQrCopied ? <Check size={14} style={{ color: 'var(--color-success)' }} /> : <QrCode size={14} />}
                                   {isQrCopied ? (lang === 'zh' ? '已複製！' : 'Copied!') : (lang === 'zh' ? '複製 QR' : 'Copy QR')}
+                                </button>
+
+                                <button 
+                                  className="btn btn-secondary"
+                                  style={{ 
+                                    padding: '0.5rem 0.75rem', 
+                                    gap: '0.25rem', 
+                                    fontSize: '0.75rem', 
+                                    height: '36px', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    color: '#c084fc', 
+                                    borderColor: 'rgba(168, 85, 247, 0.4)',
+                                    background: 'rgba(168, 85, 247, 0.08)'
+                                  }}
+                                  onClick={() => setPreviewActivity(act)}
+                                  title={lang === 'zh' ? '預覽學生作答畫面（人工檢測）' : 'Preview Student Answering View'}
+                                  type="button"
+                                >
+                                  <Eye size={14} />
+                                  {lang === 'zh' ? '測試作答' : 'Test View'}
                                 </button>
 
                                 <button 
@@ -852,6 +896,16 @@ export default function TeacherDashboard({
       <footer className="footer-branding" style={{ marginTop: 'auto', paddingTop: '3rem' }}>
         designed by <span>Nien-Lin Hsueh, Feng Chia University</span>
       </footer>
+
+      {/* Student View Inspection Modal */}
+      {previewActivity && (
+        <StudentPreviewModal
+          activity={previewActivity}
+          roomCode={getRoomCode(previewActivity.id)}
+          shareUrl={getShareUrl(previewActivity.id)}
+          onClose={() => setPreviewActivity(null)}
+        />
+      )}
     </div>
   );
 }

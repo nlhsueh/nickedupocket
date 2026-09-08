@@ -10,16 +10,17 @@ const parseHash = (hash) => {
   if (!hash || hash === '#/') return { path: 'dashboard' };
   
   const cleanHash = hash.replace(/^#/, '');
-  const parts = cleanHash.split('/').filter(Boolean);
+  const [pathPart, queryStr] = cleanHash.split('?');
+  const parts = pathPart.split('/').filter(Boolean);
   
   // Student view: /student/ROOMCODE
   if (parts[0] === 'student' && parts[1]) {
-    return { path: 'student', roomCode: parts[1] };
+    return { path: 'student', roomCode: parts[1], query: queryStr || '' };
   }
   
   // Teacher session view: /teacher/ROOMCODE
   if (parts[0] === 'teacher' && parts[1]) {
-    return { path: 'teacher', roomCode: parts[1] };
+    return { path: 'teacher', roomCode: parts[1], query: queryStr || '' };
   }
   
   return { path: 'dashboard' };
@@ -157,6 +158,7 @@ export default function App() {
         course={match ? match.course : null}
         chapter={match ? match.chapter : null}
         courses={allCourses}
+        isPreview={route.query?.includes('preview=true')}
       />
     );
   }

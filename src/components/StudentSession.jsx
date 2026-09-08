@@ -23,7 +23,7 @@ const FLORA_FAUNA_EMOJIS = [
   '🎋', '🎍', '🌱', '🍎', '🍓', '🍒', '🥑'
 ];
 
-export default function StudentSession({ roomCode, onLeave, activity, course, chapter }) {
+export default function StudentSession({ roomCode, onLeave, activity, course, chapter, isPreview = false }) {
   const { t, lang } = useThemeLang();
   const formatTime = (secs) => {
     const s = Math.max(0, Math.floor(secs));
@@ -68,12 +68,13 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   const [assignedEmoji] = useState(() => {
     const savedEmoji = localStorage.getItem('nickpocket_student_emoji');
     if (savedEmoji && FLORA_FAUNA_EMOJIS.includes(savedEmoji)) return savedEmoji;
-    const random = FLORA_FAUNA_EMOJIS[Math.floor(Math.random() * FLORA_FAUNA_EMOJIS.length)];
-    localStorage.setItem('nickpocket_student_emoji', random);
-    return random;
+    const randomOne = FLORA_FAUNA_EMOJIS[Math.floor(Math.random() * FLORA_FAUNA_EMOJIS.length)];
+    localStorage.setItem('nickpocket_student_emoji', randomOne);
+    return randomOne;
   });
 
   const [rawName, setRawName] = useState(() => {
+    if (isPreview) return '測試學生 (Preview)';
     const savedRaw = localStorage.getItem('nickpocket_student_raw_name');
     if (savedRaw) return savedRaw;
     const oldSaved = localStorage.getItem('nickpocket_student_name') || '';
@@ -81,6 +82,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   });
 
   const [nickname, setNickname] = useState(() => {
+    if (isPreview) return '🎭 測試學生 (Preview)';
     const savedRaw = localStorage.getItem('nickpocket_student_raw_name');
     const savedEmoji = localStorage.getItem('nickpocket_student_emoji') || assignedEmoji;
     if (savedRaw) return `${savedEmoji} ${savedRaw}`.trim();
@@ -101,15 +103,15 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   const [surveyTotalSubmissions, setSurveyTotalSubmissions] = useState(0);
   const [studentSurveyTab, setStudentSurveyTab] = useState(0);
 
-  const [isJoined, setIsJoined] = useState(false);
-  const [connStatus, setConnStatus] = useState('disconnected');
+  const [isJoined, setIsJoined] = useState(() => Boolean(isPreview));
+  const [connStatus, setConnStatus] = useState(isPreview ? 'connected' : 'disconnected');
   const [connError, setConnError] = useState('');
   
   // Track if room is active/started by the teacher
-  const [roomActiveStatus, setRoomActiveStatus] = useState('checking'); // 'checking', 'active'
+  const [roomActiveStatus, setRoomActiveStatus] = useState(isPreview ? 'active' : 'checking'); // 'checking', 'active'
 
   // Active question state from teacher
-  const [roomState, setRoomState] = useState('waiting'); // 'waiting', 'answering', 'stopped', 'finished'
+  const [roomState, setRoomState] = useState(isPreview ? 'answering' : 'waiting'); // 'waiting', 'answering', 'stopped', 'finished'
   const [activeQuestion, setActiveQuestion] = useState(null);
   
   // Student answer states
@@ -175,9 +177,32 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     setHasSubmitted(true);
   };
 
+  // Preview mode auto-initialization for teacher manual testing
+  useEffect(() => {
+    if (isPreview && targetActivity?.questions?.[0]) {
+      const q = targetActivity.questions[0];
+      setActiveQuestion({
+        type: q.type,
+        questionText: q.questionText,
+        options: q.options || [],
+        correctAnswer: q.correctAnswer || '',
+        items: q.items || [],
+        description: q.description || '',
+        timeLimit: q.timeLimit || 0,
+        index: 0,
+        total: targetActivity.questions.length
+      });
+      if (q.type === 'ordering' && q.items) {
+        setOrderingItems([...q.items].map((text, idx) => ({ id: `item_${idx}`, text })));
+      }
+      setRoomState('answering');
+      setRoomActiveStatus('active');
+    }
+  }, [isPreview, targetActivity]);
+
   // 1. MQTT lifecycle for student connection
   useEffect(() => {
-    if (!isJoined) return;
+    if (!isJoined || isPreview) return;
 
     mqttService.connect(
       roomCode,
@@ -465,6 +490,15 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     setSubmitting(true);
     const now = Date.now();
     setSubmitTime(now);
+
+    if (isPreview) {
+      setHasSubmitted(true);
+      if (activeQuestion && activeQuestion.index !== undefined) {
+        setStudentAnswersMap(prev => ({ ...prev, [activeQuestion.index]: selectedOption }));
+      }
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const success = mqttService.publishResponse({

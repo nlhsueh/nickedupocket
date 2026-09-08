@@ -3,13 +3,14 @@ import { QRCodeSVG } from 'qrcode.react';
 import { 
   Play, Square, ChevronRight, ArrowLeft, Users, Wifi, WifiOff, 
   CheckCircle, AlertCircle, Award, Hourglass, RefreshCw, BarChart2, Star, Cloud, FlaskConical, CheckCircle2,
-  Printer, Download, Trophy, BookOpen, Zap
+  Printer, Download, Trophy, BookOpen, Zap, Mail, Settings, Copy, Check, X
 } from 'lucide-react';
 import mqttService from '../utils/mqtt';
 import FormattedMarkdown from '../utils/formatMarkdown';
 import PieChart from './PieChart';
 import { useThemeLang, ThemeLangControls } from '../context/ThemeLangContext';
 import QuickQuestionModal from './QuickQuestionModal';
+import { sendReportViaGAS, GOOGLE_APPS_SCRIPT_TEMPLATE, DEFAULT_RECIPIENT } from '../utils/gasMailer';
 
 export default function TeacherSession({ activity, roomCode, onBack, onLaunchInstant }) {
   const { t, lang } = useThemeLang();
@@ -635,7 +636,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
   };
 
   // 4. Export to CSV & Print to PDF helpers
-  const exportSurveyCSV = () => {
+  const getSurveyCSVContent = () => {
     let csv = '\uFEFF'; // UTF-8 BOM for Microsoft Excel
     csv += `"${activity.title} - 問卷調查成果報告"\n`;
     csv += `"${lang === 'zh' ? '活動代碼' : 'Activity Code'}","${roomCode}","${lang === 'zh' ? '匯出時間' : 'Export Time'}","${new Date().toLocaleString()}"\n`;
@@ -678,7 +679,11 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
       }).join(',');
       csv += `"${stName.replace(/"/g, '""')}","${timeStr}",${answersList}\n`;
     });
+    return csv;
+  };
 
+  const exportSurveyCSV = () => {
+    const csv = getSurveyCSVContent();
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -690,7 +695,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     URL.revokeObjectURL(url);
   };
 
-  const exportSingleQuestionCSV = () => {
+  const getSingleQuestionCSVContent = () => {
     let csv = '\uFEFF';
     csv += `"${activity.title} - 第 ${currentQIndex + 1} 題成果統計"\n`;
     csv += `"${lang === 'zh' ? '題目' : 'Question'}","${String(currentQuestion.questionText).replace(/"/g, '""')}"\n`;
@@ -739,7 +744,11 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         }
       });
     }
+    return csv;
+  };
 
+  const exportSingleQuestionCSV = () => {
+    const csv = getSingleQuestionCSVContent();
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -749,6 +758,90 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // 4.1 Email report via Google Apps Script (點擊時才寄送)
+  const [emailStatus, setEmailStatus] = useState('idle'); // 'idle' | 'sending' | 'success' | 'error'
+  const [emailStatusMsg, setEmailStatusMsg] = useState('');
+  const [showGasModal, setShowGasModal] = useState(false);
+  const [gasUrl, setGasUrl] = useState(() => localStorage.getItem('nickpocket_gas_url') || '');
+  const [gasInputTemp, setGasInputTemp] = useState('');
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const handleSendEmailReport = async (type = 'survey') => {
+    const currentGasUrl = gasUrl || localStorage.getItem('nickpocket_gas_url');
+    if (!currentGasUrl) {
+      setGasInputTemp('');
+      setShowGasModal(true);
+      return;
+    }
+
+    try {
+      setEmailStatus('sending');
+      setEmailStatusMsg(lang === 'zh' ? '正在寄送成果與 CSV 附件至信箱...' : 'Sending report & CSV to email...');
+
+      let csvContent = '';
+      let csvFilename = '';
+      let responsesCount = 0;
+      let summaryHtml = '';
+
+      if (type === 'survey') {
+        csvContent = getSurveyCSVContent();
+        csvFilename = `${activity.title || 'survey'}_問卷統計_${new Date().toISOString().slice(0, 10)}.csv`;
+        responsesCount = Object.keys(surveySubmissions).length;
+
+        summaryHtml = `<h3 style="color: #334155; margin: 0 0 12px 0;">📊 問卷各題摘要（共 ${activity.questions.length} 題，回收 ${responsesCount} 份）：</h3>`;
+        activity.questions.forEach((q, idx) => {
+          summaryHtml += `<div style="margin-bottom: 12px; padding: 10px 14px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #6366f1;">`;
+          summaryHtml += `<div style="font-weight: bold; color: #1e293b; margin-bottom: 5px;">第 ${idx + 1} 題：${q.questionText}</div>`;
+          if (q.options && q.options.length > 0) {
+            summaryHtml += `<ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #475569;">`;
+            q.options.forEach((opt, optIdx) => {
+              const letter = String.fromCharCode(65 + optIdx);
+              summaryHtml += `<li><strong>${letter}.</strong> ${opt}</li>`;
+            });
+            summaryHtml += `</ul>`;
+          }
+          summaryHtml += `</div>`;
+        });
+      } else {
+        csvContent = getSingleQuestionCSVContent();
+        csvFilename = `${activity.title || 'activity'}_Q${currentQIndex + 1}_統計_${new Date().toISOString().slice(0, 10)}.csv`;
+        responsesCount = Object.keys(answers).length;
+        summaryHtml = `<div style="padding: 12px 16px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #6366f1;">`;
+        summaryHtml += `<div style="font-weight: bold; color: #1e293b; font-size: 15px;">題目：${currentQuestion.questionText}</div>`;
+        summaryHtml += `<div style="color: #64748b; font-size: 13px; margin-top: 5px;">題型：${currentQuestion.type} ｜ 回答人數：${responsesCount} 人</div>`;
+        summaryHtml += `</div>`;
+      }
+
+      await sendReportViaGAS({
+        gasUrl: currentGasUrl,
+        payload: {
+          title: activity.title,
+          roomCode: roomCode,
+          date: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+          responsesCount,
+          onlineCount: joinedStudents.length,
+          summaryHtml,
+          csvContent,
+          csvFilename
+        }
+      });
+
+      setEmailStatus('success');
+      setEmailStatusMsg(lang === 'zh' ? `✅ 成果與 CSV 附件已成功寄至 ${DEFAULT_RECIPIENT}！` : `✅ Sent to ${DEFAULT_RECIPIENT}!`);
+      setTimeout(() => {
+        setEmailStatus('idle');
+        setEmailStatusMsg('');
+      }, 5000);
+    } catch (err) {
+      console.error('Failed to send email:', err);
+      setEmailStatus('error');
+      setEmailStatusMsg(err.message || (lang === 'zh' ? '寄送失敗，請檢查 GAS 網址' : 'Failed to send'));
+      setTimeout(() => {
+        setEmailStatus('idle');
+      }, 6000);
+    }
   };
 
   // 5. Game Score calculations (答對 850 + 速度加成最高 150，答錯 0 分，逾時 0 分)
@@ -1811,7 +1904,46 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button 
+                  className="btn btn-secondary no-print" 
+                  style={{ 
+                    padding: '0.75rem 1.25rem', 
+                    fontSize: '0.92rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.45rem', 
+                    color: emailStatus === 'success' ? '#10b981' : emailStatus === 'error' ? '#ef4444' : '#38bdf8', 
+                    borderColor: emailStatus === 'success' ? 'rgba(16, 185, 129, 0.4)' : emailStatus === 'error' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(56, 189, 248, 0.4)',
+                    background: 'rgba(56, 189, 248, 0.08)'
+                  }} 
+                  onClick={() => handleSendEmailReport('survey')}
+                  disabled={emailStatus === 'sending'}
+                  title={`點擊將成果統計與 CSV 附件寄至 ${DEFAULT_RECIPIENT}`}
+                >
+                  {emailStatus === 'sending' ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" /> {lang === 'zh' ? '寄送中...' : 'Sending...'}
+                    </>
+                  ) : emailStatus === 'success' ? (
+                    <>
+                      <CheckCircle2 size={16} /> {lang === 'zh' ? '已寄送！' : 'Sent!'}
+                    </>
+                  ) : (
+                    <>
+                      <Mail size={16} /> {lang === 'zh' ? '寄送成果至信箱' : 'Email Report'}
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary no-print"
+                  style={{ padding: '0.75rem 0.75rem', color: 'var(--text-muted)' }}
+                  onClick={() => setShowGasModal(true)}
+                  title={lang === 'zh' ? '設定 Google Apps Script 發信網址' : 'Configure Mailer'}
+                >
+                  <Settings size={16} />
+                </button>
                 <button 
                   className="btn btn-secondary no-print" 
                   style={{ padding: '0.75rem 1.25rem', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)' }} 
@@ -1846,6 +1978,27 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                 </button>
               </div>
             </div>
+
+            {emailStatusMsg && (
+              <div 
+                className="animate-pop"
+                style={{ 
+                  marginBottom: '1rem', 
+                  padding: '0.65rem 1rem', 
+                  borderRadius: '10px', 
+                  fontSize: '0.88rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: emailStatus === 'error' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                  color: emailStatus === 'error' ? '#f87171' : '#34d399',
+                  border: `1px solid ${emailStatus === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
+                }}
+              >
+                {emailStatus === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                {emailStatusMsg}
+              </div>
+            )}
 
             {/* SCREEN-ONLY INTERACTIVE TABS VIEW */}
             <div className="screen-only">
@@ -2193,7 +2346,46 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                   <CheckCircle2 size={18} /> {lang === 'zh' ? '完成問卷調查' : 'Finish Survey'}
                 </button>
               ) : (
-                <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button 
+                    className="btn btn-secondary no-print" 
+                    style={{ 
+                      padding: '0.75rem 1.15rem', 
+                      fontSize: '0.9rem', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.4rem', 
+                      color: emailStatus === 'success' ? '#10b981' : emailStatus === 'error' ? '#ef4444' : '#38bdf8', 
+                      borderColor: emailStatus === 'success' ? 'rgba(16, 185, 129, 0.4)' : emailStatus === 'error' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(56, 189, 248, 0.4)',
+                      background: 'rgba(56, 189, 248, 0.08)'
+                    }} 
+                    onClick={() => handleSendEmailReport('single')}
+                    disabled={emailStatus === 'sending'}
+                    title={`點擊將本作答成果統計與 CSV 附件寄至 ${DEFAULT_RECIPIENT}`}
+                  >
+                    {emailStatus === 'sending' ? (
+                      <>
+                        <RefreshCw size={15} className="animate-spin" /> {lang === 'zh' ? '寄送中...' : 'Sending...'}
+                      </>
+                    ) : emailStatus === 'success' ? (
+                      <>
+                        <CheckCircle2 size={15} /> {lang === 'zh' ? '已寄送！' : 'Sent!'}
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={15} /> {lang === 'zh' ? '寄送成果至信箱' : 'Email Report'}
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary no-print"
+                    style={{ padding: '0.75rem 0.75rem', color: 'var(--text-muted)' }}
+                    onClick={() => setShowGasModal(true)}
+                    title={lang === 'zh' ? '設定 Google Apps Script 發信網址' : 'Configure Mailer'}
+                  >
+                    <Settings size={15} />
+                  </button>
                   <button 
                     className="btn btn-secondary no-print" 
                     style={{ padding: '0.75rem 1.15rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)' }} 
@@ -2222,6 +2414,27 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
               )}
               </div>
             </div>
+
+            {emailStatusMsg && (
+              <div 
+                className="animate-pop"
+                style={{ 
+                  marginBottom: '1rem', 
+                  padding: '0.65rem 1rem', 
+                  borderRadius: '10px', 
+                  fontSize: '0.88rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: emailStatus === 'error' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                  color: emailStatus === 'error' ? '#f87171' : '#34d399',
+                  border: `1px solid ${emailStatus === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
+                }}
+              >
+                {emailStatus === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                {emailStatusMsg}
+              </div>
+            )}
 
             {/* Prominent Standard Correct Answer Banner (For CCQ & Game) */}
             {((currentQuestion.type === 'ccq' || currentQuestion.type === 'game') && currentQuestion.correctAnswer) && (
@@ -3628,6 +3841,124 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
           }}
           teacherPrefix={teacherPrefix}
         />
+      )}
+
+      {/* Google Apps Script (GAS) Webhook Configuration Modal */}
+      {showGasModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+          onClick={() => setShowGasModal(false)}
+        >
+          <div 
+            className="glass-card animate-pop" 
+            style={{ 
+              maxWidth: '520px', 
+              width: '100%', 
+              padding: '2rem 1.75rem', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '1.25rem',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+              position: 'relative',
+              background: 'var(--card-bg)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Mail size={20} style={{ color: 'var(--color-indigo)' }} />
+                {lang === 'zh' ? 'Google 寄信服務設定' : 'Google Mailer Settings'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowGasModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              <p style={{ margin: '0 0 0.5rem 0' }}>
+                預設收件目標：<strong style={{ color: 'var(--color-indigo)' }}>{DEFAULT_RECIPIENT}</strong>
+              </p>
+              <p style={{ margin: 0 }}>
+                請貼上您在 Google Apps Script「部署為 Web 應用程式」所取得的網址。設定完成後，只要在結算頁面點擊<strong>「寄送成果至信箱」</strong>，系統就會自動發送包含 CSV 附件的報告給您。
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Google Apps Script Web App URL：</label>
+              <input 
+                type="url"
+                className="input-field"
+                placeholder="https://script.google.com/macros/s/.../exec"
+                value={gasInputTemp !== '' ? gasInputTemp : gasUrl}
+                onChange={(e) => setGasInputTemp(e.target.value)}
+                style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Quick Copy Script Accordion */}
+            <div style={{ padding: '0.85rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--border-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  📄 尚未建立腳本？點擊複製後端程式碼：
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_TEMPLATE);
+                    setCopiedCode(true);
+                    setTimeout(() => setCopiedCode(false), 3000);
+                  }}
+                >
+                  {copiedCode ? <Check size={14} style={{ color: '#10b981' }} /> : <Copy size={14} />}
+                  {copiedCode ? '已複製！' : '複製 GAS 程式碼'}
+                </button>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                至 Google Drive 新增「Google Apps Script」貼上，點擊「部署」&rarr;「Web 應用程式」，存取權限選「所有人 (Anyone)」，授權後複製網址貼至上方儲存即可。
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '0.75rem' }}
+                onClick={() => setShowGasModal(false)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ flex: 1.5, padding: '0.75rem' }}
+                onClick={() => {
+                  const toSave = gasInputTemp !== '' ? gasInputTemp.trim() : gasUrl.trim();
+                  localStorage.setItem('nickpocket_gas_url', toSave);
+                  setGasUrl(toSave);
+                  setShowGasModal(false);
+                }}
+              >
+                儲存設定
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

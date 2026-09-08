@@ -74,10 +74,10 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     getDefaultDurationForQuestion(activity.questions[0])
   );
 
-  // Lobby idle timeout (5 minutes = 300 seconds)
-  const [lobbyTimeLeft, setLobbyTimeLeft] = useState(300);
+  // Lobby idle timeout (10 minutes = 600 seconds)
+  const [lobbyTimeLeft, setLobbyTimeLeft] = useState(600);
   const lobbyTimerRef = useRef(null);
-  const lobbyTimeLeftRef = useRef(300);
+  const lobbyTimeLeftRef = useRef(600);
   lobbyTimeLeftRef.current = lobbyTimeLeft;
 
   // Question answering countdown timer
@@ -117,7 +117,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
   const studentUrl = `${window.location.origin}${window.location.pathname}#/student/${roomCode}`;
 
 
-  // Lobby countdown timer (auto-close after 5 min of inactivity)
+  // Lobby countdown timer (auto-close after 10 min of inactivity)
   useEffect(() => {
     if (sessionStatus === 'lobby') {
       if (lobbyTimerRef.current) clearInterval(lobbyTimerRef.current);
@@ -126,7 +126,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
           if (prev <= 1) {
             clearInterval(lobbyTimerRef.current);
             broadcastState({ event: 'session_timeout', reason: 'lobby_timeout' });
-            alert(lang === 'zh' ? '大廳等待超過 5 分鐘未啟動，已自動結束活動。' : 'Session timed out due to 5 minutes of inactivity.');
+            alert(lang === 'zh' ? '大廳等待超過 10 分鐘未啟動，已自動結束活動。' : 'Session timed out due to 10 minutes of inactivity.');
             onBack();
             return 0;
           }
@@ -161,7 +161,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
   const handleStatusChange = (status, info) => {
     setConnectionStatus(status);
     if (status === 'connected') {
-      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: 'chapter' });
+      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: 'chapter', lobbyTimeLeft: lobbyTimeLeftRef.current });
     }
     if (status === 'error') {
       setConnectionError(info || 'Real-time broker error');
@@ -335,7 +335,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     const status = sessionStatusRef.current;
     const qIndex = currentQIndexRef.current;
     if (status === 'lobby') {
-      broadcastState({ event: 'lobby', acknowledged: true, activityTitle: activityRef.current.title });
+      broadcastState({ event: 'lobby', acknowledged: true, activityTitle: activityRef.current.title, lobbyTimeLeft: lobbyTimeLeftRef.current });
     } else if (status === 'active') {
       broadcastActiveQuestion(qIndex);
       broadcastCurrentStats();

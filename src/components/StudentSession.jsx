@@ -262,7 +262,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   // Time tracker for game timer display
   const [timeLeft, setTimeLeft] = useState(0);
   const [questionStartMs, setQuestionStartMs] = useState(0);
-  const [lobbyTimeLeft, setLobbyTimeLeft] = useState(300);
+  const [lobbyTimeLeft, setLobbyTimeLeft] = useState(600);
 
   // Student Nickname and Join status (managed locally)
   const handleJoin = (e) => {
@@ -857,11 +857,12 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   };
 
   const handleTeacherLaunch = () => {
-    const password = prompt('Enter Teacher Access Password:');
-    if (password === 'iActivity') {
+    const password = prompt(lang === 'zh' ? '請輸入教師管理密碼：' : 'Enter Teacher Access Password:');
+    if (password === 'nick007') {
+      sessionStorage.setItem('nickpocket_teacher_auth', 'true');
       window.location.hash = `#/teacher/${roomCode}`;
     } else if (password !== null) {
-      alert('Incorrect password.');
+      alert(lang === 'zh' ? '密碼錯誤！' : 'Incorrect password.');
     }
   };
 
@@ -2345,8 +2346,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '300px', marginBottom: '2rem', lineHeight: '1.5' }}>
               {lang === 'zh' 
-                ? '因超過 5 分鐘無互動，本課堂活動已自動結束。' 
-                : 'This interactive session has automatically closed due to 5 minutes of inactivity.'}
+                ? '因超過 10 分鐘無互動，本課堂活動已自動結束。' 
+                : 'This interactive session has automatically closed due to 10 minutes of inactivity.'}
             </p>
             <button className="btn btn-primary" onClick={onLeave} style={{ width: '100%', padding: '1rem' }}>
               {lang === 'zh' ? '返回首頁' : 'Back to Home'}

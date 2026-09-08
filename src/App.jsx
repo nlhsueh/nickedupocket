@@ -132,11 +132,37 @@ export default function App() {
 
   const allCourses = [...defaultCourses, ...customCourses];
 
+  const TEACHER_PASSWORD = 'nick007';
+
+  const [isTeacherAuth, setIsTeacherAuth] = useState(
+    () => sessionStorage.getItem('nickpocket_teacher_auth') === 'true'
+  );
+  const [authInput, setAuthInput] = useState('');
+  const [authError, setAuthError] = useState(false);
+
+  const checkTeacherAuthPrompt = () => {
+    if (sessionStorage.getItem('nickpocket_teacher_auth') === 'true' || isTeacherAuth) {
+      return true;
+    }
+    const pwd = prompt('請輸入教師管理密碼 (Enter Teacher Access Password):');
+    if (pwd === TEACHER_PASSWORD) {
+      sessionStorage.setItem('nickpocket_teacher_auth', 'true');
+      setIsTeacherAuth(true);
+      return true;
+    }
+    if (pwd !== null) {
+      alert('密碼錯誤 (Incorrect password)');
+    }
+    return false;
+  };
+
   const handleLaunchActivity = (roomCode) => {
+    if (!checkTeacherAuthPrompt()) return;
     window.location.hash = `#/teacher/${roomCode}`;
   };
 
   const handleLaunchInstant = ({ roomCode, activityData }) => {
+    if (!checkTeacherAuthPrompt()) return;
     setInstantActivities(prev => {
       const next = { ...prev, [activityData.id]: activityData, [roomCode]: activityData };
       try {
@@ -155,6 +181,66 @@ export default function App() {
 
   // Route views
   if (route.path === 'teacher') {
+    if (!isTeacherAuth && sessionStorage.getItem('nickpocket_teacher_auth') !== 'true') {
+      const handleAuthSubmit = (e) => {
+        e.preventDefault();
+        if (authInput === TEACHER_PASSWORD) {
+          sessionStorage.setItem('nickpocket_teacher_auth', 'true');
+          setIsTeacherAuth(true);
+          setAuthError(false);
+        } else {
+          setAuthError(true);
+        }
+      };
+
+      return (
+        <div className="container animate-slide-up flex-center" style={{ minHeight: '80vh', flexDirection: 'column', textAlign: 'center' }}>
+          <div className="glass-card animate-pop" style={{ maxWidth: '420px', width: '100%', padding: '2.5rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>
+              🔒
+            </div>
+            <div>
+              <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+                教師管理密碼驗證
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: 0, lineHeight: 1.5 }}>
+                此為課堂主持控制介面，請輸入教師密碼以啟動並主持活動。
+              </p>
+            </div>
+            <form onSubmit={handleAuthSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <input
+                type="password"
+                className="input-field"
+                placeholder="請輸入教師密碼..."
+                value={authInput}
+                onChange={(e) => {
+                  setAuthInput(e.target.value);
+                  setAuthError(false);
+                }}
+                autoFocus
+                style={{ width: '100%', padding: '0.8rem 1rem', textAlign: 'center', fontSize: '1.1rem', letterSpacing: '2px' }}
+              />
+              {authError && (
+                <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', fontWeight: 500 }}>
+                  密碼錯誤，請重新輸入！
+                </div>
+              )}
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.85rem', fontSize: '1rem' }}>
+                驗證並進入活動
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                style={{ width: '100%', padding: '0.75rem', fontSize: '0.85rem' }}
+                onClick={handleBackToDashboard}
+              >
+                返回儀表板
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
     const match = findActivityByRoomCode(allCourses, route.roomCode, instantActivities);
     
     if (!match) {

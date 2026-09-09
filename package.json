@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sim:survey": "node scripts/simulate_40_students.cjs",
+    "sim:game": "node scripts/simulate_game_race.cjs"
   },
   "dependencies": {
     "lucide-react": "^1.25.0",

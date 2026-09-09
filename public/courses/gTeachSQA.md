@@ -738,6 +738,99 @@
   * **選項 D 錯誤**：`deploy` 是最後發布階段，此時才檢查為時已晚。
 </details>
 
+## Chapter 9: 現代端對端 (E2E) 自動化測試、無頭瀏覽器與高併發模擬 (Modern E2E Testing & Headless Automation)
+
+### [Activity: sqa-ch09-ccq1] Chapter 9: 測試金字塔現代權衡 CCQ 1
+#### [CCQ] 在經典「測試金字塔 (Test Pyramid)」模型中，端對端（E2E / UI）測試通常位居塔尖，其測試數量遠少於底層的單元測試（Unit Test）。關於 E2E 測試在現代大型軟體系統中的價值與限制，下列敘述何者最為精準？
+- E2E 測試完全沒有價值，現代敏捷團隊應 100% 依賴單元測試與契約測試（Contract Testing）
+- E2E 測試最能模擬真實使用者的業務流程與端到端整合驗證，但具有執行速度慢、維護成本高、且容易因網路延遲或 DOM 渲染時序產生「測試脆弱性（Flaky Tests）」的特性 (Correct)
+- E2E 測試一旦寫好就不需要任何維護，能保證系統絕對不會發生後端並行競爭或資料庫死鎖
+- E2E 測試在 CI/CD 流水線中的執行成本與單元測試完全相同，團隊應追求將所有測試案例升級為 E2E 測試
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：E2E 測試串連了前後端、網路、資料庫與外部依賴，最能直接反映真實使用者的商業價值（Happy Path）。然而，因其涉及瀏覽器渲染、非同步請求與環境狀態，執行耗時常為單元測試的數百倍，且極易因時序不一致產生「有時通過、有時失敗」的測試脆弱性（Flakiness），因此在金字塔中應維持精簡高價值的策略。
+  * **選項 A 錯誤**：單元測試無法驗證各元件整合後的端到端行為與真實瀏覽器環境。
+  * **選項 C 錯誤**：UI 行為經常迭代，E2E 測試維護代價通常是各測試層級中最高的。
+  * **選項 D 錯誤**：若把大量邊界測試全做成 E2E，會導致「冰淇淋甜筒（Ice-Cream Cone）」反模式，造成 CI/CD 執行時間長達數小時且誤報率極高。
+</details>
+
+### [Activity: sqa-ch09-ccq2] Chapter 9: 無頭瀏覽器 (Headless Browser) 技術本質 CCQ 2
+#### [CCQ] 現代 E2E 測試框架（如 Playwright、Puppeteer、Cypress）在 CI/CD 伺服器上執行時，通常會預設啟用 **無頭模式（Headless Mode）**。關於「無頭瀏覽器」的運作機制與特性，下列敘述何者正確？
+- 它只是一個文字介面的 HTTP 爬蟲工具（如 curl），無法解析 CSS 與執行 JavaScript
+- 它是一個具備完整排版引擎（Blink/WebKit）與 JavaScript 虛擬機的真實瀏覽器，只是省略了向作業系統 GUI 繪製視窗圖形的開銷，執行速度更快且佔用資源更少 (Correct)
+- 無頭瀏覽器無法觸發任何前端滑鼠點擊（click）或鍵盤輸入（keypress）事件
+- 無頭瀏覽器因缺少螢幕硬體支援，無法截圖（Screenshot）或錄製操作影片
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：Headless 模式下運行的就是正牌的 Chromium、Firefox 或 WebKit。它擁有完整的 DOM 樹解析、CSS 樣式計算、JavaScript 執行環境與 Cookie/LocalStorage 機制。差別僅在於它不把像素輸出到人類肉眼可見的實體螢幕或作業系統視窗上，因此非常適合在無圖形介面的 Linux 伺服器與 CI/CD 容器中快速執行。
+  * **選項 A 錯誤**：curl 只能拿純文字，無頭瀏覽器是真正能完整執行前端 SPA (如 React/Vue) 的瀏覽器。
+  * **選項 C/D 錯誤**：無頭瀏覽器完全支援點擊、輸入、甚至透過記憶體幀緩衝區輸出全頁截圖與錄影。
+</details>
+
+### [Activity: sqa-ch09-ccq3] Chapter 9: 測試策略選型：UI 自動化 vs. 協定併發 CCQ 3
+#### [CCQ] 某線上互動課堂系統（如 NickPocket Edu）即將迎來 100 位學生同時進入活動大廳並在 5 秒內搶答的情境。身為 SQA 工程師，若你的任務是「驗證即時通訊後台（MQTT / WebSocket）在 100 人高併發作答下的負載穩定度與資料一致性」，下列哪一種測試架構方案最符合工程效益與最佳實踐？
+- 在測試伺服器上透過 Playwright 同時啟動 100 個無頭 Chrome 視窗，並點擊作答按鈕
+- 撰寫輕量化的協定驅動腳本（Protocol-driven Script，如使用 Node.js / Python / k6），直接透過 WebSocket/MQTT 併發連線發送 100 筆模擬作答封包，同時保留單一真實瀏覽器作為觀察者 (Correct)
+- 要求 100 位人工測試員坐在電腦前手動點擊，因為自動化程式無法產生真實的網路封包
+- 僅撰寫針對單一純函式（Pure Function）的單元測試，無須針對分散式併發進行驗證
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：負載與壓力測試（Load / Stress Testing）的關鍵在於對後端連線、執行緒池與資料庫造成高併發衝擊。若啟動 100 個 Chrome 實例會消耗大量 CPU 與數十 GB 記憶體，容易在測試端（Client）就先因資源耗盡而失真。採用協定驅動（Protocol-driven）腳本能以極低的資源開銷產生百人甚至萬人的真實網路流量，並以單一老師端視窗即時檢驗同步結果，性價比最高。
+  * **選項 A 錯誤**：開 100 個 Chrome 瀏覽器會引發測試機本機資源耗盡（Client-side bottleneck）。
+  * **選項 C/D 錯誤**：人工手動測試不可重複且成本高昂；純單元測試無法發現真實高併發下的競態條件（Race Condition）。
+</details>
+
+### [Activity: sqa-ch09-pair1] 消除測試脆弱性 (Flaky Tests)
+#### [Pair] > * **討論任務**：在 E2E 自動化測試實務中，最令人頭痛的就是「在開發者本機執行 100% 成功，但在 GitHub Actions 或 Jenkins CI 上卻偶爾隨機失敗」的**測試脆弱性（Flaky Tests）**。請與鄰近夥伴組成雙人小組，探討：
+> 1. **根因探討**：哪些常見的編程壞習慣（例如：依賴固定秒數休眠 `sleep(3000)`、忽視非同步網路延遲、動畫 CSS 尚未播放完畢即點擊、共用測試資料庫污染等）是導致 Flaky Tests 的元兇？
+> 2. **工程解方**：現代測試框架（如 Playwright）如何透過「自動等待機制（Auto-waiting）」、「網路請求攔截與等待（waitForResponse）」或「測試環境資料隔離（Isolated Context）」來根除這些隨機失敗？
+
+### [Activity: sqa-ch09-wordcloud1] E2E 測試的最大痛點
+#### [WordCloud] 依據你目前對軟體測試與專案開發的體驗，你認為在團隊中推行「端對端 (E2E) 自動化測試」時，面臨的最大挑戰或代價是什麼？請輸入 1~3 個關鍵詞。
+
+### [Activity: sqa-ch09-game] Chapter 9: 現代自動化測試觀念限時搶答
+#### [Game] 第 1 題：在編寫 E2E 自動化測試腳本時，當需要等待後端 API 回應渲染按鈕，下列何種做法最符合 SQA 最佳實踐？
+- 使用 `time.sleep(5)` 強制等待 5 秒以確保網路絕對回傳
+- 使用測試框架提供的顯式等待（Explicit Wait / `waitForSelector`），條件滿足即立刻繼續 (Correct)
+- 將測試伺服器網路頻寬限縮為 0，避免非同步並行
+- 移除該驗證步驟，只做靜態斷言
+
+<details>
+<summary>答案</summary>
+**正確答案**：B
+</details>
+
+#### [Game] 第 2 題：測試團隊將 80% 的精力都用來寫脆弱易碎的 UI E2E 測試，而底層單元測試覆蓋率不到 10%，這種軟體測試反模式（Anti-pattern）稱作什麼？
+- 測試金字塔 (Test Pyramid)
+- 測試甜甜圈 (Test Doughnut)
+- 冰淇淋甜筒反模式 (Ice-Cream Cone Anti-pattern) (Correct)
+- 蜂巢架構 (Testing Trophy)
+
+<details>
+<summary>答案</summary>
+**正確答案**：C
+</details>
+
+#### [Game] 第 3 題：無頭瀏覽器（Headless Browser）透過何種通訊協議與測試框架（如 Puppeteer / Playwright）進行底層溝通與指令派送？
+- SMTP 郵件傳輸協定
+- Chrome DevTools Protocol (CDP) / WebSocket (Correct)
+- FTP 檔案傳輸協定
+- POP3 協定
+
+<details>
+<summary>答案</summary>
+**正確答案**：B
+</details>
+
 ## Chapter X01: 課程起點與學習背景調查 (Chapter X01: Course Orientation & Survey)
 
 ### [Activity: sqa-x01-survey] Chapter X01: SQA 學習起點與軟體開發背景問卷 (5題問卷)

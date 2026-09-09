@@ -5,16 +5,9 @@
 ### [Activity: sqa-ch01-ccq1] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 1
 #### [CCQ] 愛國者反導彈系統（1991）在達蘭基地攔截失效的根本軟體原因為何？
 - 通訊網路中斷導致雷達無法傳送指令給飛彈發射架
-- 24-bit 時鐘暫存器的浮點捨入誤差在連續運行 100 小時後累加達 0.33 秒 (Correct)
+- 24-bit 時鐘暫存器的浮點捨入誤差在連續運行 100 小時後累加達 0.33 秒
 - 程式碼發生記憶體洩漏（Memory Leak）導致作業系統當機
 - 雷達演算法誤將美軍戰機辨識為敵方飛毛腿飛彈
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：B
-**解析**：* 愛國者系統採用 24-bit 浮點數記錄時間，每小時有微小的截斷誤差。連開 100 小時累積了 0.33 秒延遲，對 4.2 馬赫的飛彈造成約 600 公尺偏差，導致雷達搜尋窗無法鎖定飛彈。
-</details>
 
 ### [Activity: sqa-ch01-pair1] 真實世界的軟體失敗案例
 #### [Pair] > * **討論任務**：請與鄰近同學組成雙人小組，分享一件你曾遇過、聽過，或透過網路搜尋找到的真實軟體失敗/事故案例（例如：2024 年 CrowdStrike 全球藍屏事件、Knight Capital 交易系統 45 分鐘虧損 4.6 億美元、熱門售票系統或遊戲上線當機等）。 > * **引導思考與討論**： >   1. **事件情境與影響**：該系統發生了什麼異常？對使用者、企業營運或整體社會帶來了哪些具體的衝擊與損失？ >   2. **根本原因（Root Cause）**：為什麼會發生這個錯誤？（是需求誤解、邏輯缺陷、數值捨入誤差、並行競爭、缺乏程式碼審查，還是部署流程漏洞？） >   3. **預防策略（Prevention）**：若站在軟體品質保證（SQA）與軟體測試的角度，團隊應採取哪些防護機制或工程實踐（例如：單元測試、自動化回歸測試、靜態分析、金絲雀發布、容錯設計等）來避免類似問題發生？
@@ -22,50 +15,27 @@
 ### [Activity: sqa-ch01-ccq2] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 3
 #### [CCQ] 在評估生成式 AI（如 GitHub Copilot、ChatGPT）對軟體專案品質的影響時，軟體工程度量研究（如 GitClear）常使用 **「程式碼流失率（Code Churn）」** 作為關鍵指標。關於 Code Churn 的定義及其在 AI 時代所反映的品質現象，下列敘述何者最為精準？
 - 指專案從一個程式語言遷移至另一個語言時，因語法不相容而遺失的程式碼行數比例
-- 指新寫入並 Commit 的程式碼在極短時間內（如兩週內）就被刪除、修改或替換的比例；高 Code Churn 反映出 AI 生成程式碼看似快速但本質脆弱、未經深思熟慮與充分驗證 (Correct)
-- 指編譯器與建置工具在優化打包過程中，自動剔除未引用死代碼（Dead Code）的效率
+- 指新寫入並 Commit 的程式碼在極短時間內（如兩週內）就被刪除、修改或替換的比例；高 Code Churn 反映出 AI 生成程式碼看似快速但本質脆弱、未經深思熟慮與充分驗證
+- 指編譯器與建置工具在優化打包過程中，自動剔除未引用死碼（Dead Code）的效率
 - 指自動化測試案例因系統版本迭代而自然失效無法執行的比率
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：B
-**解析**：* **Code Churn（程式碼流失率 / 變動率）**：衡量剛提交 (Commit) 的程式碼在短時間內（通常為 2 週內）就被後續 Commit 刪除或重寫的行數比例。
-  * **AI 時代的警訊**：AI 輔助寫程式讓工程師能輕易「一鍵採納」大段代碼，但這些代碼往往缺乏對邊界條件、架構約束與業務邏輯的深思熟慮。一旦進入測試或整合便漏洞百出，導致工程師必須頻繁推翻重寫。這種「產出快、丟棄也快」的高流失現象，正是 AI 生成代碼帶來**長期維護性技術債（Maintainability Debt）**與**系統脆弱性**的具體體現。
-</details>
-#### [CCQ] > 📚 **參考資料出處 (References)**： > 1. **Lasso Security**: [AI Package Hallucinations](https://www.lasso.security/blog/ai-package-hallucinations) — 研究指出 AI 幻覺套件（如 `huggingface-cli`）可能引發 Slopsquatting 攻擊，惡意套件在數月內被無辜下載超過 3 萬次。 > 2. **CRN**: [AWS Outage Was Not AI-Caused Via Kiro Coding Tool, Amazon Confirms](https://www.crn.com/news/cloud/2026/aws-outage-was-not-ai-caused-via-kiro-coding-tool-amazon-confirms) — 報導亞馬遜內部大推 AI 寫程式工具 Kiro 以及相關系統故障引發的代碼安全重整爭議與澄清。 > 3. **Threat Landscape**: [Lovable.dev Data Breach: BOLA Vulnerability in Vibe Coding](https://threatlandscape.io/blog/lovable-dev-data-breach-bola-vulnerability-vibe-coding) — 詳細分析 AI 自動建置應用平台 Lovable 於 2026 年爆發的 BOLA (IDOR) 越權漏洞與產生的程式碼/金鑰暴露風險。 > 4. **GitGuardian**: [State of Secrets Sprawl Report 2026](https://www.gitguardian.com/state-of-secrets-sprawl-report-2026) — 數據顯示 AI 輔助開發的金鑰與憑證洩漏率是人類開發者的兩倍（如 Claude Code 輔助提交的洩漏率達 3.2%）。 > 5. **GitClear**: [Coding on Copilot: 2024 Developer Research](https://gitclear-public.s3.us-west-2.amazonaws.com/Coding-on-Copilot-2024-Developer-Research.pdf) — 針對 1.5 億行程式碼進行的縱向分析，指出 AI 輔助開發使程式碼重複率與流失率增加，並降低了主動重構的頻率。 > 6. **Purdue University**: [Is Stack Overflow Obsolete? An Empirical Study of the Characteristics of ChatGPT Answers to Stack Overflow Questions](https://arxiv.org/abs/2308.02312) — 實證研究發現 ChatGPT 在回答軟體工程問題時，52% 的解答包含錯誤程式碼或資訊，且有 39% 的使用者採信了錯誤回答。 > 7. **New York University (NYU)**: [Asleep at the Keyboard? Assessing the Security of GitHub Copilot's Code Contributions](https://arxiv.org/abs/2108.09293) — 學術安全掃描研究指出，在無安全提示引導下，AI 生成的程式碼中有約 40% 包含常見的安全弱點（CWE Top 25 漏洞）。
+#### [CCQ] > 📚 **參考資料出處 (References)**： > 1. **Lasso Security**: [AI Package Hallucinations](https://www.lasso.security/blog/ai-package-hallucinations) — 研究指出 AI 幻覺套件（如 `huggingface-cli`）可能引發 Slopsquatting 攻擊，惡意套件在數月內被無辜下載超過 3 萬次。 > 2. **CRN**: [AWS Outage Was Not AI-Caused Via Kiro Coding Tool, Amazon Confirms](https://www.crn.com/news/cloud/2026/aws-outage-was-not-ai-caused-via-kiro-coding-tool-amazon-confirms) — 報導亞馬遜內部大推 AI 寫程式工具 Kiro 以及相關系統故障引發的程式碼安全重整爭議與澄清。 > 3. **Threat Landscape**: [Lovable.dev Data Breach: BOLA Vulnerability in Vibe Coding](https://threatlandscape.io/blog/lovable-dev-data-breach-bola-vulnerability-vibe-coding) — 詳細分析 AI 自動建置應用平台 Lovable 於 2026 年爆發的 BOLA (IDOR) 越權漏洞與產生的程式碼/金鑰暴露風險。 > 4. **GitGuardian**: [State of Secrets Sprawl Report 2026](https://www.gitguardian.com/state-of-secrets-sprawl-report-2026) — 數據顯示 AI 輔助開發的金鑰與憑證洩漏率是人類開發者的兩倍（如 Claude Code 輔助提交的洩漏率達 3.2%）。 > 5. **GitClear**: [Coding on Copilot: 2024 Developer Research](https://gitclear-public.s3.us-west-2.amazonaws.com/Coding-on-Copilot-2024-Developer-Research.pdf) — 針對 1.5 億行程式碼進行的縱向分析，指出 AI 輔助開發使程式碼重複率與流失率增加，並降低了主動重構的頻率。 > 6. **Purdue University**: [Is Stack Overflow Obsolete? An Empirical Study of the Characteristics of ChatGPT Answers to Stack Overflow Questions](https://arxiv.org/abs/2308.02312) — 實證研究發現 ChatGPT 在回答軟體工程問題時，52% 的解答包含錯誤程式碼或資訊，且有 39% 的使用者採信了錯誤回答。 > 7. **New York University (NYU)**: [Asleep at the Keyboard? Assessing the Security of GitHub Copilot's Code Contributions](https://arxiv.org/abs/2108.09293) — 學術安全掃描研究指出，在無安全提示引導下，AI 生成的程式碼中有約 40% 包含常見的安全弱點（CWE Top 25 漏洞）。
 
 ### [Activity: sqa-ch01-wordcloud1] 品質觀點
 #### [WordCloud] 你覺得哪一個觀點是最重要的品質指標？請寫下來。
 
 ### [Activity: sqa-ch01-ccq3] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 5
 #### [CCQ] 某專案團隊開發的電商 App 完全符合合約規格書上的每一條需求（製造觀點合格），但因為底層架構高度耦合且完全沒有寫單元測試，半年後客戶想新增一個促銷功能時，工程團隊發現必須重寫整個系統。這代表該軟體在 Garvin 的哪一個品質觀點上嚴重不及格？
-- 產品觀點 (Product View) (Correct)
+- 產品觀點 (Product View)
 - 製造觀點 (Manufacturing View)
 - 法律合約觀點 (Legal Contract View)
 - 超自然觀點 (Transcendental View)
 
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：A
-**解析**：* **選項 A 正確**：產品觀點著重於軟體內在結構特性（如模組化、架構整潔、可維護性與可測試性）。雖然符合製造觀點的合約規格，但內在架構腐敗。
-</details>
-
 ### [Activity: sqa-ch01-ccq4] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 6
 #### [CCQ] 某軟體團隊為醫院開發一套急診掛號分流系統。開發團隊嚴格按照原先簽訂的「系統需求規格書」完成所有功能實作，且單元測試與程式碼審查（Code Review）皆 100% 通過、完全無錯誤（Bug）。但實際上線在急診室臨床試用時，醫護人員發現分流操作流程完全不符合急救現場的真實節奏與急迫需求，導致無法在實務中使用。根據軟體工程定義，此系統在下列哪一項做得很好，但在哪一項嚴重失敗？
-- Verification（驗證）做得很好，但 Validation（確認）嚴重失敗 (Correct)
+- Verification（驗證）做得很好，但 Validation（確認）嚴重失敗
 - Validation（確認）做得很好，但 Verification（驗證）嚴重失敗
 - Verification 與 Validation 兩者皆成功，純屬醫護人員操作習慣問題
 - Verification 與 Validation 兩者皆失敗，因為使用者無法順利使用就代表底層邏輯有語法錯誤
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：A
-**解析**：* **Verification（驗證，*Are we building the product right?*）**：檢核軟體產出是否符合上一階段設定的規格、設計與技術要求。該系統完全依照規格書開發並通過單元測試與審查，因此 Verification 成功。
-  * **Validation（確認，*Are we building the right product?*）**：確認軟體是否真正解決使用者的問題、滿足實際業務場景的需求。由於系統無法滿足急診現場的真實作業節奏與臨床需求，因此 Validation 失敗。
-</details>
 
 ### [Activity: sqa-ch01-ordering1] V 模型（V-Model）開發與測試生命週期活動排序
 #### [Ordering] 在傳統 V 模型（V-Model）中，軟體的「左側開發階段（規格制定與分解）」與「右側測試層級（組裝與驗證）」具有嚴密的對稱與依賴關係。請將下列 8 項軟體工程活動，依照**「實際執行生命週期順序（從最初需求分析到最終驗收）」**由先至後排列出正確順序：
@@ -77,6 +47,9 @@
 6. 整合測試執行 (Integration Testing)
 7. 系統測試執行 (System Testing)
 8. 驗收測試執行 (Acceptance Testing)
+
+### [Activity: sqa-ch01-game] 課堂挑戰遊戲：ISO 25010 八大產品品質特性情境連連看 (10 題連環戰)
+#### [CCQ] > 🎮 **遊戲規則**： > 以下列出 10 個軟體工程日常開發、維運或慘痛故障的真實議題與事件。請根據 **ISO 25010 八大產品品質特性**，判斷每一項情境最主要是在考驗或違反哪一項品質特性？ > > **【八大品質特性選項池】**： > `A. 功能適合性 (Functional Suitability)` ｜ `B. 可靠性 (Reliability)` ｜ `C. 效能效率 (Performance Efficiency)` ｜ `D. 易用性 (Usability)` > `E. 安全性 (Security)` ｜ `F. 可維護性 (Maintainability)` ｜ `G. 可移植性 (Portability)` ｜ `H. 相容性 (Compatibility)` *   **第 1 題【吐鈔卡死危機】**：使用者在 ATM 提款 10,000 元，系統扣款成功並列印明細，但吐鈔口機械卡死分文未出，帳戶卻已被扣款。 *   **第 2 題【雙十一流量海嘯】**：電商平台午夜開賣，瞬間湧入 50 萬人搶購，伺服器 CPU 飆到 100%，API 響應時間從 150ms 暴增至 40 秒，大量連線超時。 *   **第 3 題【致命的相鄰按鈕】**：雲端後台介面將「重啟伺服器」與「永久銷毀主機」按鈕放在相鄰位置且顏色相同，點擊時缺乏防呆二次確認，導致維運工程師手滑刪除正式環境資料庫。 *   **第 4 題【牽一髮動全身的義大利麵】**：工程團隊想在會員資料中新增一個「暱稱」欄位，結果引發購物車、金流與推薦引擎等 8 個模組連鎖編譯錯誤，耗費 3 天重構修復。 *   **第 5 題【斷電重啟秒級自癒】**：微服務資料庫節點突發斷電，備援機制在 3 秒內自動完成容錯移轉 (Failover)，並重放 WAL 日誌確保交易零遺失，外部連線僅感知微小抖動。 *   **第 6 題【跨系統托運單格式打架】**：電商系統與黑貓宅急便 API 進行跨系統資料交換，因雙方日期協定格式不符（`YYYY-MM-DD` vs `DD/MM/YYYY`），造成所有物流單批次傳送失敗。 *   **第 7 題【URL 改個數字看光他人隱私】**：駭客在瀏覽器將個人資料頁的 URL 從 `userId=1001` 改為 `userId=1002`，系統竟然毫無攔截，直接秀出另一位顧客的信用卡卡號與地址。 *   **第 8 題【Mac 開發很順，推上 Linux 容器全掛】**：開發者在 macOS 本地端測試正常的服務，部署至生產環境的 Linux Docker 容器時，因寫死路徑大小寫（Linux 嚴格區分大小寫）導致找不到檔案崩潰。 *   **第 9 題【地下室離線暫存與自動重送】**：外送員騎車進入收訊不良的地下停車場，手機 App 自動切換為離線模式快取送達狀態，當回到地面偵測到 5G 訊號時自動重送同步。 *   **第 10 題【容器映像檔一鍵秒級部署】**：後端微服務封裝成標準 Docker 映像檔，無論部署在 AWS ECS、GCP GKE 還是地端 Kubernetes，皆能在 10 秒內透過統一設定檔一鍵拉起成功運行。 > 💡 *本遊戲 10 題之完整對應答案與深度情境解析，請參閱文末 [附錄：課堂互動與概念檢核參考解答](#-附錄課堂互動與概念檢核參考解答)。*
 
 ## Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging)
 
@@ -121,14 +94,14 @@
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：B
-**解析**：* **選項 B 正確**：Clean Code 的核心是「程式碼即文件」。過長的函式與深層巢狀是典型的 Code Smell，應透過 Guard Clauses 扁平化邏輯，並抽取小函式讓代碼意圖自明，而不是靠大量註解來「粉飾」難讀的邏輯。
+**解析**：* **選項 B 正確**：Clean Code 的核心是「程式碼即文件」。過長的函式與深層巢狀是典型的 Code Smell，應透過 Guard Clauses 扁平化邏輯，並抽取小函式讓程式碼意圖自明，而不是靠大量註解來「粉飾」難讀的邏輯。
   * **選項 A 錯誤**：過長函式與深層巢狀極易在日後引發隱蔽的邏輯缺陷。
   * **選項 C 錯誤**：未解決結構複雜度與可讀性的根因。
   * **選項 D 錯誤**：刻意過度壓縮只會摧毀程式碼的可讀性與可維護性。
 </details>
 
 ### [Activity: sqa-ch02-ccq4] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 4
-#### [CCQ] 某新進工程師向研發主管報告：「這段金融交易模組的程式碼經過徹底重構，完全符合 Clean Code 原則——變數命名精準、每個函式不超過 10 行、無任何深層巢狀、且完全消除了重複代碼。因此我可以 100% 保證這段模組上線後絕對不會有任何 Bug！」從軟體品質保證 (SQA) 與軟體工程的角度，下列評述何者最為精準？
+#### [CCQ] 某新進工程師向研發主管報告：「這段金融交易模組的程式碼經過徹底重構，完全符合 Clean Code 原則——變數命名精準、每個函式不超過 10 行、無任何深層巢狀、且完全消除了重複程式碼。因此我可以 100% 保證這段模組上線後絕對不會有任何 Bug！」從軟體品質保證 (SQA) 與軟體工程的角度，下列評述何者最為精準？
 - 該工程師的說法完全正確，因為 Clean Code 的核心定義就是無瑕疵、無缺陷的程式碼
 - 該工程師混淆了「內部品質」與「外部品質」；Clean Code 雖然極大化了程式碼的可讀性與可維護性，但無法保證業務規則理解正確或算式毫無漏洞，仍需仰賴自動化測試與規格驗證來確保無 Bug (Correct)
 - 只要函式行數在 10 行以內，現代 IDE 與編譯器就會自動進行形式化邏輯證明，確保無邏輯錯誤
@@ -177,7 +150,7 @@
 ### [Activity: sqa-ch03-ccq2] Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版) CCQ 2
 #### [CCQ] 某工程師使用 AI 秒速生成了一套複雜的利息計算演算法，並隨即讓同一個 AI 幫忙生成單元測試。測試跑出 100% 覆蓋率全綠燈通過，但在實際上線後卻被金融主管機關判定年息計算公式違反法規。依據 ISTQB 軟體測試 7 大原則，這最主要反映了何種問題？
 - 測試工程師未安裝最新的 JDK 執行環境
-- AI 測試陷入「殺蟲劑悖論（自我印證盲區）」與「原則 7：無錯謬誤（代碼無語法錯誤但偏離法規與真實業務需求）」 (Correct)
+- AI 測試陷入「殺蟲劑悖論（自我印證盲區）」與「原則 7：無錯謬誤（程式碼無語法錯誤但偏離法規與真實業務需求）」 (Correct)
 - 只要測試覆蓋率達到 100%，系統必然在法律上具備合規性
 - 這是硬體浮點數運算器的製造缺陷
 
@@ -185,7 +158,7 @@
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：B
-**解析**：* **選項 B 正確**：讓 AI 為自己生成的代碼寫測試，極易陷入自我印證的殺蟲劑抗藥性；同時，程式碼無編譯錯誤並不等於符合業務與法規需求（無錯謬誤）。人類工程師必須親自定義領域規格（Domain Spec）與 Test Oracle。
+**解析**：* **選項 B 正確**：讓 AI 為自己生成的程式碼寫測試，極易陷入自我印證的殺蟲劑抗藥性；同時，程式碼無編譯錯誤並不等於符合業務與法規需求（無錯謬誤）。人類工程師必須親自定義領域規格（Domain Spec）與 Test Oracle。
 </details>
 
 ### [Activity: sqa-ch03-ccq3] Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版) CCQ 3
@@ -261,7 +234,12 @@
 **正確答案**：B
 **解析**：* **錯誤**：設計檢視應遵循「及早測試（Shift-Left）」原則，在**程式碼撰寫（Coding）開始之前**就進行。如果等到測試階段才發現架構設計的瑕疵，此時資料庫與程式碼都已成形，修改的代價將會非常高昂。
 </details>
-#### [CCQ] 下圖為一個簡約的設計查核表，檢查設計是滿足完整性、邏輯性、特殊情況的處理、方法呼叫、命名、與標準是否符合規範。 #### desgin_checklist | 項目     | 說明                                                           | Pass? | 備註 | | -------- | -------------------------------------------------------------- | ----- | ---- | | 一般性   | 是否完成每一個審查步驟。                                       |       |      | | 完整性   | 是否此設計規格，涵蓋所有相關需求描述、需求規格、高階設計規格。 |       |      | | 邏輯性   | 驗證數學公式、運算流程的正確性。                               |       |      | | 特殊情況 | 檢查所有特殊狀況，是否處理所有不正確的輸入。                   |       |      | | 方法呼叫 | 檢查所有介面都精確的定義。                                     |       |      | | 命名     | 所有特別的名稱和型態都被清楚定義。                             |       |      | | 標準     | 是否遵循所有相關組織標準。                                     |       |      | 更完整的設計檢核表可歸納為以下五大核心維度（組織亦可依特性客製調整）： 1. **實體與介面完整性 (Entities & Interfaces)** - 各設計實體（模組、資料庫、檔案）皆具備唯一識別碼、明確目的與相依關係。 - 元件介面細節完整（副程式名稱、參數型態、回傳值、前置/後置條件等）。 - 避免洩漏不必要的內部實作細節，維持良好模組封裝。 2. **架構品質與設計原則 (Architecture & Principles)** - 符合高內聚力、低耦合度（High Cohesion, Low Coupling）原則。 - 採用階層式模組聚合，架構簡潔直覺、易於理解與維護。 - 優先重複利用標準化、成熟穩定的元件。 3. **需求追溯與功能完整 (Traceability & Completeness)** - 架構完整涵蓋所有系統需求，並清楚記錄採取此架構設計之決策理由。 - 逐一檢視關鍵與高風險需求，確認架構能被確實滿足。 - 提出的解決方案具備工程可行性，元件可被單獨建構與順暢整合。 4. **多維度架構視角 (Architectural Views)** - **邏輯視角 (Logical View)**：透過類別圖或概念模型明確定義各邏輯實體職責。 - **行程視角 (Process View)**：清楚描述執行緒配置、並行控制、狀態互動與生命週期。 - **實體與開發視角 (Physical & Development View)**：透過部署圖（Deployment Diagram）定義硬體/網路配置與系統建置結構。 5. **關鍵非功能設計議題 (Key Design Issues)** - 例外處理與系統復原機制（Exception handling, Initialization & Reset）。 - 資源管理與安全防護（Memory management & Security）。 - 國際化與內建測試/輔助機制（Internationalization, Built-in help & Test facilities）。
+#### [CCQ] 下圖為一個簡約的設計查核表，檢查設計是滿足完整性、邏輯性、特殊情況的處理、方法呼叫、命名、與標準是否符合規範。 #### desgin_checklist | 項目     | 說明                                                           | Pass? | 備註 | | -------- | -------------------------------------------------------------- | ----- | ---- | | 一般性   | 是否完成每一個審查步驟。                                       |       |      | | 完整性   | 是否此設計規格，涵蓋所有相關需求描述、需求規格、高階設計規格。 |       |      | | 邏輯性   | 驗證數學公式、運算流程的正確性。                               |       |      | | 特殊情況 | 檢查所有特殊狀況，是否處理所有不正確的輸入。                   |       |      | | 方法呼叫 | 檢查所有介面都精確的定義。                                     |       |      | | 命名     | 所有特別的名稱和型態都被清楚定義。                             |       |      | | 標準     | 是否遵循所有相關組織標準。                                     |       |      | 更完整的設計檢核表可歸納為以下五大核心維度（組織亦可依特性客製調整）：
+- **實體與介面完整性 (Entities & Interfaces)**
+- **架構品質與設計原則 (Architecture & Principles)**
+- **需求追溯與功能完整 (Traceability & Completeness)**
+- **多維度架構視角 (Architectural Views)**
+- **關鍵非功能設計議題 (Key Design Issues)**
 
 ### [Activity: sqa-ch04-ccq5] Chapter 4: 軟體檢視 CCQ 5
 #### [CCQ] 在程式碼檢視中，若發現系統直接將詳細的例外錯誤堆疊資訊（如 `e.printStackTrace()`）輸出至前端頁面或公開日誌，這屬於 OWASP Top 10 中的「A05:2021-安全設定錯誤 (Security Misconfiguration)」漏洞範疇。
@@ -428,6 +406,8 @@
 - 不一定，因為短路求值可能使得第二個條件 B 在某些測試案例中完全沒有被執行到，導致其 True 或 False 狀態未被覆蓋 (Correct)
 - 必定不可以，因為兩者沒有任何邏輯涵蓋關係
 - 取決於編譯器優化，與短路求值無關
+- **實務工具（如 JaCoCo）大多不支援傳統的「條件涵蓋度 (Condition Coverage)」**。
+- **實務工具中的「分支涵蓋度 (Branch Coverage)」通常是在位元組碼 (Bytecode) 層級進行分析的**。
 
 <details>
 <summary>點擊查看答案與解析</summary>
@@ -508,6 +488,22 @@
 
 **正確答案**：B
 **解析**：* 若要測試多組不同的輸入值與預期輸出值（參數化測試），應該使用 **`Scenario Outline`（情境大綱）** 搭配 **`Examples`（範例表格）**，而非 `Scenario` 搭配 `Background`。`Background` 是用於在每個情境執行前設定共同的前置步驟（例如登入系統），無法實現表格化的參數對照測試。
+</details>
+
+### [Activity: sqa-ch08-ccq1] 8.3.5 概念核對問答 (CCQ 2)：AI 畫面模擬與無頭瀏覽器技術本質
+#### [CCQ] 在現代 E2E 系統測試架構中，關於無頭瀏覽器 (Headless Browser)、桌面端自動化框架 (Spectron) 與 AI 瀏覽器代理人 (Browser Subagent) 的技術原理，下列敘述何者**最正確**？
+- 無頭瀏覽器因為沒有圖形介面 (No GUI)，因此在執行測試時不會載入 CSS 與排版引擎 (Layout Engine)，僅執行純粹的 JavaScript 邏輯運算以加快速度
+- Spectron 框架主要用於純 Web 應用的效能壓測，無法直接跨入 Electron 的主行程 (Main Process) 控制桌面原生對話框
+- Google Antigravity 的 Browser Subagent 結合了視覺語言模型 (VLM) 與 DOM 語意感知，能以人類視覺意圖辨識畫面元素，大幅改善傳統自動化測試因前端 class 或 DOM 結構調整所造成的脆弱定位器 (Brittle Locators) 斷裂問題
+- AI 瀏覽器代理人執行測試時必須在實體顯示器上有頭 (Headed) 視窗中逐幀顯示，無法整合至 Linux CI/CD 容器中輸出 WebP 測試錄影工件
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**解析**：*   **A 選項錯誤**：無頭瀏覽器（如 Headless Chromium）依然會完整執行 DOM 解析、CSS 樣式運算、Layout 排版與記憶體畫布光柵化 (Rasterization)，才能支援精確的元素重疊檢驗與像素級截圖，並非「不載入 CSS」。
+*   **B 選項錯誤**：Spectron 是專門為 Electron 桌面應用設計的測試框架，其核心特點正是能夠透過 ChromeDriver 同時管理 Electron 的主行程 (Main Process) 與渲染行程 (Renderer Process)，控制原生選單與系統對話框。
+*   **C 選項正確**：傳統 E2E 測試最大的維護噩夢在於前端程式碼重構（如 Tailwind CSS 類別更動）導致 XPath/CSS 定位器失效；AI 代理人透過多模態視覺與語意推斷，具備自我修復 (Self-healing) 與視覺辨識能力，有效攻克此痛點。
+*   **D 選項錯誤**：AI 瀏覽器代理人可完美在無頭 (Headless) 模式下運行，利用記憶體緩衝區光柵化即時擷取畫面送交多模態模型，並自動在背景將整個操作過程編碼存檔為 WebP 視訊軌與 DOM 工件。
 </details>
 
 ## Unit 1: AI 程式碼破壞實驗 (AI Code Attack & Reliability Lab)
@@ -911,3 +907,48 @@
 - B. 雖然不看程式碼，但是我會讓他執行多次，看功能是否如預期
 - C. 雖然不看程式碼，但是我會準備很多測試資料和情境，直到全部通過
 - D. 不會測試，直接上線
+
+## Chapter X01: 課程起點與學習背景調查 (Chapter X01: Course Orientation & Survey)
+
+### [Activity: sqa-x01-survey] SQA 學習起點與軟體開發背景問卷 (5題問卷)
+#### [Short] **第 1 題：請問你目前的就讀年級為何？**
+#### [Short] **第 2 題：你評估自己目前的程式開發與專案實作經驗約為何？**
+#### [Short] **第 3 題：截至目前為止，你是否有參與開發過「真正部署上線（Production）」並供大眾或外部真實使用者使用的軟體系統？**
+#### [Short] **第 4 題：在你的直覺與目前認知中，下列哪一種描述最符合你心目中對「高品質軟體」的定義？**
+#### [Short] **第 5 題：你覺得軟體品質出問題，主要來自哪裡？**
+
+### [Activity: sqa-x01-ai-survey] AI Coding 與除錯調查：使用習慣、體驗感受與信任度 (6題問卷)
+#### [Poll] **第 1 題：在日常程式開發、專案或課堂作業中，你使用生成式 AI（如 ChatGPT, Claude, GitHub Copilot, Cursor 等）輔助撰寫程式碼（AI Coding）的頻率為何？**
+- 重度依賴：幾乎每次寫程式都會使用，從架構發想、程式碼自動補全到功能實作
+- 經常使用：每週或大部分作業都會用，主要用於特定演算法、樣板程式碼或加速開發
+- 偶爾使用：遇到卡關、語法不熟悉或特定問題時才會諮詢
+- 很少使用：僅初步嘗鮮玩過，目前仍以自行撰寫與查閱官方文件為主
+- 從未使用：完全沒有在程式開發中使用過生成式 AI 工具
+#### [Poll] **第 2 題：當程式遇到錯誤（Bug）、編譯失敗或測試未通過時，你通常如何使用 AI 協助除錯（AI Debugging）？**
+- 第一時間求助：直接複製錯誤訊息（Error / Exception）或程式碼給 AI，請它分析原因並直接提供修正版本
+- 先自行排查：先自己看 Log、設定中斷點或排查，若卡關一段時間找不出原因才交給 AI 輔助分析
+- 概念釐清輔助：僅用 AI 解釋看不懂的特殊報錯訊息或底層機制，程式碼的修改依舊由自己手動完成
+- 幾乎不用於除錯：因為 AI 往往不清楚專案完整上下文，給出的除錯解法經常誤導或越改越錯
+- 不適用：目前從未在寫程式時使用過 AI
+#### [Poll] **第 3 題：綜合你的實際經驗，使用 AI 輔助寫程式與除錯帶給你最顯著的「體驗感受」為何？**
+- 效率倍增神器：大幅節省查詢語法與寫重複性代碼的時間，生產力顯著提升
+- 雙面刃體驗：雖然能快速給出解答，但常夾雜隱晦錯誤（幻覺），後續排查除錯花費的時間反而更多
+- 思維依賴與焦慮：不知不覺產生依賴，當沒有 AI 輔助時會感到寫程式變慢，甚至擔心自己基礎功退步
+- 最佳虛擬助教：像是有耐心且隨問隨答的導師，能以多角度解釋複雜演算法與邏輯，學習成效很好
+- 感受有限或不滿意：生成的代碼常難以融入專案架構，風格不符規範，體驗並不如預期
+#### [Poll] **第 4 題：整體而言，你對 AI 生成的程式碼或提供的修復建議，其「正確性與品質」的信任程度為何？**
+- 高度信任：認為 AI 給的通常都很精準，大多可以直接複製採用，很少懷疑其正確性
+- 謹慎信任：原則上相信其邏輯方向，但會快速肉眼檢視是否有明顯漏洞後再執行
+- 批判性信任：抱持懷疑態度，必須自己逐行讀懂、確認完全理解每個細節才會採用
+- 零信任／僅供參考：完全不信任其代碼品質，僅用來激發靈感或看虛擬碼思路，絕不直接採用
+- 無法評估：目前使用經驗不足，尚無法判斷其可靠度
+#### [Poll] **第 5 題：使用 AI 寫程式後，你會回頭看程式碼嗎？**
+- 會回頭看，且會逐行讀懂、確認完全理解每個細節才會採用
+- 會簡單看過，確認功能正常即可
+- 不太會回頭看，覺得 AI 生成的通常沒問題
+- 幾乎不會回頭看，直接上線
+#### [Poll] **第 6 題：使用 AI 寫程式後，你會如何進行測試？**
+- AI 產出的程式碼，我會像自己的程式碼一樣，仔細進行測試，確保功能正常
+- 雖然不看程式碼，但是我會讓他執行多次，看功能是否如預期
+- 雖然不看程式碼，但是我會準備很多測試資料和情境，直到全部通過
+- 不會測試，直接上線

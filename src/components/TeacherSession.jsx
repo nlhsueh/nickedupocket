@@ -145,13 +145,16 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     };
   }, [sessionStatus]);
 
+  const handleIncomingMessageRef = useRef();
+  const handleStatusChangeRef = useRef();
+
   // 1. MQTT Connection Lifecycle
   useEffect(() => {
     mqttService.connect(
       roomCode,
       'teacher',
-      handleIncomingMessage,
-      handleStatusChange
+      (topic, payload) => handleIncomingMessageRef.current?.(topic, payload),
+      (status, info) => handleStatusChangeRef.current?.(status, info)
     );
 
     return () => {
@@ -281,12 +284,19 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
   // 2. Message Dispatcher
   const handleIncomingMessage = (topic, payload) => {
     if (payload.event === 'join') {
+      const isAlreadyJoined = joinedStudentsRef.current.includes(payload.studentName);
       setJoinedStudents(prev => {
         if (prev.includes(payload.studentName)) return prev;
         const updated = [...prev, payload.studentName];
         joinedStudentsRef.current = updated;
         return updated;
       });
+
+      // If student was already joined and session is active, do not re-broadcast state to the entire room
+      if (isAlreadyJoined && sessionStatusRef.current === 'active') {
+        return;
+      }
+
       // Debounce join acknowledgments to prevent flooding the network when 40+ students join simultaneously
       if (joinBroadcastTimeoutRef.current) clearTimeout(joinBroadcastTimeoutRef.current);
       joinBroadcastTimeoutRef.current = setTimeout(() => {
@@ -348,6 +358,10 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
       });
     }
   };
+
+  // Keep refs pointing to freshest closures
+  handleIncomingMessageRef.current = handleIncomingMessage;
+  handleStatusChangeRef.current = handleStatusChange;
 
   const broadcastLobbyState = () => {
     const status = sessionStatusRef.current;

@@ -343,32 +343,9 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     }
   }, [isPreview, targetActivity]);
 
-  // 1. MQTT lifecycle for student connection
-  useEffect(() => {
-    if (!isJoined || isPreview) return;
-
-    mqttService.connect(
-      roomCode,
-      'student',
-      handleBrokerMessage,
-      handleStatusChange
-    );
-
-    return () => {
-      mqttService.disconnect();
-    };
-  }, [isJoined, roomCode, nickname]);
-
-  const handleStatusChange = (status, info) => {
-    setConnStatus(status);
-    if (status === 'connected') {
-      setRoomActiveStatus('checking');
-      mqttService.publishResponse({ event: 'join', studentName: nickname });
-    }
-    if (status === 'error') {
-      setConnError(info || 'Connection failed');
-    }
-  };
+  // 1. MQTT lifecycle for student connection with ref-wrapped callbacks to prevent stale closures
+  const handleBrokerMessageRef = useRef();
+  const handleStatusChangeRef = useRef();
 
   // 2. State dispatcher based on teacher broadcasts
   const handleBrokerMessage = (topic, payload) => {
@@ -410,8 +387,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       if (roomState === 'survey_answering' || roomState === 'survey_results') {
         return;
       }
-      // Guard 2: If student is already answering THIS EXACT question, do NOT wipe answers or reset timer
-      if (activeQuestion && activeQuestion.index === payload.questionIndex && roomState === 'answering') {
+      // Guard 2: If student is already answering or has submitted THIS EXACT question, do NOT wipe answers or reset timer
+      if (activeQuestion && activeQuestion.index === payload.questionIndex && (roomState === 'answering' || hasSubmitted)) {
         return;
       }
 
@@ -553,6 +530,36 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       }
     }
   };
+
+  const handleStatusChange = (status, info) => {
+    setConnStatus(status);
+    if (status === 'connected') {
+      setRoomActiveStatus('checking');
+      mqttService.publishResponse({ event: 'join', studentName: nickname });
+    }
+    if (status === 'error') {
+      setConnError(info || 'Connection failed');
+    }
+  };
+
+  // Always keep refs pointing to the freshest closures
+  handleBrokerMessageRef.current = handleBrokerMessage;
+  handleStatusChangeRef.current = handleStatusChange;
+
+  useEffect(() => {
+    if (!isJoined || isPreview) return;
+
+    mqttService.connect(
+      roomCode,
+      'student',
+      (topic, payload) => handleBrokerMessageRef.current?.(topic, payload),
+      (status, info) => handleStatusChangeRef.current?.(status, info)
+    );
+
+    return () => {
+      mqttService.disconnect();
+    };
+  }, [isJoined, roomCode, nickname]);
 
   // Auto-submit current answer on timeout
   const autoSubmitCurrent = () => {

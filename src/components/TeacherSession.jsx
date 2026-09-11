@@ -12,21 +12,9 @@ import { useThemeLang, ThemeLangControls } from '../context/ThemeLangContext';
 import QuickQuestionModal from './QuickQuestionModal';
 import { sendReportViaGAS, GOOGLE_APPS_SCRIPT_TEMPLATE, DEFAULT_RECIPIENT, DEFAULT_GAS_URL } from '../utils/gasMailer';
 
-export default function TeacherSession({ activity, roomCode, chapter, course, onBack, onLaunchInstant }) {
+export default function TeacherSession({ activity, roomCode, onBack, onLaunchInstant }) {
   const { t, lang } = useThemeLang();
   const teacherPrefix = localStorage.getItem('nickpocket_teacher_prefix') || '';
-
-  // Consecutive activity navigation within the same chapter
-  const nextActivity = React.useMemo(() => {
-    if (!chapter || !chapter.activities || chapter.activities.length <= 1) return null;
-    const currentId = activity.id?.toLowerCase();
-    const currentIndex = chapter.activities.findIndex(a => a.id?.toLowerCase() === currentId);
-    if (currentIndex >= 0 && currentIndex < chapter.activities.length - 1) {
-      return chapter.activities[currentIndex + 1];
-    }
-    return null;
-  }, [chapter, activity.id]);
-
   const [showQuickModal, setShowQuickModal] = useState(false);
   const formatTime = (secs) => {
     const s = Math.max(0, Math.floor(secs));
@@ -193,21 +181,6 @@ export default function TeacherSession({ activity, roomCode, chapter, course, on
   // Broadcast state helper with optional retain
   const broadcastState = (stateObj, retain = false) => {
     mqttService.publishState(stateObj, retain);
-  };
-
-  // Consecutive activity navigation: broadcast next room code to connected students and navigate teacher
-  const handleGoToNextActivity = () => {
-    if (!nextActivity) return;
-    const nextRoomCode = teacherPrefix ? `${teacherPrefix}-${nextActivity.id}` : nextActivity.id;
-    // Broadcast transition event to all current students with retain so any reconnecting student catches it
-    broadcastState({
-      event: 'navigate_next_activity',
-      nextRoomCode,
-      nextActivityTitle: nextActivity.title,
-      nextActivityId: nextActivity.id
-    }, true);
-    // Navigate teacher to the new activity lobby
-    window.location.hash = `#/teacher/${nextRoomCode}`;
   };
 
   // Extract word cloud frequencies and submissions
@@ -2293,26 +2266,6 @@ export default function TeacherSession({ activity, roomCode, chapter, course, on
                 >
                   <Printer size={16} /> 列印 / 儲存 PDF
                 </button>
-                {nextActivity && (
-                  <button 
-                    className="btn btn-primary no-print" 
-                    style={{ 
-                      padding: '0.75rem 1.4rem', 
-                      fontSize: '0.92rem', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.45rem',
-                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                      boxShadow: '0 4px 15px rgba(99, 102, 241, 0.35)',
-                      fontWeight: 600
-                    }} 
-                    onClick={handleGoToNextActivity}
-                    title={lang === 'zh' ? `進入下一題大廳：${nextActivity.title} (學生自動轉移至大廳，無需重新掃碼)` : `Proceed to next activity lobby: ${nextActivity.title}`}
-                  >
-                    <span>{lang === 'zh' ? `下一題：${nextActivity.title}` : `Next: ${nextActivity.title}`}</span>
-                    <ChevronRight size={18} />
-                  </button>
-                )}
                 <button 
                   className="btn btn-secondary no-print" 
                   style={{ padding: '0.75rem 1.25rem', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }} 
@@ -2747,26 +2700,6 @@ export default function TeacherSession({ activity, roomCode, chapter, course, on
                   >
                     <Printer size={15} /> {lang === 'zh' ? '列印 / 儲存 PDF' : 'Print / Save PDF'}
                   </button>
-                  {nextActivity && (
-                    <button 
-                      className="btn btn-primary no-print" 
-                      style={{ 
-                        padding: '0.75rem 1.4rem', 
-                        fontSize: '0.92rem', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '0.45rem',
-                        background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                        boxShadow: '0 4px 15px rgba(99, 102, 241, 0.35)',
-                        fontWeight: 600
-                      }} 
-                      onClick={handleGoToNextActivity}
-                      title={lang === 'zh' ? `進入下一題大廳：${nextActivity.title} (學生自動轉移至大廳，無需重新掃碼)` : `Proceed to next activity lobby: ${nextActivity.title}`}
-                    >
-                      <span>{lang === 'zh' ? `下一題：${nextActivity.title}` : `Next: ${nextActivity.title}`}</span>
-                      <ChevronRight size={18} />
-                    </button>
-                  )}
                   <button 
                     className="btn btn-secondary no-print" 
                     style={{ padding: '0.75rem 1.35rem', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }} 
@@ -4088,31 +4021,9 @@ export default function TeacherSession({ activity, roomCode, chapter, course, on
             </div>
           )}
 
-          <div style={{ marginTop: '2.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            {nextActivity && (
-              <button 
-                className="btn btn-primary no-print" 
-                style={{ 
-                  padding: '0.9rem 2.2rem', 
-                  fontSize: '1rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                  boxShadow: '0 4px 15px rgba(99, 102, 241, 0.35)',
-                  fontWeight: 600
-                }} 
-                onClick={handleGoToNextActivity}
-                title={lang === 'zh' ? `進入下一題大廳：${nextActivity.title} (學生自動轉移至大廳，無需重新掃碼)` : `Proceed to next activity lobby: ${nextActivity.title}`}
-              >
-                <span>{lang === 'zh' ? `下一題：${nextActivity.title}` : `Next: ${nextActivity.title}`}</span>
-                <ChevronRight size={18} />
-              </button>
-            )}
-            <button className="btn btn-secondary no-print" style={{ padding: '0.9rem 2rem', fontSize: '1rem' }} onClick={onBack}>
-              {lang === 'zh' ? '返回活動列表 / 儀表板' : 'Return to Dashboard'}
-            </button>
-          </div>
+          <button className="btn btn-primary" style={{ marginTop: '2.5rem', padding: '0.9rem 2.5rem', fontSize: '1rem' }} onClick={onBack}>
+            {lang === 'zh' ? '返回活動列表 / 儀表板' : 'Return to Dashboard'}
+          </button>
           </div>
         )}
 

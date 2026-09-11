@@ -111,7 +111,18 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   const [surveyTotalSubmissions, setSurveyTotalSubmissions] = useState(0);
   const [studentSurveyTab, setStudentSurveyTab] = useState(0);
 
-  const [isJoined, setIsJoined] = useState(() => Boolean(isPreview));
+  const [isJoined, setIsJoined] = useState(() => {
+    if (isPreview) return true;
+    try {
+      const autoJoin = sessionStorage.getItem('nickpocket_auto_join') === 'true';
+      if (autoJoin) {
+        sessionStorage.removeItem('nickpocket_auto_join');
+        const savedName = localStorage.getItem('nickpocket_student_name');
+        if (savedName) return true;
+      }
+    } catch {}
+    return false;
+  });
   const [connStatus, setConnStatus] = useState(isPreview ? 'connected' : 'disconnected');
   const [connError, setConnError] = useState('');
   
@@ -376,9 +387,20 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     console.log('[Student] Broker message received:', payload);
     
     // Mark room as active upon any valid teacher state broadcast
-    const validEvents = ['lobby', 'question_start', 'question_stop', 'next_question_waiting', 'results', 'session_finished', 'stats_update', 'survey_start', 'survey_stop'];
+    const validEvents = ['lobby', 'question_start', 'question_stop', 'next_question_waiting', 'results', 'session_finished', 'stats_update', 'survey_start', 'survey_stop', 'navigate_next_activity'];
     if (validEvents.includes(payload.event)) {
       setRoomActiveStatus('active');
+    }
+
+    if (payload.event === 'navigate_next_activity') {
+      if (payload.nextRoomCode) {
+        console.log('[Student] Teacher moved to next activity:', payload.nextRoomCode);
+        try {
+          sessionStorage.setItem('nickpocket_auto_join', 'true');
+        } catch {}
+        window.location.hash = `#/student/${payload.nextRoomCode}`;
+      }
+      return;
     }
     
     if (payload.event === 'lobby') {

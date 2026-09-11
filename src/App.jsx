@@ -324,8 +324,11 @@ export default function App() {
 
     return (
       <TeacherSession 
+        key={route.roomCode}
         activity={sessionActivity} 
         roomCode={route.roomCode} 
+        chapter={chapter}
+        course={course}
         onBack={handleBackToDashboard} 
         onLaunchInstant={handleLaunchInstant}
       />
@@ -336,6 +339,7 @@ export default function App() {
     const match = findActivityByRoomCode(allCourses, route.roomCode, instantActivities);
     return (
       <StudentSession 
+        key={route.roomCode}
         roomCode={route.roomCode} 
         onLeave={handleBackToDashboard} 
         activity={match ? match.activity : null}

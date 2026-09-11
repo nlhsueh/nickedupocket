@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wifi, WifiOff, Hourglass, CheckCircle2, AlertCircle, 
   ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud, GripVertical, Users, MessageSquare,
-  Award, Trophy, Star, QrCode, Copy, Check, Lock, Eye, EyeOff, X
+  Award, Trophy, Star, QrCode, Copy, Check, Lock, Eye, EyeOff, X, RefreshCw
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import mqttService from '../utils/mqtt';
@@ -117,6 +117,30 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   
   // Track if room is active/started by the teacher
   const [roomActiveStatus, setRoomActiveStatus] = useState(isPreview ? 'active' : 'checking'); // 'checking', 'active'
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Manual sync handler
+  const handleManualSync = () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    console.log('[Student] Triggered manual sync request...');
+    mqttService.publishResponse({ event: 'request_sync', studentName: nickname });
+    setTimeout(() => {
+      setIsSyncing(false);
+    }, 1500);
+  };
+
+  // Proactive sync timer: if student stays in checking/waiting for > 3.5s, auto-request sync from teacher
+  useEffect(() => {
+    if (!isJoined || isPreview || connStatus !== 'connected') return;
+    if (roomActiveStatus === 'checking' || roomState === 'waiting') {
+      const syncTimer = setInterval(() => {
+        console.log('[Student] Proactive state sync polling...');
+        mqttService.publishResponse({ event: 'request_sync', studentName: nickname });
+      }, 4000);
+      return () => clearInterval(syncTimer);
+    }
+  }, [isJoined, isPreview, connStatus, roomActiveStatus, roomState, nickname]);
 
   // Active question state from teacher
   const [roomState, setRoomState] = useState(isPreview ? 'answering' : 'waiting'); // 'waiting', 'answering', 'stopped', 'finished'
@@ -352,7 +376,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     console.log('[Student] Broker message received:', payload);
     
     // Mark room as active upon any valid teacher state broadcast
-    const validEvents = ['lobby', 'question_start', 'question_stop', 'next_question_waiting', 'results', 'session_finished', 'stats_update'];
+    const validEvents = ['lobby', 'question_start', 'question_stop', 'next_question_waiting', 'results', 'session_finished', 'stats_update', 'survey_start', 'survey_stop'];
     if (validEvents.includes(payload.event)) {
       setRoomActiveStatus('active');
     }
@@ -534,8 +558,11 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   const handleStatusChange = (status, info) => {
     setConnStatus(status);
     if (status === 'connected') {
-      setRoomActiveStatus('checking');
+      if (roomActiveStatus !== 'active') {
+        setRoomActiveStatus('checking');
+      }
       mqttService.publishResponse({ event: 'join', studentName: nickname });
+      mqttService.publishResponse({ event: 'request_sync', studentName: nickname });
     }
     if (status === 'error') {
       setConnError(info || 'Connection failed');
@@ -1374,6 +1401,32 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
             </div>
           )}
 
+          {!isConnecting && (
+            <button
+              type="button"
+              onClick={handleManualSync}
+              disabled={isSyncing}
+              className="btn"
+              style={{
+                background: 'rgba(99, 102, 241, 0.12)',
+                border: '1px solid var(--border-glow)',
+                color: 'var(--color-indigo)',
+                borderRadius: '20px',
+                padding: '0.45rem 1.1rem',
+                fontSize: '0.84rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                cursor: isSyncing ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                margin: '0.2rem 0'
+              }}
+            >
+              <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+              <span>{isSyncing ? (lang === 'zh' ? '正在同步最新題目...' : 'Syncing...') : (lang === 'zh' ? '🔄 畫面沒反應？點此重新同步' : '🔄 No response? Tap to sync')}</span>
+            </button>
+          )}
+
           {renderInviteQrCard()}
 
           <button 
@@ -1684,6 +1737,27 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                 {lang === 'zh' ? '等待老師開始課堂活動...' : 'Waiting for instructor to start...'}
               </span>
+              <button
+                type="button"
+                onClick={handleManualSync}
+                disabled={isSyncing}
+                style={{
+                  background: 'rgba(99, 102, 241, 0.12)',
+                  border: '1px solid var(--border-glow)',
+                  color: 'var(--color-indigo)',
+                  borderRadius: '20px',
+                  padding: '0.35rem 0.95rem',
+                  fontSize: '0.82rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  cursor: isSyncing ? 'not-allowed' : 'pointer',
+                  marginTop: '0.25rem'
+                }}
+              >
+                <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
+                <span>{isSyncing ? (lang === 'zh' ? '正在同步最新題目...' : 'Syncing...') : (lang === 'zh' ? '🔄 畫面沒反應？點此重新同步' : '🔄 Tap to sync question')}</span>
+              </button>
             </div>
 
             {renderInviteQrCard()}

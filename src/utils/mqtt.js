@@ -103,26 +103,29 @@ class MqttService {
     }
   }
 
-  publish(topic, payload) {
+  publish(topic, payload, options = {}) {
     if (!this.client || !this.isConnected) {
       console.warn('[MQTT] Cannot publish, client not connected');
       return false;
     }
-    const messageStr = JSON.stringify(payload);
-    this.client.publish(topic, messageStr, { qos: 1, retain: false });
+    const messageStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    const publishOptions = typeof options === 'boolean' 
+      ? { qos: 1, retain: options } 
+      : { qos: 1, retain: false, ...options };
+    this.client.publish(topic, messageStr, publishOptions);
     return true;
   }
 
   // Teacher broadcasts current session state (e.g. active question, start/stop events)
-  publishState(state) {
+  publishState(state, retain = false) {
     const topic = `nickpocket/room/${this.roomCode}/state`;
-    return this.publish(topic, state);
+    return this.publish(topic, state, { qos: 1, retain });
   }
 
   // Student publishes answer response
   publishResponse(response) {
     const topic = `nickpocket/room/${this.roomCode}/responses`;
-    return this.publish(topic, response);
+    return this.publish(topic, response, { qos: 1, retain: false });
   }
 
   disconnect() {

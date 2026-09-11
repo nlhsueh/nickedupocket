@@ -54,7 +54,9 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
   const [surveySubmissions, setSurveySubmissions] = useState({}); // { [studentName]: { answers: { [qIdx]: 'A' }, timestamp } }
   const surveySubmissionsRef = useRef({});
   const joinBroadcastTimeoutRef = useRef(null);
+  const statsBroadcastTimeoutRef = useRef(null);
   const [surveyViewQIndex, setSurveyViewQIndex] = useState(0); // number or 'all'
+  const [surveyActiveTab, setSurveyActiveTab] = useState('all'); // 'all' or question index
   
   // Helper for smart default duration per question type
   const getDefaultDurationForQuestion = (q) => {
@@ -160,6 +162,8 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     return () => {
       mqttService.disconnect();
       if (timerRef.current) clearInterval(timerRef.current);
+      if (joinBroadcastTimeoutRef.current) clearTimeout(joinBroadcastTimeoutRef.current);
+      if (statsBroadcastTimeoutRef.current) clearTimeout(statsBroadcastTimeoutRef.current);
     };
   }, [roomCode]);
 
@@ -167,16 +171,16 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
   const handleStatusChange = (status, info) => {
     setConnectionStatus(status);
     if (status === 'connected') {
-      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: 'chapter', lobbyTimeLeft: lobbyTimeLeftRef.current });
+      broadcastState({ event: 'lobby', activityTitle: activity.title, activityType: 'chapter', lobbyTimeLeft: lobbyTimeLeftRef.current }, true);
     }
     if (status === 'error') {
       setConnectionError(info || 'Real-time broker error');
     }
   };
 
-  // Broadcast state helper
-  const broadcastState = (stateObj) => {
-    mqttService.publishState(stateObj);
+  // Broadcast state helper with optional retain
+  const broadcastState = (stateObj, retain = false) => {
+    mqttService.publishState(stateObj, retain);
   };
 
   // Extract word cloud frequencies and submissions
@@ -283,25 +287,21 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
 
   // 2. Message Dispatcher
   const handleIncomingMessage = (topic, payload) => {
-    if (payload.event === 'join') {
-      const isAlreadyJoined = joinedStudentsRef.current.includes(payload.studentName);
-      setJoinedStudents(prev => {
-        if (prev.includes(payload.studentName)) return prev;
-        const updated = [...prev, payload.studentName];
-        joinedStudentsRef.current = updated;
-        return updated;
-      });
-
-      // If student was already joined and session is active, do not re-broadcast state to the entire room
-      if (isAlreadyJoined && sessionStatusRef.current === 'active') {
-        return;
+    if (payload.event === 'join' || payload.event === 'request_sync') {
+      if (payload.studentName) {
+        setJoinedStudents(prev => {
+          if (prev.includes(payload.studentName)) return prev;
+          const updated = [...prev, payload.studentName];
+          joinedStudentsRef.current = updated;
+          return updated;
+        });
       }
 
-      // Debounce join acknowledgments to prevent flooding the network when 40+ students join simultaneously
+      // Debounce join & sync acknowledgments (200ms) to prevent flooding the network while guaranteeing reconnecting students get current state
       if (joinBroadcastTimeoutRef.current) clearTimeout(joinBroadcastTimeoutRef.current);
       joinBroadcastTimeoutRef.current = setTimeout(() => {
         broadcastLobbyState();
-      }, 250);
+      }, 200);
     } 
     else if (payload.event === 'submit_answer') {
       setAnswers(prev => {
@@ -314,9 +314,14 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
           }
         };
         answersRef.current = next;
-        broadcastCurrentStats(next);
         return next;
       });
+
+      // Debounce stats broadcasting (400ms) to prevent broadcast storm when 40+ students submit answers simultaneously
+      if (statsBroadcastTimeoutRef.current) clearTimeout(statsBroadcastTimeoutRef.current);
+      statsBroadcastTimeoutRef.current = setTimeout(() => {
+        broadcastCurrentStats(answersRef.current);
+      }, 400);
 
       if (payload.questionIndex !== undefined) {
         allQuestionsAnswersRef.current = {
@@ -367,7 +372,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     const status = sessionStatusRef.current;
     const qIndex = currentQIndexRef.current;
     if (status === 'lobby') {
-      broadcastState({ event: 'lobby', acknowledged: true, activityTitle: activityRef.current.title, lobbyTimeLeft: lobbyTimeLeftRef.current });
+      broadcastState({ event: 'lobby', acknowledged: true, activityTitle: activityRef.current.title, lobbyTimeLeft: lobbyTimeLeftRef.current }, true);
     } else if (status === 'active') {
       if (isMultiQuestionSurvey) {
         // Multi-question survey: broadcast full survey questions, do not send single question_start
@@ -382,7 +387,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
             options: q.options || [],
             description: q.description || ''
           }))
-        });
+        }, true);
       } else {
         broadcastActiveQuestion(qIndex);
         broadcastCurrentStats();
@@ -408,7 +413,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
           allSurveyStats,
           totalSubmissions: Object.keys(currentSubs).length,
           totalStudents: joinedStudentsRef.current.length || joinedStudents.length
-        });
+        }, true);
       } else {
         const q = activityRef.current.questions[qIndex];
         const statsObj = getMultipleChoiceStats();
@@ -421,7 +426,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
           totalStudents: joinedStudentsRef.current.length || joinedStudents.length,
           shortAnswers: getShortAnswers(),
           gameData: lastGameDataRef.current
-        });
+        }, true);
       }
     } else if (status === 'finished') {
       const sorted = getSortedScoreboard();
@@ -444,7 +449,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         allQuestions: finalGameData.allQuestions,
         allAnswersByQuestion: allQuestionsAnswersRef.current,
         leaderboard: sorted
-      });
+      }, true);
     }
   };
 
@@ -472,7 +477,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
           options: q.options || [],
           description: q.description || ''
         }))
-      });
+      }, true);
       return;
     }
 
@@ -527,7 +532,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
       allSurveyStats,
       totalSubmissions: Object.keys(currentSubs).length,
       totalStudents: joinedStudentsRef.current.length || joinedStudents.length
-    });
+    }, true);
   };
 
   const extendTime = (addSecs = 30) => {
@@ -555,7 +560,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         description: q.description || '',
         items: q.items,
         timeLimit: duration
-      });
+      }, true);
     } else {
       broadcastState({
         event: 'question_start',
@@ -565,7 +570,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         description: q.description || '',
         options: q.options || [],
         timeLimit: duration
-      });
+      }, true);
     }
   };
 
@@ -614,7 +619,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         totalWords: wordCloudData.totalWords
       } : null,
       gameData
-    });
+    }, true);
   };
 
   const nextQuestionAndStart = () => {
@@ -1679,6 +1684,225 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Survey Questions Display Section for Teacher */}
+            <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem' }}>
+              <div className="flex-between" style={{ marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <BookOpen size={20} style={{ color: 'var(--color-indigo)' }} />
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {lang === 'zh' ? '問卷題目內容與選項 (題目解說與答疑)' : 'Survey Questions & Choices (For Instructor Reference)'}
+                  </h3>
+                  <span className="badge badge-indigo" style={{ fontSize: '0.8rem' }}>
+                    共 {activity.questions.length} 題
+                  </span>
+                </div>
+
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', maxWidth: '100%', paddingBottom: '0.2rem' }}>
+                  <button
+                    type="button"
+                    className={`btn ${surveyActiveTab === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                    onClick={() => setSurveyActiveTab('all')}
+                  >
+                    📋 {lang === 'zh' ? '全部題目一覽' : 'All Questions'}
+                  </button>
+                  {activity.questions.map((q, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`btn ${surveyActiveTab === idx ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                      onClick={() => setSurveyActiveTab(idx)}
+                    >
+                      第 {idx + 1} 題
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Questions Content View */}
+              {surveyActiveTab === 'all' ? (
+                /* All Questions Grid / List */
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
+                  {activity.questions.map((q, qIdx) => (
+                    <div 
+                      key={qIdx} 
+                      className="glass-card animate-pop" 
+                      style={{ 
+                        padding: '1.4rem', 
+                        borderRadius: '14px', 
+                        background: 'rgba(255, 255, 255, 0.025)',
+                        border: '1px solid var(--border-light)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem'
+                      }}
+                    >
+                      <div className="flex-between" style={{ alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <span className="badge badge-indigo" style={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                          第 {qIdx + 1} 題
+                        </span>
+                        <span className="badge badge-purple" style={{ fontSize: '0.75rem' }}>
+                          {q.type === 'short' ? (lang === 'zh' ? '簡答/回饋' : 'Short Answer') : (lang === 'zh' ? '單選題' : 'Multiple Choice')}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
+                        <FormattedMarkdown text={q.questionText} />
+                      </div>
+
+                      {q.description && (
+                        <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', background: 'rgba(99, 102, 241, 0.06)', padding: '0.5rem 0.75rem', borderRadius: '8px', borderLeft: '3px solid var(--color-indigo)' }}>
+                          <FormattedMarkdown text={q.description} />
+                        </div>
+                      )}
+
+                      {/* Options */}
+                      {q.options && q.options.length > 0 && q.type !== 'short' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.25rem' }}>
+                          {q.options.map((opt, optIdx) => {
+                            const letter = String.fromCharCode(65 + optIdx);
+                            const cleanOpt = String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt;
+                            return (
+                              <div 
+                                key={optIdx} 
+                                style={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: '0.6rem', 
+                                  background: 'rgba(255, 255, 255, 0.03)', 
+                                  padding: '0.5rem 0.75rem', 
+                                  borderRadius: '8px',
+                                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                                  fontSize: '0.92rem'
+                                }}
+                              >
+                                <span 
+                                  style={{ 
+                                    width: '24px', 
+                                    height: '24px', 
+                                    borderRadius: '50%', 
+                                    background: 'rgba(99, 102, 241, 0.2)', 
+                                    color: '#818cf8', 
+                                    display: 'inline-flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    fontWeight: 700,
+                                    fontSize: '0.8rem',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  {letter}
+                                </span>
+                                <span style={{ color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                                  <FormattedMarkdown text={cleanOpt} />
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.4rem 0' }}>
+                          💬 {lang === 'zh' ? '學生自由輸入文字填答' : 'Open text feedback'}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                /* Focused Single Question View */
+                activity.questions[surveyActiveTab] && (() => {
+                  const q = activity.questions[surveyActiveTab];
+                  return (
+                    <div 
+                      className="glass-card animate-pop" 
+                      style={{ 
+                        padding: '2rem', 
+                        borderRadius: '16px', 
+                        background: 'rgba(99, 102, 241, 0.03)',
+                        border: '1px solid var(--border-glow)'
+                      }}
+                    >
+                      <div className="flex-between" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                          <span className="badge badge-indigo" style={{ fontSize: '1rem', padding: '0.35rem 0.8rem' }}>
+                            第 {surveyActiveTab + 1} 題
+                          </span>
+                          <span className="badge badge-purple" style={{ fontSize: '0.85rem' }}>
+                            {q.type === 'short' ? (lang === 'zh' ? '簡答/心得回饋' : 'Short Answer') : (lang === 'zh' ? '單選題' : 'Multiple Choice')}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                          {surveyActiveTab + 1} / {activity.questions.length}
+                        </span>
+                      </div>
+
+                      <h3 style={{ fontSize: '1.5rem', lineHeight: 1.45, margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>
+                        <FormattedMarkdown text={q.questionText} />
+                      </h3>
+
+                      {q.description && (
+                        <div style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', background: 'rgba(99, 102, 241, 0.08)', padding: '0.75rem 1rem', borderRadius: '10px', borderLeft: '4px solid var(--color-indigo)', marginBottom: '1.5rem' }}>
+                          <FormattedMarkdown text={q.description} />
+                        </div>
+                      )}
+
+                      {/* Big Choices List */}
+                      {q.options && q.options.length > 0 && q.type !== 'short' ? (
+                        <div className="grid-2" style={{ gap: '1rem' }}>
+                          {q.options.map((opt, optIdx) => {
+                            const letter = String.fromCharCode(65 + optIdx);
+                            const cleanOpt = String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt;
+                            return (
+                              <div 
+                                key={optIdx} 
+                                className="glass-card" 
+                                style={{ 
+                                  padding: '1.1rem 1.25rem', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: '1rem', 
+                                  border: '1px solid var(--border-light)',
+                                  borderRadius: '12px',
+                                  background: 'rgba(255, 255, 255, 0.03)'
+                                }}
+                              >
+                                <span 
+                                  style={{ 
+                                    width: '32px', 
+                                    height: '32px', 
+                                    borderRadius: '50%', 
+                                    background: 'rgba(99, 102, 241, 0.2)', 
+                                    color: '#818cf8', 
+                                    display: 'inline-flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    fontWeight: 700,
+                                    fontSize: '1rem',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  {letter}
+                                </span>
+                                <span style={{ fontSize: '1.15rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                                  <FormattedMarkdown text={cleanOpt} />
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px dashed var(--border-light)', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                          💬 {lang === 'zh' ? '本題為簡答題，學生可在手機輸入自訂文字內容。' : 'Open text question. Students type their answers freely.'}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
+              )}
             </div>
           </div>
         ) : sessionStatus === 'active' && (

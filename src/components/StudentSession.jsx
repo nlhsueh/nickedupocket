@@ -130,10 +130,6 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   const [roomActiveStatus, setRoomActiveStatus] = useState(isPreview ? 'active' : 'checking'); // 'checking', 'active'
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Active question state from teacher
-  const [roomState, setRoomState] = useState(isPreview ? 'answering' : 'waiting'); // 'waiting', 'answering', 'stopped', 'finished'
-  const [activeQuestion, setActiveQuestion] = useState(null);
-
   // Manual sync handler
   const handleManualSync = () => {
     if (isSyncing) return;
@@ -156,6 +152,10 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       return () => clearInterval(syncTimer);
     }
   }, [isJoined, isPreview, connStatus, roomActiveStatus, roomState, nickname]);
+
+  // Active question state from teacher
+  const [roomState, setRoomState] = useState(isPreview ? 'answering' : 'waiting'); // 'waiting', 'answering', 'stopped', 'finished'
+  const [activeQuestion, setActiveQuestion] = useState(null);
   
   // Student answer states
   const [selectedOption, setSelectedOption] = useState(null);

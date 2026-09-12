@@ -1,27 +1,132 @@
 # Advanced Software Engineering (進階軟體工程)
 
-## Ch 1: Introduction to Software Engineering
+## Chapter 1: Introduction to Software Engineering
 
-### [Activity: ase-ch01-ccq1] 1968 NATO Conference & Origin (CCQ 1)
-#### [CCQ] * **Correct Answer**: **B** (1968) * **Explanation**: The NATO Science Committee convened a landmark conference in Garmisch, Germany, in October 1968, where the term "Software Engineering" was formally adopted to address the Software Crisis and establish engineering rigor for software. * [⬆ Return to Section 1.2](#12-the-genesis-of-software-engineering-and-the-software-crisis)
+### [Activity: ase-ch01-ccq1] Concept Check (CCQ 1) — The Software Crisis
+#### [CCQ] Why couldn't the 1968 Software Crisis be resolved simply by purchasing faster computer hardware or larger memory?
+- Computer hardware manufacturing and memory fabrication completely stagnated in the late 1960s, preventing computational speedups.
+- The crisis was fundamentally an intellectual and organizational challenge of system complexity, which faster hardware only amplified. (Correct)
+- Programming languages of that era strictly lacked mathematical calculation primitives and compiler memory allocation capabilities.
+- Early mainframe computers were physically incompatible with shared telecommunication networks and multi-terminal architectures.
 
-### [Activity: ase-ch01-ccq2] Software Crisis Nature & Complexity (CCQ 2)
-#### [CCQ] * **Correct Answer**: **B** (The crisis was a cognitive and organizational failure in managing system complexity, which faster hardware only amplified). * **Explanation**: Increasing hardware capacity allowed organizations to dream up systems of unprecedented scale. However, because human programmers were still using ad-hoc, informal techniques, larger codebases rapidly exceeded human intellectual limits. Faster CPU chips do not fix missing requirements, tangled spaghetti dependencies, or miscommunicated interface contracts. * [⬆ Return to Section 1.2](#12-the-genesis-of-software-engineering-and-the-software-crisis)
+<details>
+<summary>Click to view Answer & Explanation</summary>
 
-### [Activity: ase-ch01-ccq3] IEEE Software Definition (CCQ 3)
-#### [CCQ] * **Correct Answer**: **C** (CPU processor hardware and physical memory units) * **Explanation**: The IEEE standard defines software as computer programs, procedures, and possibly associated documentation and data. CPU hardware and physical memory are physical electronic devices (hardware) that execute software, rather than components of the software itself. * [⬆ Return to Section 1.3.1](#131-the-ieee-definition-of-software)
+**Correct Answer**: B
+**Explanation**: The crisis was fundamentally an intellectual and organizational failure in managing system complexity. Increasing hardware capacity allowed organizations to build systems of unprecedented scale, which human programmers using ad-hoc, informal techniques could not manage. Faster CPU chips do not fix missing requirements, tangled spaghetti dependencies, or miscommunicated interface contracts.
+</details>
 
-### [Activity: ase-ch01-ccq4] ISO 9126 Six Quality Attributes (CCQ 4)
-#### [CCQ] * **Correct Answer**: **A** (Functionality, Reliability, Usability, Efficiency, Maintainability, Portability.) * **Explanation**: The ISO 9126 model defines exactly these six primary characteristics of software quality. Other attributes like Performance, Security, and Availability are either sub-characteristics under these primary categories (e.g., Security is under Functionality, Availability is under Reliability) or general engineering metrics. * [⬆ Return to Section 1.4](#14-what-defines-a-good-software-system-the-iso-9126-quality-model)
+### [Activity: ase-ch01-ccq2] Concept Check (CCQ 2) — The IEEE Definition of Software
+#### [CCQ] According to the IEEE standard definition of software, which of the following is NOT considered a component of software?
+- Executable computer programs and source code files.
+- System database schemas and configuration files.
+- CPU processor hardware and physical memory units. (Correct)
+- Software installation and deployment procedures.
 
-### [Activity: ase-ch01-ccq5] Fault Tolerance & Reliability (CCQ 5)
-#### [CCQ] * **Correct Answer**: **B** (A system crash occurring when a third-party API goes offline $\rightarrow$ Reliability (Fault Tolerance)) * **Explanation**: * **B** is correct: A system's ability to cope with external service failures without crashing is the definition of Fault Tolerance (a sub-characteristic of Reliability). * **A** is incorrect: slow query performance is an Efficiency (Time Behavior) issue. * **C** is incorrect: testability issues belong to Maintainability, not Portability. * **D** is incorrect: OS compatibility issues belong to Portability (Adaptability), not Usability. * [⬆ Return to Section 1.4](#14-what-defines-a-good-software-system-the-iso-9126-quality-model)
+<details>
+<summary>Click to view Answer & Explanation</summary>
 
-### [Activity: ase-ch01-ccq6] Software Specification Core Activity (CCQ 6)
-#### [CCQ] * **Correct Answer**: **A** (Conducting stakeholder interviews to draft user stories $\rightarrow$ Software Specification) * **Explanation**: * **A** is correct: Eliciting and modeling requirements through stakeholder interviews is a direct action in Software Specification. * **B** is incorrect: Writing automated unit tests belongs to Software Validation (specifically verification testing), not Design & Implementation. * **C** is incorrect: Refactoring database schemas is a Software Evolution activity (preventive/perfective maintenance), not Validation. * **D** is incorrect: Swapping APIs belongs to Design & Implementation (or Evolution), not Specification. * [⬆ Return to Section 1.6.3](#163-the-core-activities-of-the-software-engineering-process)
+**Correct Answer**: C
+**Explanation**: The IEEE standard defines software as computer programs, procedures, and possibly associated documentation and data. CPU hardware and physical memory are physical electronic devices (hardware) that execute software, rather than components of the software itself.
+</details>
 
-### [Activity: ase-ch01-ccq7] Brooks's Law & Mythical Man-Month (CCQ 7)
-#### [CCQ] * **Correct Answer**: **B** (The project will be delayed even further because senior developers must stop coding to train and coordinate the new hires). * **Explanation**: Frederick Brooks demonstrated in *The Mythical Man-Month* that complex software tasks are not cleanly partitionable like manual labor (e.g., digging a ditch). When new engineers join a project in its final critical phase: 1. Senior developers must context-switch away from coding to onboard and mentor the newcomers. 2. The number of inter-personal communication channels increases quadratically according to $\frac{n(n-1)}{2}$. * [⬆ Return to Section 1.6.5](#165-dispelling-common-software-myths)
+### [Activity: ase-ch01-ccq3] Concept Check (CCQ 3) — Core Universal Activities of the Software Process
+#### [CCQ] Which of the following pairs correctly matches a specific software engineering action with its corresponding universal core activity?
+- Conducting stakeholder interviews to draft user stories $\rightarrow$ Software Specification (Correct)
+- Writing automated unit tests to mock database responses $\rightarrow$ Software Design & Implementation
+- Refactoring database schemas to improve query speed $\rightarrow$ Software Validation
+- Swapping a third-party payment API for a new gateway $\rightarrow$ Software Specification
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: A
+**Explanation**: Eliciting and modeling requirements through stakeholder interviews is a direct action in Software Specification. Writing unit tests is part of Software Validation (specifically verification). Refactoring database schemas is Software Evolution (preventive/perfective maintenance). Swapping APIs is Design & Implementation or Evolution.
+</details>
+
+### [Activity: ase-ch01-ccq4] Concept Check (CCQ 4) — Brooks's Law and Project Dynamics
+#### [CCQ] A project is 3 weeks behind schedule with 2 weeks remaining before release. The manager hires 4 junior programmers to speed up progress. What will happen according to Brooks's Law?
+- The project will finish 1 week early.
+- The project will be delayed further because senior engineers must spend time onboarding and mentoring new hires. (Correct)
+- The existing developers will code twice as fast.
+- Communication complexity remains unchanged.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Frederick Brooks demonstrated in The Mythical Man-Month that complex software development is not partitionable like manual labor. Adding people to a late project increases communication overhead quadratically according to n(n-1)/2, while senior engineers must stop productive coding to onboard newcomers.
+</details>
+
+### [Activity: ase-ch01-ccq5] Concept Check (CCQ 5) — Fundamental Design Principles
+#### [CCQ] An order-processing module directly handles HTTP requests, executes payment transactions, queries the SQL database, and generates HTML receipt emails. Which fundamental design principle is most severely violated?
+- Separation of Concerns: Multiple distinct responsibilities are tightly tangled in a single module. (Correct)
+- YAGNI: Speculative future features are implemented before actual business requirements emerge.
+- Brooks's Law: Adding developers to the order module increases communication complexity exponentially.
+- Anticipation of Change: System configurations are hardcoded into compiled production binaries.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: A
+**Explanation**: Separation of Concerns (and the Single Responsibility Principle) dictates that a module should have only one reason to change and encapsulate a single coherent responsibility. Tangling HTTP routing, business payment processing, database access, and UI rendering in one module creates severe coupling and high fragility.
+</details>
+
+### [Activity: ase-ch01-ccq6] Concept Check (CCQ 6) — Matching Real-World Issues to ISO 25010 Quality Characteristics
+#### [CCQ] Which of the following matches a real-world software issue with its corresponding ISO 25010 quality characteristic?
+- A database query taking 15 seconds to return results $\rightarrow$ Maintainability (Testability)
+- A system crash occurring when a third-party API goes offline $\rightarrow$ Reliability (Fault Tolerance) (Correct)
+- Developers struggling to write unit tests due to tight coupling $\rightarrow$ Portability (Adaptability)
+- An unencrypted session cookie allowing account takeover $\rightarrow$ Usability (Operability)
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: A system's ability to cope with external service failures without crashing is the definition of Fault Tolerance (a sub-characteristic of Reliability). Slow query execution is Performance Efficiency (Time Behavior). Struggling to write unit tests is Maintainability (Testability). Unencrypted session cookies belong to Security (Confidentiality).
+</details>
+
+### [Activity: ase-ch01-ccq7] Concept Check (CCQ 7) — Engineering Ethics and the Public Interest
+#### [CCQ] Under the ACM/IEEE Code of Ethics, if an employer directs an engineer to implement an algorithm that falsifies safety compliance reports, what is the engineer's obligation?
+- Comply, because the employer pays the engineer's salary.
+- Refuse and escalate, because the Public Interest takes precedence over Employer loyalty. (Correct)
+- Implement the code but omit documentation.
+- Outsource the code to an external vendor.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Principle 1 of the ACM/IEEE Software Engineering Code of Ethics states that software engineers shall act consistently with the public interest, which takes absolute precedence over loyalty to an employer or client.
+</details>
+
+### [Activity: ase-ch01-ccq8] Concept Check (CCQ 8) — AI Coding & Code Churn
+#### [CCQ] In empirical studies evaluating AI coding assistants (such as GitClear's analysis of 150M lines of code), "Code Churn" emerged as a major warning sign. What does high Code Churn indicate in an AI-assisted codebase?
+- Code is rapidly rewritten, deleted, or patched shortly after commit, indicating brittle code accepted without sufficient verification. (Correct)
+- Compilers and bundlers are aggressively removing unreachable dead code from application binaries during automated deployment.
+- Software engineering teams are switching programming languages frequently due to automated polyglot syntax translation.
+- Automated test cases are executing too quickly and depleting available CI/CD pipeline virtual machine compute resources.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: A
+**Explanation**: Code churn measures the percentage of code that is modified, replaced, or deleted within two weeks of being committed. In AI coding environments, high code churn reveals that developers rapidly accept AI suggestions that compile on localhost but fail under real-world integration, forcing frequent rewrites and accumulating maintainability debt.
+</details>
+
+### [Activity: ase-ch01-ccq9] Concept Check (CCQ 9) — AI Verification & Echo-Chamber Testing
+#### [CCQ] An engineer prompts an AI to generate a complex payment calculation module, and then asks the same AI to write unit tests without providing a formal specification. All tests pass. What is the primary risk?
+- Echo-chamber validation: The generated tests merely mirror the AI's internal flawed assumptions rather than actual business requirements. (Correct)
+- Performance bottleneck: AI-generated test assertions take significantly longer to execute than human-written assertions.
+- Compilation failure: Testing frameworks cannot parse automated mock datasets generated by large language models.
+- Version lock-in: The test suite becomes tightly coupled to a single specific cloud runtime environment.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: A
+**Explanation**: When AI writes both the implementation and its own test cases without an independent specification contract, it falls into "echo-chamber testing"—validating only what it assumed, rather than what the system is actually required to do. Independent verification is required ("Who tests the tester?").
+</details>
 
 ## Ch 1: 軟體工程導論 (中文版)
 

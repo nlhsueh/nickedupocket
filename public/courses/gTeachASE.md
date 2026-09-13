@@ -150,3 +150,97 @@
 
 ### [Activity: ase-ch01-zh-ccq7] 人月神話與布魯克斯法則 (CCQ 7)
 #### [CCQ] * **正確答案**：**B** (專案將會面臨更嚴重的延遲，因為資深開發人員必須停下工作來培訓與協調新進人員) * **詳細解析**：布魯克斯（Frederick Brooks）在其名著《人月神話》中指出，軟體開發是高度複雜的腦力工作，並不能像挖土溝那樣簡單地透過增加人手來等比例縮短時間。當新進人員加入時，資深工程師必須暫停開發工作以協助其 onboard，且團隊中人與人之間的溝通管道數量會呈現 $\frac{n(n-1)}{2}$ 的二次方攀升。這使得落後的專案引入新人只會導致專案更為延遲。 * [⬆ 返回 Section 1.6.5](#165-破解常見的軟體迷思)
+
+## Chapter X01: 課程學習起點與背景調查 (Chapter X01: Course Orientation & Survey)
+
+### [Activity: ase-x01-survey-grad] Chapter X01: Graduate Student Background & AI Coding Survey (6 Questions)
+#### [Survey] Question 1: What is your prior academic background in Software Engineering (SE) courses?
+- A. Completed one or more formal undergraduate SE courses (e.g., Software Engineering, OOAD)
+- B. Taken software-adjacent courses (e.g., Web/Mobile Development, Database Systems), but no formal SE course
+- C. Learned software development concepts primarily self-taught, through online courses, or bootcamps
+- D. Transitioning from a non-CS / non-engineering background with minimal prior SE coursework
+
+#### [Survey] Question 2: How would you describe your practical software development experience?
+- A. Beginner: Solved introductory coding exercises, but haven't built complete multi-module applications
+- B. Coursework Projects: Completed semester course projects or undergraduate capstone systems
+- C. Independent Projects: Built and maintained independent full-stack applications or open-source projects using Git
+- D. Industry Internship: Worked on real-world commercial software products in a professional development team
+- E. Experienced / Full-time Engineer: 1+ years of full-time software engineering or production system maintenance
+
+#### [Survey] Question 3: Which software engineering practices have you actively practiced in projects?
+- A. Version control workflows (Git branches, pull requests, code reviews, issue tracking)
+- B. Automated testing (unit testing frameworks, integration tests, mock objects)
+- C. CI/CD pipelines, containerization (Docker), or automated cloud deployments
+- D. Agile/Scrum methodologies (user stories, sprint planning, daily standups)
+- E. Primarily solo programming with single scripts; minimal exposure to structured engineering workflows
+
+#### [Survey] Question 4: How frequently do you use Generative AI coding assistants (e.g., GitHub Copilot, Cursor, ChatGPT, Claude)?
+- A. Heavy Daily User: Integrated into my IDE/workflow for almost every coding task
+- B. Frequent User: Several times a week for boilerplate generation, syntax lookups, or speeding up dev
+- C. Occasional User: Only when encountering bottlenecks, obscure error messages, or unfamiliar APIs
+- D. Rare / Curious: Tried it a few times, but still rely mainly on manual coding and official documentation
+- E. Never Used: Have not used generative AI tools for programming tasks
+
+#### [Survey] Question 5: In which area do you find AI coding tools most helpful in your development workflow?
+- A. Auto-completing repetitive boilerplate and routine function implementations
+- B. Debugging, interpreting stack traces, and diagnosing compiler/runtime errors
+- C. Brainstorming system architecture, algorithms, and exploring design trade-offs
+- D. Generating unit test cases, mock datasets, and edge cases
+- E. Rapidly ramping up on unfamiliar programming languages, frameworks, or APIs
+- F. None of the above
+
+#### [Survey] Question 6: How do you verify and trust AI-generated code before adopting it?
+- A. Rigorous Inspection: I read and comprehend every single line, and write/run tests before committing
+- B. Empirical Smoke Test: I skim the code and run it to see if the main happy path functions properly
+- C. Test Suite Driven: I rely on comprehensive automated tests; if tests pass, I adopt the code
+- D. High Trust / Minimal Review: I generally assume AI code is correct and deploy with little review
+- E. High Skepticism: I frequently find AI hallucinations or subtle flaws, requiring heavy manual rewrites
+- F. None of the above
+
+### [Activity: ase-x01-survey-undergrad] Chapter X01: 專班大學生背景與 AI 輔助開發問卷 (7題問卷)
+#### [問卷] 第 1 題：請問你過去修習軟體工程相關課程的經歷為何？
+- A. 曾在大專院校修過「軟體工程」或「物件導向分析與設計」等正式課程
+- B. 修過程式設計、網頁開發或資料庫等實務技術課程，但尚未修過系統性的軟體工程課
+- C. 主要透過自學、線上課程、或職業培訓機構（Bootcamp）學習軟體開發
+- D. 過去完全未曾接觸過軟體工程相關課程，目前仍在摸索基礎程式概念
+
+#### [問卷] 第 2 題：你評估自己目前的程式開發與專案實作經驗約為何？
+- A. 初學摸索階段：能撰寫基本邏輯或練習題，尚未獨立或合作完成完整系統
+- B. 課堂作業專案：能完成期末專案或課堂指派專案，熟悉基本語法與套件使用
+- C. 完整專案開發：曾獨立或與同儕完成具備前後端、資料庫整合的完整應用系統
+- D. 業界實習或實務：有參與商業軟體開發、產學合作或職場系統維護之實務經驗
+- E. 資深或全職工程師：具備多年產業開發實務，熟悉部署維運、效能調校與架構維護
+
+#### [問卷] 第 3 題：在過往的專案或開發過程中，你熟悉並常使用哪些軟體工程實務？
+- A. 版本控制協作（如 Git 分支管理、GitHub/GitLab PR 與 Code Review）
+- B. 自動化測試（如撰寫單元測試 Unit Test、整合測試）
+- C. 容器化技術或自動化流程（如 Docker、CI/CD 管線）
+- D. 敏捷開發與專案管理（如 Trello、Jira、Scrum 衝刺運作）
+- E. 目前以個人單機編程為主，尚未頻繁使用上述團隊工程流程
+
+#### [問卷] 第 4 題：在日常學習、工作或撰寫程式時，你使用 AI 程式輔助工具（如 Copilot、Cursor、ChatGPT、Claude）的頻率為何？
+- A. 重度依賴：已融入日常開發，幾乎每次寫程式都會使用
+- B. 經常使用：每週或遇到較大專案時都會用，加速樣板程式碼或功能實作
+- C. 偶爾使用：卡關、報錯看不懂或特定語法不熟悉時才當作諮詢顧問
+- D. 極少使用：只有初步體驗嘗鮮過，目前仍習慣純手工撰寫並查閱官方文件
+- E. 從未使用：完全沒有在寫程式時使用過生成式 AI 工具
+
+#### [問卷] 第 5 題：你覺得目前生成式 AI 對你的程式開發在哪一方面幫助最大？
+- A. 自動生成重複樣板程式碼與快速補全，大幅提升開發與輸入速度
+- B. 解讀錯誤訊息（Stack Trace / Error Log）與排查難解 Bug
+- C. 協助構思專案架構、演算法思路與設計方案比較
+- D. 輔助撰寫測試案例（Unit Test）與產生測試假資料
+- E. 快速上手不熟悉的程式語言、框架或 API 語法
+- F. None of the above
+
+#### [問卷] 第 6 題：當使用 AI 產生程式碼後，你通常會如何確認其正確性與品質？
+- A. 嚴謹審查：必定逐行閱讀完全讀懂，並手動或自動測試確認邏輯無誤才採用
+- B. 功能驗證：快速瀏覽程式碼，只要實際執行結果符合預期就直接採用
+- C. 測試驅動：準備齊全的測試案例進行驗證，測試綠燈通過即採用
+- D. 高度信任：直覺相信 AI 產出的程式碼通常沒問題，鮮少深入檢查
+- E. 保持警惕：常發現 AI 生成有幻覺或潛在缺陷，通常需要手動大幅修改重寫
+- F. None of the above
+
+#### [Short] 第 7 題（簡答）：請問你過去或目前的主要專業領域為何？（例如：語文、設計、製造、金融、醫療、行政、資通訊等）
+
+

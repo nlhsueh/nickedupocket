@@ -851,8 +851,15 @@ export default function TeacherDashboard({
                             {/* Question Details Preview */}
                             {act.questions && act.questions.length > 0 && (
                               <div style={{ background: 'rgba(255,255,255,0.01)', padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                                {act.questions.length > 1 && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                    <span className="badge badge-purple" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                                      📋 共 {act.questions.length} 題問卷
+                                    </span>
+                                  </div>
+                                )}
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, margin: '0 0 0.5rem 0' }}>
-                                  Question: <FormattedMarkdown text={act.questions[0].questionText} />
+                                  {act.questions.length > 1 ? '第 1 題：' : 'Question: '}<FormattedMarkdown text={act.questions[0].questionText} />
                                 </p>
                                 {actType !== 'ordering' && actType !== 'short' && actType !== 'pair' && act.questions[0].options && (
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
@@ -879,6 +886,22 @@ export default function TeacherDashboard({
                                 {actType === 'pair' && act.questions[0].description && (
                                   <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', color: 'var(--text-muted)', borderLeft: '2px solid rgba(6, 182, 212, 0.4)', paddingLeft: '0.5rem' }}>
                                     <FormattedMarkdown text={act.questions[0].description} />
+                                  </div>
+                                )}
+
+                                {/* Preview of subsequent questions in multi-question activity */}
+                                {act.questions.length > 1 && (
+                                  <div style={{ marginTop: '0.65rem', paddingTop: '0.55rem', borderTop: '1px dashed rgba(255,255,255,0.08)', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                    {act.questions.slice(1).map((q, qIdx) => (
+                                      <span 
+                                        key={qIdx} 
+                                        className="badge badge-secondary" 
+                                        style={{ fontSize: '0.73rem', padding: '0.2rem 0.5rem', opacity: 0.85, maxWidth: '280px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} 
+                                        title={q.questionText}
+                                      >
+                                        第 {qIdx + 2} 題：{q.questionText}
+                                      </span>
+                                    ))}
                                   </div>
                                 )}
                               </div>

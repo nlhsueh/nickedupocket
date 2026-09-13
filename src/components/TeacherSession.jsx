@@ -47,15 +47,17 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
   const [reviewSelectedQIndex, setReviewSelectedQIndex] = useState('all'); // 'all' or number
 
   // Multi-question Survey state & detection
-  const isMultiQuestionSurvey = activity.questions && activity.questions.length > 1 && (
+  const isMultiQuestionSurvey = Boolean(activity.questions && activity.questions.length > 1 && (
     activity.questions.every(q => q.type === 'poll' || q.type === 'short') ||
-    /問卷|survey/i.test(activity.title)
-  );
+    /問卷|survey|questionnaire|調查|回饋|反饋|滿意度/i.test(activity.title || '') ||
+    /survey/i.test(activity.id || '') ||
+    activity.questions.some(q => /問卷|survey/i.test(q.questionText || ''))
+  ));
   const [surveySubmissions, setSurveySubmissions] = useState({}); // { [studentName]: { answers: { [qIdx]: 'A' }, timestamp } }
   const surveySubmissionsRef = useRef({});
   const joinBroadcastTimeoutRef = useRef(null);
   const statsBroadcastTimeoutRef = useRef(null);
-  const [surveyViewQIndex, setSurveyViewQIndex] = useState(0); // number or 'all'
+  const [surveyViewQIndex, setSurveyViewQIndex] = useState('all'); // 'all' or question index
   const [surveyActiveTab, setSurveyActiveTab] = useState('all'); // 'all' or question index
   
   // Helper for smart default duration per question type
@@ -1580,94 +1582,98 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         {/* ACTIVE QUESTION PANEL (Teacher Screen) */}
         {sessionStatus === 'active' && isMultiQuestionSurvey ? (
           /* Multi-question Survey Live Dashboard (Teacher Screen) */
-          <div className="glass-card animate-slide-up teacher-session-card" style={{ flex: 1, padding: '2.5rem', display: 'flex', flexDirection: 'column' }}>
-            <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1.25rem', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div className="glass-card animate-slide-up teacher-session-card" style={{ flex: 1, padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* Header: Title, Survey Badge, Action Buttons */}
+            <div className="flex-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div style={{ maxWidth: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
                   <span className="badge badge-purple" style={{ fontSize: '0.85rem' }}>
                     📋 全班問卷自由填寫中 (Survey in Progress)
                   </span>
-                  <span className="badge badge-indigo">共 {activity.questions.length} 題</span>
+                  <span className="badge badge-indigo">共 {activity.questions.length} 題問卷</span>
                 </div>
-                <h2 className="teacher-session-main-title" style={{ fontSize: '1.8rem', margin: 0, wordBreak: 'break-word' }}>{activity.title}</h2>
-                <p style={{ color: 'var(--text-secondary)', margin: '0.4rem 0 0 0', fontSize: '0.9rem' }}>
-                  學生可在手機端自由切換各題並整份提交。老師可觀察回收進度，隨時點擊右側按鈕截止並觀看圓餅圖結果。
+                <h2 className="teacher-session-main-title" style={{ fontSize: '1.6rem', margin: 0, wordBreak: 'break-word' }}>{activity.title}</h2>
+                <p style={{ color: 'var(--text-secondary)', margin: '0.3rem 0 0 0', fontSize: '0.88rem' }}>
+                  學生正於手機端自由填寫整份問卷。老師可對照下方問卷題目進行課堂答疑，並觀察頂部回收進度，隨時截止觀看圓餅圖結果。
                 </p>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <button 
                   type="button" 
                   className="btn btn-secondary" 
-                  style={{ padding: '0.85rem 1.25rem', color: '#f472b6', borderColor: 'rgba(236, 72, 153, 0.45)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem' }} 
+                  style={{ padding: '0.65rem 1.1rem', color: '#f472b6', borderColor: 'rgba(236, 72, 153, 0.45)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem' }} 
                   onClick={handleSimulateStudents}
                   title="模擬 10 位學生填寫整份問卷並提交"
                 >
-                  <FlaskConical size={16} /> 模擬 10 人提交問卷
+                  <FlaskConical size={16} /> 模擬 10 人填寫
                 </button>
                 <button 
                   className="btn btn-primary animate-pulse-glow"
                   style={{ 
-                    padding: '0.85rem 1.75rem', 
-                    fontSize: '1.05rem', 
+                    padding: '0.75rem 1.4rem', 
+                    fontSize: '1rem', 
                     display: 'flex', 
                     alignItems: 'center', 
-                    gap: '0.6rem',
+                    gap: '0.5rem',
                     background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                    boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)'
+                    boxShadow: '0 4px 16px rgba(99, 102, 241, 0.35)'
                   }}
                   onClick={stopSurvey}
                   title="截止問卷並進入結果統計畫面"
                 >
-                  <BarChart2 size={20} /> 截止作答並觀看結果 (Stop & View Results)
+                  <BarChart2 size={18} /> 截止作答並觀看結果 (Stop & View Results)
                 </button>
               </div>
             </div>
 
-            {/* Recovery Progress Metrics */}
-            <div className="grid-2" style={{ gap: '2rem', marginBottom: '2rem', alignItems: 'stretch' }}>
-              <div className="glass-card flex-center" style={{ padding: '2.5rem', flexDirection: 'column', textAlign: 'center', background: 'rgba(99, 102, 241, 0.05)', borderColor: 'rgba(99, 102, 241, 0.3)', borderRadius: '16px' }}>
-                <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600 }}>
-                  問卷即時回收進度 (Submission Progress)
-                </span>
-                <div style={{ fontSize: '4.2rem', fontWeight: 900, color: '#818cf8', fontFamily: 'monospace', lineHeight: 1 }}>
-                  {Object.keys(surveySubmissions).length} 
-                  <span style={{ fontSize: '2rem', color: 'var(--text-secondary)', fontWeight: 500, marginLeft: '0.2rem' }}>
-                    / {joinedStudents.length}
+            {/* Compact Live Progress & Students Strip */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'minmax(280px, 360px) 1fr', 
+              gap: '1.25rem', 
+              background: 'rgba(99, 102, 241, 0.04)', 
+              border: '1px solid rgba(99, 102, 241, 0.2)', 
+              borderRadius: '14px', 
+              padding: '0.85rem 1.25rem',
+              alignItems: 'center'
+            }}>
+              {/* Left: Compact Submission Counter & Progress */}
+              <div>
+                <div className="flex-between" style={{ marginBottom: '0.4rem' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Users size={15} style={{ color: 'var(--color-indigo)' }} />
+                    {lang === 'zh' ? '問卷回收進度' : 'Submission Progress'}
+                  </span>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#818cf8', fontFamily: 'monospace' }}>
+                    {Object.keys(surveySubmissions).length} / {joinedStudents.length} 人
+                    <span style={{ marginLeft: '0.4rem', color: '#10b981', fontWeight: 700 }}>
+                      ({joinedStudents.length > 0 ? Math.round((Object.keys(surveySubmissions).length / joinedStudents.length) * 100) : 0}%)
+                    </span>
                   </span>
                 </div>
-                
-                <div style={{ width: '85%', height: '12px', background: 'rgba(255,255,255,0.06)', borderRadius: '6px', overflow: 'hidden', marginTop: '1.25rem' }}>
+                <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div 
                     style={{ 
                       height: '100%', 
                       width: `${joinedStudents.length > 0 ? (Object.keys(surveySubmissions).length / joinedStudents.length) * 100 : 0}%`,
                       background: 'linear-gradient(90deg, #6366f1 0%, #10b981 100%)',
-                      transition: 'width 0.4s ease'
+                      transition: 'width 0.35s ease'
                     }} 
                   />
                 </div>
-                <div style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 700, marginTop: '0.65rem' }}>
-                  回收率：{joinedStudents.length > 0 ? Math.round((Object.keys(surveySubmissions).length / joinedStudents.length) * 100) : 0}%
-                </div>
               </div>
 
-              {/* Student Status Grid */}
-              <div className="glass-card" style={{ padding: '1.5rem', borderRadius: '16px', display: 'flex', flexDirection: 'column' }}>
-                <div className="flex-between" style={{ marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.5rem' }}>
-                  <h4 style={{ fontSize: '1rem', margin: 0, color: 'var(--text-primary)' }}>
-                    全班學生名單 ({joinedStudents.length} 人在線)
-                  </h4>
-                  <span className="badge badge-indigo" style={{ fontSize: '0.8rem' }}>
-                    {Object.keys(surveySubmissions).length} 人已交
-                  </span>
-                </div>
-
-                <div style={{ flex: 1, overflowY: 'auto', maxHeight: '220px', display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignContent: 'flex-start' }}>
+              {/* Right: Compact Students Status Chips */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflowX: 'auto', padding: '0.2rem 0' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                  在線學生 ({joinedStudents.length}):
+                </span>
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', maxHeight: '48px', overflowY: 'auto' }}>
                   {joinedStudents.length === 0 ? (
-                    <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      {lang === 'zh' ? '尚無學生加入活動' : 'No students have joined yet'}
-                    </div>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                      {lang === 'zh' ? '等待學生掃碼加入中...' : 'Waiting for students...'}
+                    </span>
                   ) : (
                     joinedStudents.map((st, idx) => {
                       const isSub = !!surveySubmissions[st];
@@ -1675,9 +1681,9 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                         <span 
                           key={idx} 
                           className={`badge ${isSub ? 'badge-success animate-pop' : 'badge-secondary'}`}
-                          style={{ fontSize: '0.88rem', padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                          style={{ fontSize: '0.78rem', padding: '0.2rem 0.55rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                         >
-                          {isSub ? '✅ ' : '⏳ '} {st}
+                          {isSub ? '✅' : '⏳'} {st}
                         </span>
                       );
                     })
@@ -1686,36 +1692,37 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
               </div>
             </div>
 
-            {/* Survey Questions Display Section for Teacher */}
-            <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem' }}>
-              <div className="flex-between" style={{ marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            {/* Questions Section - Directly visible and prominent */}
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              <div className="flex-between" style={{ marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <BookOpen size={20} style={{ color: 'var(--color-indigo)' }} />
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {lang === 'zh' ? '問卷題目內容與選項 (題目解說與答疑)' : 'Survey Questions & Choices (For Instructor Reference)'}
+                  <BookOpen size={18} style={{ color: 'var(--color-indigo)' }} />
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {lang === 'zh' ? '問卷題目內容與選項 (課堂解說與對照)' : 'Survey Questions & Choices (Instructor Reference)'}
                   </h3>
                   <span className="badge badge-indigo" style={{ fontSize: '0.8rem' }}>
-                    共 {activity.questions.length} 題
+                    全部共 {activity.questions.length} 題
                   </span>
                 </div>
 
-                {/* Tabs */}
-                <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', maxWidth: '100%', paddingBottom: '0.2rem' }}>
+                {/* View Tabs: All Questions vs Single Focus */}
+                <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', maxWidth: '100%', paddingBottom: '0.2rem' }}>
                   <button
                     type="button"
                     className={`btn ${surveyActiveTab === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                    style={{ padding: '0.35rem 0.85rem', fontSize: '0.82rem', whiteSpace: 'nowrap', fontWeight: surveyActiveTab === 'all' ? 700 : 500 }}
                     onClick={() => setSurveyActiveTab('all')}
                   >
-                    📋 {lang === 'zh' ? '全部題目一覽' : 'All Questions'}
+                    📋 全部題目一覽 (預設)
                   </button>
                   {activity.questions.map((q, idx) => (
                     <button
                       key={idx}
                       type="button"
                       className={`btn ${surveyActiveTab === idx ? 'btn-primary' : 'btn-secondary'}`}
-                      style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
                       onClick={() => setSurveyActiveTab(idx)}
+                      title={`切換至第 ${idx + 1} 題焦點放大`}
                     >
                       第 {idx + 1} 題
                     </button>
@@ -1726,43 +1733,54 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
               {/* Questions Content View */}
               {surveyActiveTab === 'all' ? (
                 /* All Questions Grid / List */
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1rem', overflowY: 'auto' }}>
                   {activity.questions.map((q, qIdx) => (
                     <div 
                       key={qIdx} 
                       className="glass-card animate-pop" 
                       style={{ 
-                        padding: '1.4rem', 
-                        borderRadius: '14px', 
+                        padding: '1.15rem 1.25rem', 
+                        borderRadius: '12px', 
                         background: 'rgba(255, 255, 255, 0.025)',
                         border: '1px solid var(--border-light)',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.75rem'
+                        gap: '0.65rem'
                       }}
                     >
                       <div className="flex-between" style={{ alignItems: 'flex-start', gap: '0.5rem' }}>
                         <span className="badge badge-indigo" style={{ fontWeight: 700, fontSize: '0.85rem' }}>
                           第 {qIdx + 1} 題
                         </span>
-                        <span className="badge badge-purple" style={{ fontSize: '0.75rem' }}>
-                          {q.type === 'short' ? (lang === 'zh' ? '簡答/回饋' : 'Short Answer') : (lang === 'zh' ? '單選題' : 'Multiple Choice')}
-                        </span>
+                        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                          <span className="badge badge-purple" style={{ fontSize: '0.75rem' }}>
+                            {q.type === 'short' ? (lang === 'zh' ? '簡答/回饋' : 'Short Answer') : (lang === 'zh' ? '單選題' : 'Multiple Choice')}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '0.15rem 0.5rem', fontSize: '0.72rem', borderRadius: '6px' }}
+                            onClick={() => setSurveyActiveTab(qIdx)}
+                            title="放大單題檢視"
+                          >
+                            🔍 放大
+                          </button>
+                        </div>
                       </div>
 
-                      <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
                         <FormattedMarkdown text={q.questionText} />
                       </div>
 
                       {q.description && (
-                        <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', background: 'rgba(99, 102, 241, 0.06)', padding: '0.5rem 0.75rem', borderRadius: '8px', borderLeft: '3px solid var(--color-indigo)' }}>
+                        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', background: 'rgba(99, 102, 241, 0.06)', padding: '0.45rem 0.7rem', borderRadius: '8px', borderLeft: '3px solid var(--color-indigo)' }}>
                           <FormattedMarkdown text={q.description} />
                         </div>
                       )}
 
                       {/* Options */}
                       {q.options && q.options.length > 0 && q.type !== 'short' ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.25rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.15rem' }}>
                           {q.options.map((opt, optIdx) => {
                             const letter = String.fromCharCode(65 + optIdx);
                             const cleanOpt = String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt;
@@ -1772,18 +1790,18 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                                 style={{ 
                                   display: 'flex', 
                                   alignItems: 'center', 
-                                  gap: '0.6rem', 
+                                  gap: '0.55rem', 
                                   background: 'rgba(255, 255, 255, 0.03)', 
-                                  padding: '0.5rem 0.75rem', 
+                                  padding: '0.45rem 0.7rem', 
                                   borderRadius: '8px',
                                   border: '1px solid rgba(255, 255, 255, 0.05)',
-                                  fontSize: '0.92rem'
+                                  fontSize: '0.9rem'
                                 }}
                               >
                                 <span 
                                   style={{ 
-                                    width: '24px', 
-                                    height: '24px', 
+                                    width: '22px', 
+                                    height: '22px', 
                                     borderRadius: '50%', 
                                     background: 'rgba(99, 102, 241, 0.2)', 
                                     color: '#818cf8', 
@@ -1791,7 +1809,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                                     alignItems: 'center', 
                                     justifyContent: 'center',
                                     fontWeight: 700,
-                                    fontSize: '0.8rem',
+                                    fontSize: '0.75rem',
                                     flexShrink: 0
                                   }}
                                 >
@@ -1820,7 +1838,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                     <div 
                       className="glass-card animate-pop" 
                       style={{ 
-                        padding: '2rem', 
+                        padding: '1.75rem', 
                         borderRadius: '16px', 
                         background: 'rgba(99, 102, 241, 0.03)',
                         border: '1px solid var(--border-glow)'
@@ -1835,24 +1853,52 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                             {q.type === 'short' ? (lang === 'zh' ? '簡答/心得回饋' : 'Short Answer') : (lang === 'zh' ? '單選題' : 'Multiple Choice')}
                           </span>
                         </div>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                          {surveyActiveTab + 1} / {activity.questions.length}
-                        </span>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '0.3rem 0.7rem', fontSize: '0.82rem' }}
+                            disabled={surveyActiveTab === 0}
+                            onClick={() => setSurveyActiveTab(prev => Math.max(0, prev - 1))}
+                          >
+                            ← 上一題
+                          </button>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                            {surveyActiveTab + 1} / {activity.questions.length}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '0.3rem 0.7rem', fontSize: '0.82rem' }}
+                            disabled={surveyActiveTab >= activity.questions.length - 1}
+                            onClick={() => setSurveyActiveTab(prev => Math.min(activity.questions.length - 1, prev + 1))}
+                          >
+                            下一題 →
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '0.3rem 0.7rem', fontSize: '0.82rem', marginLeft: '0.4rem' }}
+                            onClick={() => setSurveyActiveTab('all')}
+                          >
+                            📋 返回全部題目一覽
+                          </button>
+                        </div>
                       </div>
 
-                      <h3 style={{ fontSize: '1.5rem', lineHeight: 1.45, margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>
+                      <h3 style={{ fontSize: '1.4rem', lineHeight: 1.45, margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>
                         <FormattedMarkdown text={q.questionText} />
                       </h3>
 
                       {q.description && (
-                        <div style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', background: 'rgba(99, 102, 241, 0.08)', padding: '0.75rem 1rem', borderRadius: '10px', borderLeft: '4px solid var(--color-indigo)', marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', background: 'rgba(99, 102, 241, 0.08)', padding: '0.65rem 0.9rem', borderRadius: '10px', borderLeft: '4px solid var(--color-indigo)', marginBottom: '1.25rem' }}>
                           <FormattedMarkdown text={q.description} />
                         </div>
                       )}
 
                       {/* Big Choices List */}
                       {q.options && q.options.length > 0 && q.type !== 'short' ? (
-                        <div className="grid-2" style={{ gap: '1rem' }}>
+                        <div className="grid-2" style={{ gap: '0.85rem' }}>
                           {q.options.map((opt, optIdx) => {
                             const letter = String.fromCharCode(65 + optIdx);
                             const cleanOpt = String(opt).replace(/^(\(?[A-Za-z]\)?[.:、\)\-\s]+|Option\s+[A-Za-z][:.\-\s]*)/i, '').trim() || opt;
@@ -1861,10 +1907,10 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                                 key={optIdx} 
                                 className="glass-card" 
                                 style={{ 
-                                  padding: '1.1rem 1.25rem', 
+                                  padding: '1rem 1.15rem', 
                                   display: 'flex', 
                                   alignItems: 'center', 
-                                  gap: '1rem', 
+                                  gap: '0.85rem', 
                                   border: '1px solid var(--border-light)',
                                   borderRadius: '12px',
                                   background: 'rgba(255, 255, 255, 0.03)'
@@ -1872,8 +1918,8 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                               >
                                 <span 
                                   style={{ 
-                                    width: '32px', 
-                                    height: '32px', 
+                                    width: '30px', 
+                                    height: '30px', 
                                     borderRadius: '50%', 
                                     background: 'rgba(99, 102, 241, 0.2)', 
                                     color: '#818cf8', 
@@ -1881,13 +1927,13 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                                     alignItems: 'center', 
                                     justifyContent: 'center',
                                     fontWeight: 700,
-                                    fontSize: '1rem',
+                                    fontSize: '0.95rem',
                                     flexShrink: 0
                                   }}
                                 >
                                   {letter}
                                 </span>
-                                <span style={{ fontSize: '1.15rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                                <span style={{ fontSize: '1.1rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
                                   <FormattedMarkdown text={cleanOpt} />
                                 </span>
                               </div>
@@ -1895,7 +1941,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                           })}
                         </div>
                       ) : (
-                        <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px dashed var(--border-light)', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                        <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1.25rem', borderRadius: '12px', border: '1px dashed var(--border-light)', textAlign: 'center', color: 'var(--text-secondary)' }}>
                           💬 {lang === 'zh' ? '本題為簡答題，學生可在手機輸入自訂文字內容。' : 'Open text question. Students type their answers freely.'}
                         </div>
                       )}
@@ -2302,6 +2348,13 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
             <div className="screen-only">
               {/* Question Tabs */}
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.35rem' }}>
+              <button
+                className={`btn ${surveyViewQIndex === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '0.5rem 1.1rem', fontSize: '0.9rem', whiteSpace: 'nowrap', fontWeight: surveyViewQIndex === 'all' ? 700 : 500 }}
+                onClick={() => setSurveyViewQIndex('all')}
+              >
+                📊 全部題目一覽 (All)
+              </button>
               {activity.questions.map((q, idx) => (
                 <button
                   key={idx}
@@ -2312,13 +2365,6 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                   第 {idx + 1} 題
                 </button>
               ))}
-              <button
-                className={`btn ${surveyViewQIndex === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '0.5rem 1.1rem', fontSize: '0.9rem', whiteSpace: 'nowrap' }}
-                onClick={() => setSurveyViewQIndex('all')}
-              >
-                📊 全部題目一覽 (All)
-              </button>
             </div>
 
             {/* Tab View Content */}

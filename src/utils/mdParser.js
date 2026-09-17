@@ -198,7 +198,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       if (ansMatch) {
         inExplanation = true;
         const val = ansMatch[1].trim().toUpperCase();
-        if (!currentQuestion.correctAnswer && ['A', 'B', 'C', 'D', 'E'].includes(val)) {
+        if (!currentQuestion.correctAnswer && /^[A-Z0-9]$/i.test(val)) {
           currentQuestion.correctAnswer = val;
         }
         continue;
@@ -207,9 +207,17 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       // Check for explanation headers or bullet points: **解析**：..., Option explanations, etc.
       if (
         /^\*?\*?(?:解析|Explanation|詳細解析|答案解析|說明)[:：]/i.test(cleanForCheck) ||
-        /^\*?\*?選項\s*[A-Za-z0-9/、\s]+\s*(正確|錯誤|說明)[:：]/i.test(cleanForCheck)
+        /^\*?\*?選項\s*[A-Za-z0-9/、\s]+\s*(正確|錯誤|說明)[:：]/i.test(cleanForCheck) ||
+        /^\*?\*?[A-Za-z0-9/、\s]+選項\s*(正確|錯誤|說明)[:：]/i.test(cleanForCheck)
       ) {
         inExplanation = true;
+        // Infer correct answer from explanation if not yet set
+        if (!currentQuestion.correctAnswer) {
+          const inferMatch = cleanForCheck.match(/(?:選項\s*([A-Za-z])\s*正確|([A-Za-z])\s*選項正確)/i);
+          if (inferMatch) {
+            currentQuestion.correctAnswer = (inferMatch[1] || inferMatch[2]).toUpperCase();
+          }
+        }
         if (cleanForCheck) {
           currentQuestion.explanation = currentQuestion.explanation
             ? `${currentQuestion.explanation}\n${cleanForCheck}`
@@ -220,6 +228,12 @@ export function parseMarkdownCourse(mdText, fileId = '') {
 
       // If we are within a details block or an explanation section, do not parse as options
       if (inDetails || inExplanation) {
+        if (!currentQuestion.correctAnswer) {
+          const inferMatch = cleanForCheck.match(/(?:選項\s*([A-Za-z])\s*正確|([A-Za-z])\s*選項正確)/i);
+          if (inferMatch) {
+            currentQuestion.correctAnswer = (inferMatch[1] || inferMatch[2]).toUpperCase();
+          }
+        }
         if (cleanForCheck && !cleanForCheck.startsWith('<') && !cleanForCheck.startsWith('---')) {
           currentQuestion.explanation = currentQuestion.explanation
             ? `${currentQuestion.explanation}\n${cleanForCheck}`
@@ -249,8 +263,8 @@ export function parseMarkdownCourse(mdText, fileId = '') {
             currentQuestion.correctAnswer = val.toUpperCase();
           }
         } else {
-          if (['A', 'B', 'C', 'D'].includes(val.toUpperCase())) {
-            currentQuestion.correctAnswer = val.toUpperCase();
+          if (/^[A-Z0-9]$/i.test(val.trim())) {
+            currentQuestion.correctAnswer = val.trim().toUpperCase();
           } else {
             currentQuestion.rawCorrectText = val;
           }
@@ -340,6 +354,46 @@ export function parseMarkdownCourse(mdText, fileId = '') {
   // Post-processing for matching Game text correct answers and refining activity titles
   chapters.forEach(chap => {
     chap.activities.forEach(act => {
+      // Auto-heal: If an activity has a single question that actually embeds multiple sub-questions
+      // (e.g. "* 第 1 題... * 第 2 題..." or "第 1 題... 第 2 題..."), split it into distinct questions!
+      const expandedQuestions = [];
+      act.questions.forEach(q => {
+        const fullText = `${q.questionText || ''}\n${q.description || ''}`;
+        const questionBulletRegex = /(?:^|[*\-\d.]+\s+|\s+)(?:[*_]{0,2})第\s*(\d+)\s*題(?:【([^】]+)】)?[:：]?([^*]+?)(?=(?:(?:[*\-\d.]+\s+|\s+)(?:[*_]{0,2})第\s*\d+\s*題)|$)/gis;
+        const matches = [...fullText.matchAll(questionBulletRegex)];
+        
+        // If there are at least 2 distinct embedded questions and q.options is empty or default True/False
+        if (matches.length >= 2 && (q.options.length <= 3 && (q.options[0] === 'True' || q.options.length === 0))) {
+          // Check if there is an options pool in the prompt
+          let poolOptions = [];
+          const poolMatch = fullText.match(/【(?:八大|十大|各大)?[^】]*選項池】[:：]?\s*([^\n*]+)/i);
+          if (poolMatch) {
+            poolOptions = poolMatch[1].split(/[｜|]+/).map(opt => opt.replace(/[`*]/g, '').trim()).filter(Boolean);
+          }
+
+          matches.forEach((m, subIdx) => {
+            const num = m[1];
+            const tag = m[2] ? `【${m[2]}】` : '';
+            const qContent = m[3].replace(/^[>*\-\s]+/, '').trim();
+            const subQ = {
+              id: `${q.id}_sub_${num || subIdx}`,
+              type: q.type === 'ccq' && /game/i.test(act.id) ? 'game' : q.type,
+              questionText: `第 ${num || (subIdx + 1)} 題${tag}：${qContent}`,
+              options: poolOptions.length > 0 ? [...poolOptions] : (q.options.length > 0 ? [...q.options] : []),
+              correctAnswer: '',
+              items: [],
+              timeLimit: q.timeLimit || 20,
+              description: '',
+              explanation: ''
+            };
+            expandedQuestions.push(subQ);
+          });
+        } else {
+          expandedQuestions.push(q);
+        }
+      });
+      act.questions = expandedQuestions;
+
       // Ensure activity title is a concise question summary rather than full chapter title
       act.title = getActivityShortTitle(act, chap);
 

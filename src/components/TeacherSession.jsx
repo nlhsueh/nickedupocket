@@ -231,7 +231,11 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     const q = act.questions[qIndex];
     if (!q) return;
 
-    const stats = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    const optionCount = Math.max(10, q?.options?.length || 0);
+    const stats = {};
+    for (let i = 0; i < optionCount; i++) {
+      stats[String.fromCharCode(65 + i)] = 0;
+    }
     let total = 0;
     const shortList = [];
 
@@ -398,7 +402,11 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
       if (isMultiQuestionSurvey) {
         const currentSubs = surveySubmissionsRef.current || surveySubmissions;
         const allSurveyStats = activity.questions.map((q, idx) => {
-          const stats = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
+          const optionCount = Math.max(10, q?.options?.length || 0);
+          const stats = {};
+          for (let i = 0; i < optionCount; i++) {
+            stats[String.fromCharCode(65 + i)] = 0;
+          }
           let total = 0;
           Object.values(currentSubs).forEach(sub => {
             const choice = sub.answers?.[idx];
@@ -516,7 +524,11 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
 
     // Compute stats for all survey questions
     const allSurveyStats = activity.questions.map((q, qIdx) => {
-      const stats = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
+      const optionCount = Math.max(10, q?.options?.length || 0);
+      const stats = {};
+      for (let i = 0; i < optionCount; i++) {
+        stats[String.fromCharCode(65 + i)] = 0;
+      }
       let total = 0;
       Object.values(currentSubs).forEach(sub => {
         const choice = sub.answers?.[qIdx];
@@ -997,9 +1009,15 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
 
   // 5. Result Computations & Visuals
   
-  // Calculate stats for CCQ/Poll (A, B, C, D votes)
+  // Calculate stats for CCQ/Poll/Game (A, B, C, D, ... votes)
   const getMultipleChoiceStats = () => {
-    const stats = { A: 0, B: 0, C: 0, D: 0 };
+    const act = activityRef.current || activity;
+    const currentQ = act?.questions?.[currentQIndexRef.current];
+    const optionCount = Math.max(10, currentQ?.options?.length || 0);
+    const stats = {};
+    for (let i = 0; i < optionCount; i++) {
+      stats[String.fromCharCode(65 + i)] = 0;
+    }
     let total = 0;
 
     Object.values(answers).forEach((ans) => {

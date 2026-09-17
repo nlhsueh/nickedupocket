@@ -87,7 +87,187 @@
 8. 驗收測試執行 (Acceptance Testing)
 
 ### [Activity: sqa-ch01-game] 課堂挑戰遊戲：ISO 25010 八大產品品質特性情境連連看 (10 題連環戰)
-#### [CCQ] > 🎮 **遊戲規則**： > 以下列出 10 個軟體工程日常開發、維運或慘痛故障的真實議題與事件。請根據 **ISO 25010 八大產品品質特性**，判斷每一項情境最主要是在考驗或違反哪一項品質特性？ > > **【八大品質特性選項池】**： > `A. 功能適合性 (Functional Suitability)` ｜ `B. 可靠性 (Reliability)` ｜ `C. 效能效率 (Performance Efficiency)` ｜ `D. 易用性 (Usability)` > `E. 安全性 (Security)` ｜ `F. 可維護性 (Maintainability)` ｜ `G. 可移植性 (Portability)` ｜ `H. 相容性 (Compatibility)` *   **第 1 題【吐鈔卡死危機】**：使用者在 ATM 提款 10,000 元，系統扣款成功並列印明細，但吐鈔口機械卡死分文未出，帳戶卻已被扣款。 *   **第 2 題【雙十一流量海嘯】**：電商平台午夜開賣，瞬間湧入 50 萬人搶購，伺服器 CPU 飆到 100%，API 響應時間從 150ms 暴增至 40 秒，大量連線超時。 *   **第 3 題【致命的相鄰按鈕】**：雲端後台介面將「重啟伺服器」與「永久銷毀主機」按鈕放在相鄰位置且顏色相同，點擊時缺乏防呆二次確認，導致維運工程師手滑刪除正式環境資料庫。 *   **第 4 題【牽一髮動全身的義大利麵】**：工程團隊想在會員資料中新增一個「暱稱」欄位，結果引發購物車、金流與推薦引擎等 8 個模組連鎖編譯錯誤，耗費 3 天重構修復。 *   **第 5 題【斷電重啟秒級自癒】**：微服務資料庫節點突發斷電，備援機制在 3 秒內自動完成容錯移轉 (Failover)，並重放 WAL 日誌確保交易零遺失，外部連線僅感知微小抖動。 *   **第 6 題【跨系統托運單格式打架】**：電商系統與黑貓宅急便 API 進行跨系統資料交換，因雙方日期協定格式不符（`YYYY-MM-DD` vs `DD/MM/YYYY`），造成所有物流單批次傳送失敗。 *   **第 7 題【URL 改個數字看光他人隱私】**：駭客在瀏覽器將個人資料頁的 URL 從 `userId=1001` 改為 `userId=1002`，系統竟然毫無攔截，直接秀出另一位顧客的信用卡卡號與地址。 *   **第 8 題【Mac 開發很順，推上 Linux 容器全掛】**：開發者在 macOS 本地端測試正常的服務，部署至生產環境的 Linux Docker 容器時，因寫死路徑大小寫（Linux 嚴格區分大小寫）導致找不到檔案崩潰。 *   **第 9 題【地下室離線暫存與自動重送】**：外送員騎車進入收訊不良的地下停車場，手機 App 自動切換為離線模式快取送達狀態，當回到地面偵測到 5G 訊號時自動重送同步。 *   **第 10 題【容器映像檔一鍵秒級部署】**：後端微服務封裝成標準 Docker 映像檔，無論部署在 AWS ECS、GCP GKE 還是地端 Kubernetes，皆能在 10 秒內透過統一設定檔一鍵拉起成功運行。
+
+#### [Game] 第 1 題：【吐鈔卡死危機】使用者在 ATM 提款 10,000 元，系統扣款成功並列印明細，但吐鈔口機械卡死分文未出，帳戶卻已被扣款。這最主要違反了 ISO 25010 的哪一項品質特性？
+- 功能適合性 (Functional Suitability) (Correct)
+- 可靠性 (Reliability)
+- 效能效率 (Performance Efficiency)
+- 易用性 (Usability)
+- 安全性 (Security)
+- 可維護性 (Maintainability)
+- 可移植性 (Portability)
+- 相容性 (Compatibility)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：A
+**解析**：* **選項 A 正確**：**功能適合性 (Functional Suitability)** 涵蓋功能完整性與正確性（Functional Correctness: 提供符合規格與精確要求的正確結果）。ATM 扣款卻未能履行吐鈔的核心業務功能，屬於功能正確性與適合性的重大失效。
+* **選項 B 說明**：雖然硬體故障引發異常，但核心問題是該業務功能未能達成正確的結果狀態。
+</details>
+
+#### [Game] 第 2 題：【雙十一流量海嘯】電商平台午夜開賣，瞬間湧入 50 萬人搶購，伺服器 CPU 飆到 100%，API 響應時間從 150ms 暴增至 40 秒，大量連線超時。這最主要是在考驗或違反哪一項品質特性？
+- 功能適合性 (Functional Suitability)
+- 可靠性 (Reliability)
+- 效能效率 (Performance Efficiency) (Correct)
+- 易用性 (Usability)
+- 安全性 (Security)
+- 可維護性 (Maintainability)
+- 可移植性 (Portability)
+- 相容性 (Compatibility)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：C
+**解析**：* **選項 C 正確**：**效能效率 (Performance Efficiency)** 評估系統在特定條件下的效能表現，包括時間表現 (Time Behavior: 響應時間、吞吐量) 與容量 (Capacity: 系統承受最大負載能力)。CPU 飆高、響應時間急劇惡化至超時，為典型的效能效率問題。
+</details>
+
+#### [Game] 第 3 題：【致命的相鄰按鈕】雲端後台介面將「重啟伺服器」與「永久銷毀主機」按鈕放在相鄰位置且顏色相同，點擊時缺乏防呆二次確認，導致維運工程師手滑刪除正式環境資料庫。這最主要違反了哪一項品質特性？
+- 功能適合性 (Functional Suitability)
+- 可靠性 (Reliability)
+- 效能效率 (Performance Efficiency)
+- 易用性 (Usability) (Correct)
+- 安全性 (Security)
+- 可維護性 (Maintainability)
+- 可移植性 (Portability)
+- 相容性 (Compatibility)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：D
+**解析**：* **選項 D 正確**：**易用性 (Usability)** 中的關鍵子特性為「使用者錯誤防禦 (User Error Protection)」，系統介面應預防使用者犯錯或在執行破壞性指令時提供防呆確認機制。高危險按鈕同色且相鄰為嚴重的易用性缺陷。
+</details>
+
+#### [Game] 第 4 題：【牽一髮動全身的義大利麵】工程團隊想在會員資料中新增一個「暱稱」欄位，結果引發購物車、金流與推薦引擎等 8 個模組連鎖編譯錯誤，耗費 3 天重構修復。這最主要凸顯了系統在何種品質特性的嚴重欠缺？
+- 功能適合性 (Functional Suitability)
+- 可靠性 (Reliability)
+- 效能效率 (Performance Efficiency)
+- 易用性 (Usability)
+- 安全性 (Security)
+- 可維護性 (Maintainability) (Correct)
+- 可移植性 (Portability)
+- 相容性 (Compatibility)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：F
+**解析**：* **選項 F 正確**：**可維護性 (Maintainability)** 衡量修改軟體的有效性與效率，包含模組化 (Modularity) 與可修改性 (Modifiability)。小幅修改單一欄位卻造成跨模組連鎖破壞，反映高耦合的架構，嚴重缺乏可維護性。
+</details>
+
+#### [Game] 第 5 題：【斷電重啟秒級自癒】微服務資料庫節點突發斷電，備援機制在 3 秒內自動完成容錯移轉 (Failover)，並重放 WAL 日誌確保交易零遺失，外部連線僅感知微小抖動。這最主要展現了哪一項品質特性的卓越表現？
+- 功能適合性 (Functional Suitability)
+- 可靠性 (Reliability) (Correct)
+- 效能效率 (Performance Efficiency)
+- 易用性 (Usability)
+- 安全性 (Security)
+- 可維護性 (Maintainability)
+- 可移植性 (Portability)
+- 相容性 (Compatibility)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：**可靠性 (Reliability)** 衡量系統在特定時間內維持規定效能水準的能力，包含容錯性 (Fault Tolerance) 與可復原性 (Recoverability: 在故障後復原資料與恢復運作的能力)。斷電自動容錯移轉與日誌重放零遺失是可靠性的核心指標。
+</details>
+
+#### [Game] 第 6 題：【跨系統托運單格式打架】電商系統與黑貓宅急便 API 進行跨系統資料交換，因雙方日期協定格式不符（`YYYY-MM-DD` vs `DD/MM/YYYY`），造成所有物流單批次傳送失敗。這最主要是在考驗或違反哪一項品質特性？
+- 功能適合性 (Functional Suitability)
+- 可靠性 (Reliability)
+- 效能效率 (Performance Efficiency)
+- 易用性 (Usability)
+- 安全性 (Security)
+- 可維護性 (Maintainability)
+- 可移植性 (Portability)
+- 相容性 (Compatibility) (Correct)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：H
+**解析**：* **選項 H 正確**：**相容性 (Compatibility)** 指產品在共享同一硬體或軟體環境下交換資訊的能力，關鍵子特性為「互通性 (Interoperability: 兩個以上系統交換資訊並有效使用被交換資訊的能力)」。日期格式不相容導致無法跨系統溝通即為互通性失敗。
+</details>
+
+#### [Game] 第 7 題：【URL 改個數字看光他人隱私】駭客在瀏覽器將個人資料頁的 URL 從 `userId=1001` 改為 `userId=1002`，系統竟然毫無攔截，直接秀出另一位顧客的信用卡卡號與地址。這屬於哪一項品質特性的嚴重漏洞？
+- 功能適合性 (Functional Suitability)
+- 可靠性 (Reliability)
+- 效能效率 (Performance Efficiency)
+- 易用性 (Usability)
+- 安全性 (Security) (Correct)
+- 可維護性 (Maintainability)
+- 可移植性 (Portability)
+- 相容性 (Compatibility)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：E
+**解析**：* **選項 E 正確**：**安全性 (Security)** 確保資訊與資料受到保護，使未授權人員無法存取。此案例為典型 BOLA / IDOR (不安全的物件直接參照) 越權漏洞，嚴重違反安全性中的「機密性 (Confidentiality)」。
+</details>
+
+#### [Game] 第 8 題：【Mac 開發很順，推上 Linux 容器全掛】開發者在 macOS 本地端測試正常的服務，部署至生產環境的 Linux Docker 容器時，因寫死路徑大小寫（Linux 嚴格區分大小寫）導致找不到檔案崩潰。這最主要違反或考驗了哪一項品質特性？
+- 功能適合性 (Functional Suitability)
+- 可靠性 (Reliability)
+- 效能效率 (Performance Efficiency)
+- 易用性 (Usability)
+- 安全性 (Security)
+- 可維護性 (Maintainability)
+- 可移植性 (Portability) (Correct)
+- 相容性 (Compatibility)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：G
+**解析**：* **選項 G 正確**：**可移植性 (Portability)** 衡量系統能從一個硬體、軟體或其他操作環境轉移至另一個環境的有效性與效率，其關鍵子特性為「適應性 (Adaptability: 適應不同作業系統或執行環境的能力)」。跨 macOS/Linux 失敗屬於適應性不足。
+</details>
+
+#### [Game] 第 9 題：【地下室離線暫存與自動重送】外送員騎車進入收訊不良的地下停車場，手機 App 自動切換為離線模式快取送達狀態，當回到地面偵測到 5G 訊號時自動重送同步。這最主要是在展現系統的哪一項品質特性？
+- 功能適合性 (Functional Suitability)
+- 可靠性 (Reliability) (Correct)
+- 效能效率 (Performance Efficiency)
+- 易用性 (Usability)
+- 安全性 (Security)
+- 可維護性 (Maintainability)
+- 可移植性 (Portability)
+- 相容性 (Compatibility)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：**可靠性 (Reliability)** 之子特性「容錯性 (Fault Tolerance)」與「可用性 (Availability)」，指系統在部分環境故障（如網路中斷）時仍能維持指定運作水準，並在連線恢復後自癒同步。
+</details>
+
+#### [Game] 第 10 題：【容器映像檔一鍵秒級部署】後端微服務封裝成標準 Docker 映像檔，無論部署在 AWS ECS、GCP GKE 還是地端 Kubernetes，皆能在 10 秒內透過統一設定檔一鍵拉起成功運行。這最主要展現了哪一項品質特性？
+- 功能適合性 (Functional Suitability)
+- 可靠性 (Reliability)
+- 效能效率 (Performance Efficiency)
+- 易用性 (Usability)
+- 安全性 (Security)
+- 可維護性 (Maintainability)
+- 可移植性 (Portability) (Correct)
+- 相容性 (Compatibility)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：G
+**解析**：* **選項 G 正確**：**可移植性 (Portability)** 涵蓋「易安裝性 (Installability: 在指定環境成功安裝/部署的難易度)」與「適應性 (Adaptability: 能夠運行在不同雲平台或基礎設施)」。利用標準容器一鍵多雲部署是現代可移植性的代表作。
+</details>
 
 ## Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging)
 
@@ -497,8 +677,15 @@
   * **B 正確**：等價變異體（Equivalent Mutant）在語意上與原程式完全等價，代表對於所有可能的輸入，其輸出都與原程式相同。因此，沒有測試案例能夠區分兩者並將其殺死。
   * **C 錯誤**：等價變異體是程式碼本身的邏輯語意問題（例如把整數的 `a < b` 變成 `a <= b - 1`），與編譯器優化無關。
   * **D 錯誤**：在計算變異分數時，公式為 `MS = K / (M - E)`，其中等價變異體數 E 應從總變異體數 M 中扣除，以反映真實的測試集殺死率。
-</details>
 #### [CCQ] 在實務上，變異測試需要搭配工具才能使用，因為一個程式所產生出的變異體需要很多，這需要自動化的產生，而比對變異體的執行結果與原程式是否相異也需要透過系統自動檢查，才能發揮此方法的效益。
+Correct: True
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：True
+**解析**：變異測試需要自動注入大量變異體，並需逐一執行既有測試案例集來比對輸出是否相異（殺死變異體），若無自動化工具輔助產生與判別，手動執行將極不切實際。
+</details>
 
 ### [Activity: sqa-ch06-ccq6] 6.5.5 概念核對問答 (CCQ 6)
 #### [CCQ] 利用 LLM 輔助生成白箱測試單元測試（如使用 JUnit 生成測試套件）以提高覆蓋率時，下列何者通常是 AI 最難以自動驗證、最需要軟體工程師介入進行人工審查（做為 Oracle）的核心部分？
@@ -528,15 +715,17 @@
 **解析**：* 若要測試多組不同的輸入值與預期輸出值（參數化測試），應該使用 **`Scenario Outline`（情境大綱）** 搭配 **`Examples`（範例表格）**，而非 `Scenario` 搭配 `Background`。`Background` 是用於在每個情境執行前設定共同的前置步驟（例如登入系統），無法實現表格化的參數對照測試。
 </details>
 
-### [Activity: sqa-ch08-ccq1] 8.3.5 概念核對問答 (CCQ 2)：AI 畫面模擬與無頭瀏覽器技術本質
+### [Activity: sqa-ch08-ccq2] 8.3.5 概念核對問答 (CCQ 2)：AI 畫面模擬與無頭瀏覽器技術本質
 #### [CCQ] 在現代 E2E 系統測試架構中，關於無頭瀏覽器 (Headless Browser)、桌面端自動化框架 (Spectron) 與 AI 瀏覽器代理人 (Browser Subagent) 的技術原理，下列敘述何者**最正確**？
 - 無頭瀏覽器因為沒有圖形介面 (No GUI)，因此在執行測試時不會載入 CSS 與排版引擎 (Layout Engine)，僅執行純粹的 JavaScript 邏輯運算以加快速度
 - Spectron 框架主要用於純 Web 應用的效能壓測，無法直接跨入 Electron 的主行程 (Main Process) 控制桌面原生對話框
-- Google Antigravity 的 Browser Subagent 結合了視覺語言模型 (VLM) 與 DOM 語意感知，能以人類視覺意圖辨識畫面元素，大幅改善傳統自動化測試因前端 class 或 DOM 結構調整所造成的脆弱定位器 (Brittle Locators) 斷裂問題
+- Google Antigravity 的 Browser Subagent 結合了視覺語言模型 (VLM) 與 DOM 語意感知，能以人類視覺意圖辨識畫面元素，大幅改善傳統自動化測試因前端 class 或 DOM 結構調整所造成的脆弱定位器 (Brittle Locators) 斷裂問題 (Correct)
 - AI 瀏覽器代理人執行測試時必須在實體顯示器上有頭 (Headed) 視窗中逐幀顯示，無法整合至 Linux CI/CD 容器中輸出 WebP 測試錄影工件
 
 <details>
 <summary>點擊查看答案與解析</summary>
+
+**正確答案**：C
 
 **解析**：*   **A 選項錯誤**：無頭瀏覽器（如 Headless Chromium）依然會完整執行 DOM 解析、CSS 樣式運算、Layout 排版與記憶體畫布光柵化 (Rasterization)，才能支援精確的元素重疊檢驗與像素級截圖，並非「不載入 CSS」。
 *   **B 選項錯誤**：Spectron 是專門為 Electron 桌面應用設計的測試框架，其核心特點正是能夠透過 ChromeDriver 同時管理 Electron 的主行程 (Main Process) 與渲染行程 (Renderer Process)，控制原生選單與系統對話框。

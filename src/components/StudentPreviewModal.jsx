@@ -627,7 +627,7 @@ export default function StudentPreviewModal({ activity, roomCode, onClose, share
                   <div>
                     {currentQ.description && (() => {
                       const cleanDesc = currentQ.description
-                        .replace(/^\s*[*•-]?\s*🔍?\s*\*\*?(?:詞彙庫|字詞庫|詞庫|選項池|Word\s*Bank)[^：:\n]*[：:][\s\S]*?(?=\n\s*(?:[1-9]\.|\*|【|<details)|$)/i, '')
+                        .replace(/^\s*[*•-]?\s*🔍?\s*\*\*?[^\*：:\n]*?(?:詞彙庫|字詞庫|詞庫|選項池|Word\s*Bank)[^：:\n]*?\*?[:：][\s\S]*?(?=\n\s*(?:[1-9]\.|\d+\.|【|<details)|$)/i, '')
                         .trim();
                       return cleanDesc ? (
                         <div style={{ padding: '0.85rem 1rem', marginBottom: '1.15rem', background: 'rgba(99, 102, 241, 0.08)', borderLeft: '3px solid var(--color-indigo)', borderRadius: '6px', fontSize: '0.9rem', lineHeight: '1.6' }}>

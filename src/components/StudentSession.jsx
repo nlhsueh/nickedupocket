@@ -2720,7 +2720,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                 <div>
                   {activeQuestion.description && (() => {
                     const cleanDesc = activeQuestion.description
-                      .replace(/^\s*[*•-]?\s*🔍?\s*\*\*?(?:詞彙庫|字詞庫|詞庫|選項池|Word\s*Bank)[^：:\n]*[：:][\s\S]*?(?=\n\s*(?:[1-9]\.|\*|【|<details)|$)/i, '')
+                      .replace(/^\s*[*•-]?\s*🔍?\s*\*\*?[^\*：:\n]*?(?:詞彙庫|字詞庫|詞庫|選項池|Word\s*Bank)[^：:\n]*?\*?[:：][\s\S]*?(?=\n\s*(?:[1-9]\.|\d+\.|【|<details)|$)/i, '')
                       .trim();
                     return cleanDesc ? (
                       <div className="glass-card" style={{ padding: '1rem 1.15rem', marginBottom: '1.25rem', background: 'rgba(99, 102, 241, 0.05)', borderColor: 'rgba(99, 102, 241, 0.25)', borderRadius: '12px' }}>

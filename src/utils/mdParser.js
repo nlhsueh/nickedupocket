@@ -561,9 +561,12 @@ export function parseFillQuestionBlanks(q) {
 
   // 3. Extract or generate word bank (candidate options pool)
   let wordBank = [];
-  const poolMatch = promptText.match(/(?:【(?:詞彙池|選項池|字詞庫|詞庫)池?】|\*\*?(?:詞彙庫|字詞庫|詞庫|選項池|Word\s*Bank)[^：:]*\*?[:：])\s*([\s\S]+?)(?=\n\s*(?:[1-9]\.|\*|【|<details)|$)/i);
+  const poolMatch = promptText.match(/(?:【(?:詞彙池|選項池|字詞庫|詞庫)池?】|\*\*?[^\*：:\n]*?(?:詞彙庫|字詞庫|詞庫|選項池|Word\s*Bank)[^：:\n]*?\*?[:：])\s*([\s\S]+?)(?=\n\s*(?:[1-9]\.|\d+\.|【|<details)|$)/i);
   if (poolMatch) {
-    wordBank = poolMatch[1].split(/[｜|]+/).map(opt => opt.replace(/[`*\n\r]/g, '').trim()).filter(Boolean);
+    wordBank = poolMatch[1]
+      .split(/[｜|\n\r]+/)
+      .map(opt => opt.replace(/^\s*[*•-]\s*/, '').replace(/[`*]/g, '').trim())
+      .filter(Boolean);
   } else {
     wordBank = blanks.map(b => b.displayAnswer).filter(Boolean);
   }

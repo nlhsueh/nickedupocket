@@ -349,147 +349,170 @@ Time: 20
 **解析**：* **選項 B 正確**：吞掉例外（Swallowing Exceptions）是嚴重的反模式（Anti-pattern）。它只是掩蓋了錯誤徵兆，實質上的並發競爭依然存在，並會導致資料悄悄被破壞。
 </details>
 
-### [Activity: sqa-ch02-game] 課堂挑戰遊戲：除錯偵探所 (Game 挑戰 7 題)
+### [Activity: sqa-ch02-fill1] 2.7 綜合練習 (3/5)：核心概念填空挑戰 (一)
+#### [Fill] 請根據本章核心理論，從下方詞彙庫選出最適當的專業名詞填入：
 
-#### [Game] 第 1 題：【深夜趕工手滑】工程師因疲勞將演算法終止條件 `<` 誤打成 `<=`。這在 IEEE 軟體工程定義與錯的因果鏈中屬於何者？
-- Mistake (人為失誤) (Correct)
-- Fault / Defect (靜態缺陷)
-- Error State (內部錯誤狀態)
-- Failure (系統失效)
-- Precondition Violation (前置條件違約)
-- Invariant Violation (破壞不變量)
-- High Severity, Low Priority (高嚴重度、低優先級)
+* 🔍 **備選詞彙庫 (Word Bank，含干擾項)**：
+  * `前置條件 (Preconditions)` ｜ `Fault / Defect` ｜ `例外處理 (Exception Handling)` ｜ `Mistake`
+  * `類別不變量 (Class Invariants)` ｜ `Error State` ｜ `語法錯誤 (Syntax Error)` ｜ `Failure`
+  * `後置條件 (Postconditions)`
+
+1. **錯的因果鏈** (2.1 臭蟲因果理論)：
+   工程師心智思維中的人為失誤稱為 **[ ① ______ ]**，反映在程式碼中成為靜態的 **[ ② ______ ]**；當該行程式碼被執行，會引發記憶體內部的 **[ ③ ______ ]**，最終造成外部可見的行為偏離，稱為 **[ ④ ______ ]**。
+2. **契約式設計** (2.5 契約防禦 DbC)：
+   呼叫端必須負責滿足的是 **[ ⑤ ______ ]**；方法保證在執行完畢後達成的狀態是 **[ ⑥ ______ ]**；類別在任何公開方法執行前後皆必須恆成立的條件是 **[ ⑦ ______ ]**。
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+* **2.7 填空挑戰 (一) 參考答案**：
+  * ① `Mistake`（人為失誤）、② `Fault / Defect`（靜態缺陷）、③ `Error State`（內部錯誤狀態）、④ `Failure`（系統失效）
+  * ⑤ `前置條件 (Preconditions)`、⑥ `後置條件 (Postconditions)`、⑦ `類別不變量 (Class Invariants)`
+</details>
+
+### [Activity: sqa-ch02-fill2] 2.7 綜合練習 (4/5)：核心概念填空挑戰 (二)
+#### [Fill] 請根據本章核心理論，從下方詞彙庫選出最適當的專業名詞填入：
+
+* 🔍 **備選詞彙庫 (Word Bank，含干擾項)**：
+  * `衛語句 (Guard Clauses)` ｜ `優先級 (Priority)` ｜ `冒煙測試 (Smoke Testing)`
+  * `嚴重度 (Severity)` ｜ `重現 (Reproduce)` ｜ `程式碼壞味道 (Code Smells)`
+  * `條件斷點 (Conditional Breakpoints)` ｜ `熱修復 (Hotfix)` ｜ `迴歸測試 (Regression Testing)`
+
+1. **缺陷管理二維度** (2.6 團隊治理)：
+   衡量缺陷對系統架構破壞深淺程度的是 **[ ① ______ ]**；決定開發團隊排程修復順序的是 **[ ② ______ ]**。
+2. **整潔程式碼與防錯設計** (2.2 源頭預防)：
+   提早判斷無效條件並直接回傳、消除多層巢狀結構的重構技巧是 **[ ③ ______ ]**；程式碼中雖能正常運作但暗示結構不良、日後難以維護的特徵稱為 **[ ④ ______ ]**。
+3. **科學除錯與工具實務** (2.3 科學排查 ＆ 2.4 IDE 工具)：
+   排查問題的第一步是穩定且完全 **[ ⑤ ______ ]** 臭蟲；在 IDE 中僅在特定表達式成立時才中斷程式的工具是 **[ ⑥ ______ ]**；修復後執行既有測試以確保未破壞其他功能的程序稱為 **[ ⑦ ______ ]**。
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+* **2.7 填空挑戰 (二) 參考答案**：
+  * ① `嚴重度 (Severity)`、② `優先級 (Priority)`
+  * ③ `衛語句 (Guard Clauses)`、④ `程式碼壞味道 (Code Smells)`
+  * ⑤ `重現 (Reproduce)`、⑥ `條件斷點 (Conditional Breakpoints)`、⑦ `迴歸測試 (Regression Testing)`
+</details>
+
+### [Activity: sqa-ch02-game] 2.7 綜合練習 (5/5)：除錯偵探所 (Game 挑戰 7 題)
+
+#### [Game] 第 1 題：【遺漏負數與邊界】電商折扣系統規格書僅註明「滿千享 8 折」，未定義負數金額或退款情境，導致負數金額折抵後反向入帳。這在軟體工程定義中屬於何者？
+- 規格遺漏缺陷 (Missing Specification) (Correct)
+- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
+- 吞掉例外反模式 (Swallowing Exceptions)
+- 條件斷點應用 (Conditional Breakpoint)
+- 斷言與例外的誤用 (Assertion vs Exception Misuse)
+- 低嚴重度、高優先級 (Low Severity, High Priority)
+- 迴歸缺陷導致回開 (Regression Defect & Reopened)
 Time: 20
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：A
-**解析**：* **選項 A 正確**：工程師心智模型偏差或疲勞導致的打字手滑失誤 (Mistake)。
+**解析**：* **選項 A 正確**：需求未定義極端邊界與負數行為，源頭需求規格即存在遺漏缺陷 (Missing Specification Defect)。
 </details>
 
-#### [Game] 第 2 題：【埋伏四年的未爆彈】日曆模組寫錯閏年 2/29 判定，但在平年從未被觸發執行。這在系統中屬於何者？
-- Mistake (人為失誤)
-- Fault / Defect (靜態缺陷) (Correct)
-- Error State (內部錯誤狀態)
-- Failure (系統失效)
-- Precondition Violation (前置條件違約)
-- Invariant Violation (破壞不變量)
-- High Severity, Low Priority (高嚴重度、低優先級)
+#### [Game] 第 2 題：【計算總額暗藏玄機】名為 `calculateTotal()` 的函式在計算訂單金額時，內部偷偷修改了全域購物車快取狀態。這屬於何種軟體工程問題？
+- 規格遺漏缺陷 (Missing Specification)
+- 隱蔽副作用與壞味道 (Side Effect & Code Smell) (Correct)
+- 吞掉例外反模式 (Swallowing Exceptions)
+- 條件斷點應用 (Conditional Breakpoint)
+- 斷言與例外的誤用 (Assertion vs Exception Misuse)
+- 低嚴重度、高優先級 (Low Severity, High Priority)
+- 迴歸缺陷導致回開 (Regression Defect & Reopened)
 Time: 20
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：B
-**解析**：* **選項 B 正確**：潛伏於靜態原始碼中但尚未被激發的邏輯漏洞 (Fault/Defect)。
+**解析**：* **選項 B 正確**：查詢與計算函式暗藏全域狀態修改，違反單一職責原則且具備隱蔽副作用 (Hidden Side Effect / Code Smell)。
 </details>
 
-#### [Game] 第 3 題：【已成懸空的無效指標】記憶體被釋放為懸空指標（Dangling Pointer），但後續程式尚未存取它，對外亦無崩潰。此時系統內部處於何種狀態？
-- Mistake (人為失誤)
-- Fault / Defect (靜態缺陷)
-- Error State (內部錯誤狀態) (Correct)
-- Failure (系統失效)
-- Precondition Violation (前置條件違約)
-- Invariant Violation (破壞不變量)
-- High Severity, Low Priority (高嚴重度、低優先級)
+#### [Game] 第 3 題：【空的 Catch 假裝沒事】工程師為了不讓系統拋出 500 錯誤，加上 `try { ... } catch (Exception e) {}` 空實作，導致帳戶餘額資料悄悄損毀。這屬於何種危害？
+- 規格遺漏缺陷 (Missing Specification)
+- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
+- 吞掉例外反模式 (Swallowing Exceptions) (Correct)
+- 條件斷點應用 (Conditional Breakpoint)
+- 斷言與例外的誤用 (Assertion vs Exception Misuse)
+- 低嚴重度、高優先級 (Low Severity, High Priority)
+- 迴歸缺陷導致回開 (Regression Defect & Reopened)
 Time: 20
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：C
-**解析**：* **選項 C 正確**：系統執行期內部狀態已不一致（Dangling Pointer），但尚未引起外部觀察到的失效 (Error State)。
+**解析**：* **選項 C 正確**：吞掉例外 (Swallowing Exceptions Anti-Pattern) 會掩蓋真實系統錯誤狀態，使缺陷在深層發酵造成毀滅性資料損壞。
 </details>
 
-#### [Game] 第 4 題：【雙十一首頁大崩潰】大促午夜開賣連線池耗盡，所有用戶看到 HTTP 500 系統錯誤畫面無法結帳。這屬於何者？
-- Mistake (人為失誤)
-- Fault / Defect (靜態缺陷)
-- Error State (內部錯誤狀態)
-- Failure (系統失效) (Correct)
-- Precondition Violation (前置條件違約)
-- Invariant Violation (破壞不變量)
-- High Severity, Low Priority (高嚴重度、低優先級)
+#### [Game] 第 4 題：【百萬迴圈的精準排查】在處理 100 萬筆交易的迴圈中，系統只在特定 `user_id == 888888` 時崩潰，工程師欲避免無效單步除錯。在 IDE 工具中最適合使用何種機制？
+- 規格遺漏缺陷 (Missing Specification)
+- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
+- 吞掉例外反模式 (Swallowing Exceptions)
+- 條件斷點應用 (Conditional Breakpoint) (Correct)
+- 斷言與例外的誤用 (Assertion vs Exception Misuse)
+- 低嚴重度、高優先級 (Low Severity, High Priority)
+- 迴歸缺陷導致回開 (Regression Defect & Reopened)
 Time: 20
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：D
-**解析**：* **選項 D 正確**：系統對外提供之服務完全中斷，使用者直接觀察到的非預期行為偏離 (Failure)。
+**解析**：* **選項 D 正確**：條件斷點 (Conditional Breakpoints) 能讓程式僅在滿足指定布林表達式時暫停，大幅節省海量迴圈除錯時間。
 </details>
 
-#### [Game] 第 5 題：【拿負數金額來存款】呼叫端傳入 `-5000` 進行存款，被方法第一行的 `assert amount > 0` 攔截拒絕執行。在契約式設計 (DbC) 中屬於何者？
-- Mistake (人為失誤)
-- Fault / Defect (靜態缺陷)
-- Error State (內部錯誤狀態)
-- Failure (系統失效)
-- Precondition Violation (前置條件違約) (Correct)
-- Invariant Violation (破壞不變量)
-- High Severity, Low Priority (高嚴重度、低優先級)
+#### [Game] 第 5 題：【線上環境失效的防線】後端工程師使用 `assert request.getBody() != null` 驗證外部使用者的 HTTP 請求參數，因正式環境未開 `-ea` 導致防線全失。這反映了何種設計謬誤？
+- 規格遺漏缺陷 (Missing Specification)
+- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
+- 吞掉例外反模式 (Swallowing Exceptions)
+- 條件斷點應用 (Conditional Breakpoint)
+- 斷言與例外的誤用 (Assertion vs Exception Misuse) (Correct)
+- 低嚴重度、高優先級 (Low Severity, High Priority)
+- 迴歸缺陷導致回開 (Regression Defect & Reopened)
 Time: 20
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：E
-**解析**：* **選項 E 正確**：呼叫端未履行契約規定的合法正數輸入義務，違反前置條件 (Precondition Violation)。
+**解析**：* **選項 E 正確**：斷言 (Assertion) 僅用於開發除錯與內部契約驗證；對外部不可信之使用者輸入必須使用穩固的例外處理機制 (Exception Handling)。
 </details>
 
-#### [Game] 第 6 題：【堆積中兒子的數值超越父親】在 MaxHeap 結構中執行 `deleteMax()` 調整後，子節點數值大於父節點。在契約式設計 (DbC) 中屬於何者？
-- Mistake (人為失誤)
-- Fault / Defect (靜態缺陷)
-- Error State (內部錯誤狀態)
-- Failure (系統失效)
-- Precondition Violation (前置條件違約)
-- Invariant Violation (破壞不變量) (Correct)
-- High Severity, Low Priority (高嚴重度、低優先級)
+#### [Game] 第 6 題：【不痛不癢但商譽暴跌】跨國金融公司官網首頁正中央的主視覺，將英文單字 `Security` 拼錯為 `Securty`，系統一切運行正常無崩潰。在缺陷管理維度中屬於？
+- 規格遺漏缺陷 (Missing Specification)
+- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
+- 吞掉例外反模式 (Swallowing Exceptions)
+- 條件斷點應用 (Conditional Breakpoint)
+- 斷言與例外的誤用 (Assertion vs Exception Misuse)
+- 低嚴重度、高優先級 (Low Severity, High Priority) (Correct)
+- 迴歸缺陷導致回開 (Regression Defect & Reopened)
 Time: 20
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：F
-**解析**：* **選項 F 正確**：破壞了 MaxHeap「任一節點必大於等於其子節點」的結構類別不變量 (Class Invariant Violation)。
+**解析**：* **選項 F 正確**：技術架構損害極輕微（文字拼錯），但嚴重損及企業專業形象與公關信任，屬於典型的「低嚴重度、高優先級 (Low Severity, High Priority)」。
 </details>
 
-#### [Game] 第 7 題：【淘汰系統上的致命藍屏】軟體在已淘汰的 Windows XP 上安裝會引發作業系統死機藍屏，但公司全體付費企業客戶皆已遷移至 Win 11。在缺陷管理中應如何定級？
-- Mistake (人為失誤)
-- Fault / Defect (靜態缺陷)
-- Error State (內部錯誤狀態)
-- Failure (系統失效)
-- Precondition Violation (前置條件違約)
-- Invariant Violation (破壞不變量)
-- High Severity, Low Priority (高嚴重度、低優先級) (Correct)
+#### [Game] 第 7 題：【修好了 A 卻弄壞了 B】工程師修復登入頁面排版並關閉 Ticket，上線後忘記密碼功能卻因此損毀，測試團隊緊急重啟該 Ticket。這在 BTS 流程中反映何者？
+- 規格遺漏缺陷 (Missing Specification)
+- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
+- 吞掉例外反模式 (Swallowing Exceptions)
+- 條件斷點應用 (Conditional Breakpoint)
+- 斷言與例外的誤用 (Assertion vs Exception Misuse)
+- 低嚴重度、高優先級 (Low Severity, High Priority)
+- 迴歸缺陷導致回開 (Regression Defect & Reopened) (Correct)
 Time: 20
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：G
-**解析**：* **選項 G 正確**：技術危害性極高（OS 崩潰死機，High Severity），但因無實際商業受眾，排修急迫性極低（Low Priority）。
-</details>
-
-### [Activity: sqa-ch02-fill] 2.7 綜合練習：核心概念填空挑戰
-#### [Fill] 請根據本章核心理論，填入最適當的軟體工程專業名詞：
-
-* 🔍 **詞彙庫 (Word Bank)**：
-  `前置條件 (Preconditions)` ｜ `Fault / Defect` ｜ `優先級 (Priority)` ｜ `Mistake` ｜ `類別不變量 (Class Invariants)` ｜ `Error State` ｜ `嚴重度 (Severity)` ｜ `Failure` ｜ `後置條件 (Postconditions)`
-
-1. **錯的因果鏈**：
-   工程師心智思維中的人為失誤稱為 **[ ① ______ ]**，反映在程式碼中成為靜態的 **[ ② ______ ]**；當該行程式碼被執行，會引發記憶體內部的 **[ ③ ______ ]**，最終造成外部可見的行為偏離，稱為 **[ ④ ______ ]**。
-2. **契約式設計 (DbC)**：
-   呼叫端必須負責滿足的是 **[ ⑤ ______ ]**；方法保證在執行完畢後達成的狀態是 **[ ⑥ ______ ]**；類別在任何公開方法執行前後皆必須恆成立的條件是 **[ ⑦ ______ ]**。
-3. **缺陷管理二維度**：
-   衡量缺陷對系統架構破壞深淺程度的是 **[ ⑧ ______ ]**；決定開發團隊排程修復順序的是 **[ ⑨ ______ ]**。
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-* **2.7 填空挑戰參考答案**：
-  * ① `Mistake`（人為失誤）、② `Fault / Defect`（靜態缺陷）、③ `Error State`（內部錯誤狀態）、④ `Failure`（系統失效）
-  * ⑤ `前置條件 (Preconditions)`、⑥ `後置條件 (Postconditions)`、⑦ `類別不變量 (Class Invariants)`
-  * ⑧ `嚴重度 (Severity)`、⑨ `優先級 (Priority)`
+**解析**：* **選項 G 正確**：修復既有缺陷時衍生了新的副作用破壞其他功能（迴歸缺陷 Regression Defect），導致本已 Closed 的工單必須被重啟回開 (Reopened)。
 </details>
 
 ## Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版)

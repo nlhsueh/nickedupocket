@@ -349,6 +349,127 @@ Time: 20
 **解析**：* **選項 B 正確**：吞掉例外（Swallowing Exceptions）是嚴重的反模式（Anti-pattern）。它只是掩蓋了錯誤徵兆，實質上的並發競爭依然存在，並會導致資料悄悄被破壞。
 </details>
 
+### [Activity: sqa-ch02-game] 課堂挑戰遊戲：除錯偵探所 (Game 挑戰 7 題)
+
+#### [Game] 第 1 題：【深夜趕工手滑】工程師因疲勞將演算法終止條件 `<` 誤打成 `<=`。這在 IEEE 軟體工程定義與錯的因果鏈中屬於何者？
+- Mistake (人為失誤) (Correct)
+- Fault / Defect (靜態缺陷)
+- Error State (內部錯誤狀態)
+- Failure (系統失效)
+- Precondition Violation (前置條件違約)
+- Invariant Violation (破壞不變量)
+- High Severity, Low Priority (高嚴重度、低優先級)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：A
+**解析**：* **選項 A 正確**：工程師心智模型偏差或疲勞導致的打字手滑失誤 (Mistake)。
+</details>
+
+#### [Game] 第 2 題：【埋伏四年的未爆彈】日曆模組寫錯閏年 2/29 判定，但在平年從未被觸發執行。這在系統中屬於何者？
+- Mistake (人為失誤)
+- Fault / Defect (靜態缺陷) (Correct)
+- Error State (內部錯誤狀態)
+- Failure (系統失效)
+- Precondition Violation (前置條件違約)
+- Invariant Violation (破壞不變量)
+- High Severity, Low Priority (高嚴重度、低優先級)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **選項 B 正確**：潛伏於靜態原始碼中但尚未被激發的邏輯漏洞 (Fault/Defect)。
+</details>
+
+#### [Game] 第 3 題：【已成懸空的無效指標】記憶體被釋放為懸空指標（Dangling Pointer），但後續程式尚未存取它，對外亦無崩潰。此時系統內部處於何種狀態？
+- Mistake (人為失誤)
+- Fault / Defect (靜態缺陷)
+- Error State (內部錯誤狀態) (Correct)
+- Failure (系統失效)
+- Precondition Violation (前置條件違約)
+- Invariant Violation (破壞不變量)
+- High Severity, Low Priority (高嚴重度、低優先級)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：C
+**解析**：* **選項 C 正確**：系統執行期內部狀態已不一致（Dangling Pointer），但尚未引起外部觀察到的失效 (Error State)。
+</details>
+
+#### [Game] 第 4 題：【雙十一首頁大崩潰】大促午夜開賣連線池耗盡，所有用戶看到 HTTP 500 系統錯誤畫面無法結帳。這屬於何者？
+- Mistake (人為失誤)
+- Fault / Defect (靜態缺陷)
+- Error State (內部錯誤狀態)
+- Failure (系統失效) (Correct)
+- Precondition Violation (前置條件違約)
+- Invariant Violation (破壞不變量)
+- High Severity, Low Priority (高嚴重度、低優先級)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：D
+**解析**：* **選項 D 正確**：系統對外提供之服務完全中斷，使用者直接觀察到的非預期行為偏離 (Failure)。
+</details>
+
+#### [Game] 第 5 題：【拿負數金額來存款】呼叫端傳入 `-5000` 進行存款，被方法第一行的 `assert amount > 0` 攔截拒絕執行。在契約式設計 (DbC) 中屬於何者？
+- Mistake (人為失誤)
+- Fault / Defect (靜態缺陷)
+- Error State (內部錯誤狀態)
+- Failure (系統失效)
+- Precondition Violation (前置條件違約) (Correct)
+- Invariant Violation (破壞不變量)
+- High Severity, Low Priority (高嚴重度、低優先級)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：E
+**解析**：* **選項 E 正確**：呼叫端未履行契約規定的合法正數輸入義務，違反前置條件 (Precondition Violation)。
+</details>
+
+#### [Game] 第 6 題：【堆積中兒子的數值超越父親】在 MaxHeap 結構中執行 `deleteMax()` 調整後，子節點數值大於父節點。在契約式設計 (DbC) 中屬於何者？
+- Mistake (人為失誤)
+- Fault / Defect (靜態缺陷)
+- Error State (內部錯誤狀態)
+- Failure (系統失效)
+- Precondition Violation (前置條件違約)
+- Invariant Violation (破壞不變量) (Correct)
+- High Severity, Low Priority (高嚴重度、低優先級)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：F
+**解析**：* **選項 F 正確**：破壞了 MaxHeap「任一節點必大於等於其子節點」的結構類別不變量 (Class Invariant Violation)。
+</details>
+
+#### [Game] 第 7 題：【淘汰系統上的致命藍屏】軟體在已淘汰的 Windows XP 上安裝會引發作業系統死機藍屏，但公司全體付費企業客戶皆已遷移至 Win 11。在缺陷管理中應如何定級？
+- Mistake (人為失誤)
+- Fault / Defect (靜態缺陷)
+- Error State (內部錯誤狀態)
+- Failure (系統失效)
+- Precondition Violation (前置條件違約)
+- Invariant Violation (破壞不變量)
+- High Severity, Low Priority (高嚴重度、低優先級) (Correct)
+Time: 20
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：G
+**解析**：* **選項 G 正確**：技術危害性極高（OS 崩潰死機，High Severity），但因無實際商業受眾，排修急迫性極低（Low Priority）。
+</details>
+
 ## Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版)
 
 ### [Activity: sqa-ch03-ccq1] Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版) CCQ 1
@@ -392,6 +513,9 @@ Time: 20
 **正確答案**：B
 **解析**：* **選項 B 正確**：高階架構設計定義了子系統與模組間的 API 介面與資料傳遞協定，其直接對應的驗證層級為整合測試 (Integration Testing)。
 </details>
+
+### [Activity: sqa-ch03-short1] 課堂互動：SQA 2.0 應對 Test Oracle 難題
+#### [Short] 如何為沒有唯一標準答案的 AI 與複雜系統建立 Test Oracle？（請簡述變質測試 Metamorphic Testing、差分測試 Differential Testing 或 LLM-as-a-Judge 的實務應用思路）
 
 ## Chapter 4: 軟體檢視
 
@@ -1123,39 +1247,3 @@ Correct: True
 #### [問卷] 第 5 題：沒有用 AI, 我可以說是不會寫程式了
 - A. 同意
 - B. 不同意
-
-## Chapter X01: 課程起點與學習背景調查 (Chapter X01: Course Orientation & Survey)
-
-### [Activity: sqa-x01-survey] SQA 學習起點與軟體開發背景問卷 (5題問卷)
-#### [Short] **第 1 題：請問你目前的就讀年級為何？**
-#### [Short] **第 2 題：你評估自己目前的程式開發與專案實作經驗約為何？**
-#### [Short] **第 3 題：截至目前為止，你是否有參與開發過「真正部署上線（Production）」並供大眾或外部真實使用者使用的軟體系統？**
-#### [Short] **第 4 題：在你的直覺與目前認知中，下列哪一種描述最符合你心目中對「高品質軟體」的定義？**
-#### [Short] **第 5 題：你覺得軟體品質出問題，主要來自哪裡？**
-
-### [Activity: sqa-x01-ai-survey] AI Coding 與除錯調查：使用習慣、體驗感受與信任度 (6題問卷)
-#### [Poll] **第 1 題：在日常程式開發、專案或課堂作業中，你使用生成式 AI 輔助撰寫程式碼的頻率為何？**
-- 重度依賴：幾乎每次寫程式都會使用，從架構發想、程式碼自動補全到功能實作
-- 經常使用：每週或大部分作業都會用，主要用於特定演算法、樣板程式碼或加速開發
-- 偶爾使用：遇到卡關、語法不熟悉或特定問題時才會諮詢
-- 很少使用：僅初步嘗鮮玩過，目前仍以自行撰寫與查閱官方文件為主
-- 從未使用：完全沒有在程式開發中使用過生成式 AI 工具
-#### [Poll] **第 2 題：當程式遇到錯誤、編譯失敗或測試未通過時，你通常如何使用 AI 協助除錯？**
-- 直接求助：直接複製錯誤訊息或程式碼給 AI，請它分析原因並直接提供修正版本
-- 先自行排查：先自己看 Log、設定中斷點或排查，若卡關一段時間找不出原因才交給 AI 輔助分析
-- 概念釐清輔助：僅用 AI 解釋看不懂的特殊報錯訊息或底層機制，程式碼的修改依舊由自己手動完成
-- 幾乎不用於除錯：因為 AI 往往不清楚專案完整上下文，給出的除錯解法經常誤導或越改越錯
-- 不適用：目前從未在寫程式時使用過 AI
-#### [Poll] **第 3 題：使用 AI 寫程式後，你會回頭看程式碼嗎？**
-- 會回頭看，且會逐行讀懂、確認完全理解每個細節才會採用
-- 會簡單看過，確認功能正常即可
-- 不太會回頭看，覺得 AI 生成的通常沒問題
-- 幾乎不會回頭看，直接上線
-#### [Poll] **第 4 題：使用 AI 寫程式後，你會如何進行測試？**
-- AI 產出的程式碼，我會像自己的程式碼一樣，仔細進行測試，確保功能正常
-- 雖然不看程式碼，但是我會讓他執行多次，看功能是否如預期
-- 雖然不看程式碼，但是我會準備很多測試資料和情境，直到全部通過
-- 不會測試，直接上線
-#### [Poll] **第 5 題：沒有用 AI, 我可以說是不會寫程式了**
-- 同意
-- 不同意

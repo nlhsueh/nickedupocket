@@ -75,7 +75,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       } else {
         // Legacy Support: Treating "### [Type] Question" or "### 🙋 CCQ: Question" as an activity containing a single question
         const cleanHeading = rawText.replace(/^[🙋🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
-        const typeMatch = cleanHeading.match(/^\[?(CCQ|Poll|Survey|Ordering|Game|Short|QA|WordCloud|Pair|Discussion|PairDiscussion|Pair-Discussion|投票|問卷|問卷調查|搶答|文字雲|排序|簡答|問答|問答題|觀念檢核|雙人討論|分組討論|小組討論|討論|討論題)\]?[:：\s]?(.*)/i);
+        const typeMatch = cleanHeading.match(/^\[?(CCQ|Poll|Survey|Ordering|Game|Short|QA|WordCloud|Pair|Discussion|PairDiscussion|Pair-Discussion|Fill|Cloze|投票|問卷|問卷調查|搶答|文字雲|排序|簡答|問答|問答題|填空|填空題|觀念檢核|雙人討論|分組討論|小組討論|討論|討論題)\]?[:：\s]?(.*)/i);
         
         if (typeMatch) {
           const rawType = typeMatch[1].toLowerCase();
@@ -86,6 +86,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
           else if (['wordcloud', '文字雲'].includes(rawType)) qType = 'wordcloud';
           else if (['ordering', '排序', '排序題'].includes(rawType)) qType = 'ordering';
           else if (['pair', 'discussion', 'pairdiscussion', 'pair-discussion', '雙人討論', '分組討論', '小組討論', '討論', '討論題'].includes(rawType)) qType = 'pair';
+          else if (['fill', 'cloze', '填空', '填空題'].includes(rawType)) qType = 'fill';
           else qType = 'ccq';
 
           const qText = typeMatch[2].trim() || cleanHeading;
@@ -104,6 +105,8 @@ export function parseMarkdownCourse(mdText, fileId = '') {
             options: qType === 'ccq' ? ['True', 'False', '50-50'] : [],
             correctAnswer: '',
             items: [],
+            blanks: [],
+            wordBank: [],
             timeLimit: qType === 'game' ? 15 : (qType === 'pair' ? 300 : (qType === 'wordcloud' ? 60 : 0)),
             description: '',
             explanation: ''
@@ -143,7 +146,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
 
       const qTextRaw = line.substring(5).trim();
       const cleanLine = qTextRaw.replace(/^[🙋🎯📊⚡☁️🔢💬💡❓📱🎮🏆⏱️]\s*/, '').trim();
-      const typeMatch = cleanLine.match(/^\[?(CCQ|Poll|Survey|Ordering|Game|Short|QA|WordCloud|Pair|Discussion|PairDiscussion|Pair-Discussion|投票|問卷|問卷調查|搶答|文字雲|排序|簡答|問答|問答題|觀念檢核|雙人討論|分組討論|小組討論|討論|討論題)\]?[:：\s]?(.*)/i);
+      const typeMatch = cleanLine.match(/^\[?(CCQ|Poll|Survey|Ordering|Game|Short|QA|WordCloud|Pair|Discussion|PairDiscussion|Pair-Discussion|Fill|Cloze|投票|問卷|問卷調查|搶答|文字雲|排序|簡答|問答|問答題|填空|填空題|觀念檢核|雙人討論|分組討論|小組討論|討論|討論題)\]?[:：\s]?(.*)/i);
 
       if (typeMatch) {
         const rawType = typeMatch[1].toLowerCase();
@@ -154,6 +157,7 @@ export function parseMarkdownCourse(mdText, fileId = '') {
         else if (['wordcloud', '文字雲'].includes(rawType)) qType = 'wordcloud';
         else if (['ordering', '排序', '排序題'].includes(rawType)) qType = 'ordering';
         else if (['pair', 'discussion', 'pairdiscussion', 'pair-discussion', '雙人討論', '分組討論', '小組討論', '討論', '討論題'].includes(rawType)) qType = 'pair';
+        else if (['fill', 'cloze', '填空', '填空題'].includes(rawType)) qType = 'fill';
         else qType = 'ccq';
 
         const qText = typeMatch[2].trim() || cleanLine;
@@ -165,6 +169,8 @@ export function parseMarkdownCourse(mdText, fileId = '') {
           options: qType === 'ccq' ? ['True', 'False', '50-50'] : [],
           correctAnswer: '',
           items: [],
+          blanks: [],
+          wordBank: [],
           timeLimit: qType === 'game' ? 15 : (qType === 'pair' ? 300 : (qType === 'wordcloud' ? 60 : 0)),
           description: '',
           explanation: ''
@@ -316,6 +322,12 @@ export function parseMarkdownCourse(mdText, fileId = '') {
             currentQuestion.correctAnswer = String.fromCharCode(65 + idx);
           }
         }
+
+        if (currentQuestion.type === 'fill') {
+          currentQuestion.description = currentQuestion.description
+            ? `${currentQuestion.description}\n${line}`
+            : line;
+        }
         continue;
       }
 
@@ -323,12 +335,16 @@ export function parseMarkdownCourse(mdText, fileId = '') {
         const itemText = line.replace(/^\d+\.\s/, '').trim();
         if (currentQuestion.type === 'ordering') {
           currentQuestion.items.push(itemText);
+        } else if (currentQuestion.type === 'fill' || currentQuestion.type === 'pair' || currentQuestion.type === 'short') {
+          currentQuestion.description = currentQuestion.description
+            ? `${currentQuestion.description}\n${line}`
+            : line;
         }
         continue;
       }
 
       // Collect multiline discussion / question prompt descriptions
-      if (currentQuestion && (currentQuestion.type === 'pair' || currentQuestion.type === 'short')) {
+      if (currentQuestion && (currentQuestion.type === 'pair' || currentQuestion.type === 'short' || currentQuestion.type === 'fill')) {
         const trimmed = line.trim();
         if (
           trimmed && 
@@ -398,6 +414,10 @@ export function parseMarkdownCourse(mdText, fileId = '') {
       act.title = getActivityShortTitle(act, chap);
 
       act.questions.forEach(q => {
+        if (q.type === 'fill') {
+          parseFillQuestionBlanks(q);
+        }
+
         if (q.type === 'game' && q.rawCorrectText && !q.correctAnswer) {
           const matchedIdx = q.options.findIndex(opt => 
             opt.toLowerCase().trim() === q.rawCorrectText.toLowerCase().trim()
@@ -416,4 +436,138 @@ export function parseMarkdownCourse(mdText, fileId = '') {
     courseTitle,
     chapters
   };
+}
+
+export function parseFillQuestionBlanks(q) {
+  const circledMap = {
+    '①': 1, '②': 2, '③': 3, '④': 4, '⑤': 5,
+    '⑥': 6, '⑦': 7, '⑧': 8, '⑨': 9, '⑩': 10,
+    '⑪': 11, '⑫': 12, '⑬': 13, '⑭': 14, '⑮': 15,
+    '⑯': 16, '⑰': 17, '⑱': 18, '⑲': 19, '⑳': 20
+  };
+  const numToCircled = ['', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
+
+  const promptText = `${q.questionText || ''}\n${q.description || ''}`;
+  const ansText = q.explanation || '';
+
+  const blanksMap = {};
+
+  // 1. Detect all blanks referenced in prompt text
+  const promptRegex = /(?:\[\s*)?([①-⑳])(?:\s*_{2,}\s*\])?/g;
+  let pm;
+  while ((pm = promptRegex.exec(promptText)) !== null) {
+    const sym = pm[1];
+    const id = circledMap[sym];
+    if (id && !blanksMap[id]) {
+      blanksMap[id] = {
+        id,
+        label: sym,
+        displayAnswer: '',
+        acceptableAnswers: []
+      };
+    }
+  }
+
+  const numRegex = /\[\s*(\d{1,2})\s*_{2,}\s*\]/g;
+  let nm;
+  while ((nm = numRegex.exec(promptText)) !== null) {
+    const id = parseInt(nm[1], 10);
+    if (id && !blanksMap[id]) {
+      blanksMap[id] = {
+        id,
+        label: numToCircled[id] || `(${id})`,
+        displayAnswer: '',
+        acceptableAnswers: []
+      };
+    }
+  }
+
+  // 2. Extract answers from explanation / details
+  if (ansText) {
+    const ansRegex = /([①-⑳]|\b(?:第\s*)?(\d{1,2})\s*(?:格|小題|題)?[:：])\s*([^①-⑳\n\r]+)/g;
+    let am;
+    while ((am = ansRegex.exec(ansText)) !== null) {
+      let id = null;
+      let sym = '';
+      if (am[1] && circledMap[am[1]]) {
+        sym = am[1];
+        id = circledMap[sym];
+      } else if (am[2]) {
+        id = parseInt(am[2], 10);
+        sym = numToCircled[id] || `(${id})`;
+      }
+
+      if (!id) continue;
+
+      let raw = am[3].trim().replace(/[、，,；;。]+$/, '').replace(/[`*]/g, '').trim();
+      raw = raw.replace(/[①-⑳].*$/, '').trim();
+      if (!raw || raw.includes('___')) continue;
+
+      const aliases = new Set();
+      const cleanLower = raw.toLowerCase().trim();
+      aliases.add(cleanLower);
+
+      const withoutParen = raw.replace(/[（\(][^）\)]+[）\)]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (withoutParen) {
+        const wpLower = withoutParen.toLowerCase();
+        aliases.add(wpLower);
+        aliases.add(wpLower.replace(/\s*\/\s*/g, '/'));
+        aliases.add(wpLower.replace(/\s*\/\s*/g, ' / '));
+
+        withoutParen.split(/[\/|、,，]+/).forEach(s => {
+          const item = s.trim().toLowerCase();
+          if (item) {
+            aliases.add(item);
+            if (item.endsWith('s') && item.length > 3) {
+              aliases.add(item.slice(0, -1));
+            }
+          }
+        });
+      }
+
+      const parenMatches = raw.match(/[（\(]([^）\)]+)[）\)]/g);
+      if (parenMatches) {
+        parenMatches.forEach(pm => {
+          const inner = pm.replace(/[（\(\)）]/g, '').trim();
+          aliases.add(inner.toLowerCase());
+          inner.split(/[\/|、,，]+/).forEach(s => {
+            const item = s.trim().toLowerCase();
+            if (item) {
+              aliases.add(item);
+              if (item.endsWith('s') && item.length > 3) {
+                aliases.add(item.slice(0, -1));
+              }
+            }
+          });
+        });
+      }
+
+      if (!blanksMap[id]) {
+        blanksMap[id] = {
+          id,
+          label: sym,
+          displayAnswer: raw,
+          acceptableAnswers: Array.from(aliases)
+        };
+      } else {
+        blanksMap[id].displayAnswer = raw;
+        blanksMap[id].acceptableAnswers = Array.from(aliases);
+      }
+    }
+  }
+
+  const blanks = Object.values(blanksMap).sort((a, b) => a.id - b.id);
+  q.blanks = blanks;
+
+  // 3. Extract or generate word bank (candidate options pool)
+  let wordBank = [];
+  const poolMatch = promptText.match(/(?:【(?:詞彙池|選項池|字詞庫|詞庫)池?】|\*\*?(?:詞彙庫|字詞庫|詞庫|選項池|Word\s*Bank)[^：:]*\*?[:：])\s*([\s\S]+?)(?=\n\s*(?:[1-9]\.|\*|【|<details)|$)/i);
+  if (poolMatch) {
+    wordBank = poolMatch[1].split(/[｜|]+/).map(opt => opt.replace(/[`*\n\r]/g, '').trim()).filter(Boolean);
+  } else {
+    wordBank = blanks.map(b => b.displayAnswer).filter(Boolean);
+  }
+  q.wordBank = Array.from(new Set(wordBank));
+
+  return blanks;
 }

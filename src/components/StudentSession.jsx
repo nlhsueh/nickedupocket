@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wifi, WifiOff, Hourglass, CheckCircle2, AlertCircle, 
   ChevronUp, ChevronDown, CornerDownRight, ArrowRight, BarChart2, Cloud, GripVertical, Users, MessageSquare,
-  Award, Trophy, Star, QrCode, Copy, Check, Lock, Eye, EyeOff, X, RefreshCw
+  Award, Trophy, Star, QrCode, Copy, Check, Lock, Eye, EyeOff, X, RefreshCw, Edit3
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import mqttService from '../utils/mqtt';
@@ -60,6 +60,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
         return <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>🔢 流程排序 (Ordering)</span>;
       case 'short':
         return <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>📝 問答討論 (QA)</span>;
+      case 'fill':
+        return <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>📝 概念填空 (Fill)</span>;
       default:
         return <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>🎯 課堂互動</span>;
     }
@@ -152,6 +154,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   const [orderingItems, setOrderingItems] = useState([]);
   const [partnerName, setPartnerName] = useState('');
   const [pairSummary, setPairSummary] = useState('');
+  const [fillAnswers, setFillAnswers] = useState({});
+  const [activeBlankId, setActiveBlankId] = useState(1);
   const [hasSubmitted, setHasSubmitted] = useState(() => {
     try {
       return sessionStorage.getItem(`nickpocket_survey_submitted_${roomCode}`) === 'true';
@@ -392,6 +396,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       setTextAnswer('');
       setPartnerName('');
       setPairSummary('');
+      setFillAnswers({});
       setOrderingItems([]);
       setRevealedCorrectAnswer(null);
       setGameResultData(null);
@@ -422,6 +427,8 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       setTextAnswer('');
       setPartnerName('');
       setPairSummary('');
+      setFillAnswers({});
+      setActiveBlankId(1);
       setSubmitting(false);
       setSubmitTime(null);
       setQuestionStartMs(Date.now());
@@ -436,10 +443,15 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
         description: payload.description || '',
         options: payload.options || [],
         items: payload.items || [],
+        blanks: payload.blanks || [],
+        wordBank: payload.wordBank || [],
         timeLimit: payload.timeLimit || 0
       };
       
       setActiveQuestion(qData);
+      if (payload.blanks && payload.blanks.length > 0) {
+        setActiveBlankId(payload.blanks[0].id);
+      }
       
       if (payload.type === 'ordering') {
         // Shuffle items with correct number mappings and unique IDs
@@ -528,6 +540,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
       setTextAnswer('');
       setPartnerName('');
       setPairSummary('');
+      setFillAnswers({});
       setOrderingItems([]);
       setRevealedCorrectAnswer(null);
       setLiveStats({ stats: { A: 0, B: 0, C: 0, D: 0, E: 0 }, totalSubmissions: 0, totalStudents: 0, shortAnswers: [], pairDiscussions: [], wordCloud: null });
@@ -635,6 +648,18 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
           if (activeQuestion.index !== undefined) {
             setStudentAnswersMap(prev => ({ ...prev, [activeQuestion.index]: textAnswer.trim() }));
           }
+        }
+      } else if (activeQuestion.type === 'fill') {
+        mqttService.publishResponse({
+          event: 'submit_answer',
+          studentName: nickname,
+          answer: fillAnswers,
+          timestamp: now,
+          questionIndex: activeQuestion.index
+        });
+        setHasSubmitted(true);
+        if (activeQuestion.index !== undefined) {
+          setStudentAnswersMap(prev => ({ ...prev, [activeQuestion.index]: fillAnswers }));
         }
       } else {
         if (selectedOption) {
@@ -780,6 +805,46 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
 
       if (success) {
         setHasSubmitted(true);
+      } else {
+        alert('Failed to send answer. Check your connection.');
+      }
+    } catch (e) {
+      console.error('[MQTT] Publish error:', e);
+      alert('Connection error. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitFillAnswer = () => {
+    if (hasSubmitted || roomState !== 'answering') return;
+    setSubmitting(true);
+    const now = Date.now();
+    setSubmitTime(now);
+
+    if (isPreview) {
+      setHasSubmitted(true);
+      if (activeQuestion && activeQuestion.index !== undefined) {
+        setStudentAnswersMap(prev => ({ ...prev, [activeQuestion.index]: fillAnswers }));
+      }
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      const success = mqttService.publishResponse({
+        event: 'submit_answer',
+        studentName: nickname,
+        answer: fillAnswers,
+        timestamp: now,
+        questionIndex: activeQuestion.index
+      });
+
+      if (success) {
+        setHasSubmitted(true);
+        if (activeQuestion && activeQuestion.index !== undefined) {
+          setStudentAnswersMap(prev => ({ ...prev, [activeQuestion.index]: fillAnswers }));
+        }
       } else {
         alert('Failed to send answer. Check your connection.');
       }
@@ -1771,7 +1836,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
               {/* Question Header */}
               <div className="flex-between" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <span className="badge badge-indigo">
-                  {activeQuestion.type === 'ccq' ? 'Concept Check' : activeQuestion.type.toUpperCase()}
+                  {activeQuestion.type === 'ccq' ? 'Concept Check' : activeQuestion.type === 'fill' ? (lang === 'zh' ? '📝 填空挑戰' : '📝 Fill Blanks') : activeQuestion.type.toUpperCase()}
                 </span>
                 {roomState === 'answering' && timeLeft > 0 ? (
                   <span className={`badge ${timeLeft <= 15 ? 'badge-danger animate-pulse-glow' : 'badge-warning'}`} style={{ fontSize: '0.9rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -1913,6 +1978,20 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
                             <div>夥伴：<strong style={{ color: 'var(--color-indigo)' }}>{partnerName.trim() || '未填寫'}</strong></div>
                             <div style={{ marginTop: '0.2rem' }}>討論結論：<strong style={{ color: 'var(--text-primary)' }}>"{pairSummary}"</strong></div>
+                          </div>
+                        )}
+                        {activeQuestion.type === 'fill' && (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
+                            <div style={{ marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-indigo)' }}>
+                              📝 {lang === 'zh' ? '已填入空格：' : 'Submitted Blanks:'}
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                              {(activeQuestion.blanks || []).map(b => (
+                                <span key={b.id} className="badge" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-light)', fontSize: '0.78rem' }}>
+                                  <strong>{b.label}</strong> {fillAnswers[b.id] || '(未填)'}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                         {textAnswer && activeQuestion.type === 'short' && (
@@ -2304,6 +2383,85 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                     </div>
                   )}
 
+                  {/* Fill-in-the-Blank Details */}
+                  {activeQuestion.type === 'fill' && (() => {
+                    const blanks = activeQuestion.blanks || [];
+                    let correctCount = 0;
+                    blanks.forEach(b => {
+                      const acc = (b.acceptableAnswers || []).map(a => a.toLowerCase().trim());
+                      const val = (fillAnswers[b.id] || '').toLowerCase().trim();
+                      if (val && acc.some(a => val === a || (a.length >= 4 && val.includes(a)))) {
+                        correctCount++;
+                      }
+                    });
+                    const pct = blanks.length > 0 ? Math.round((correctCount / blanks.length) * 100) : 0;
+                    const isAllCorrect = blanks.length > 0 && correctCount === blanks.length;
+
+                    return (
+                      <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+                        <div 
+                          className="glass-card flex-between animate-pop"
+                          style={{
+                            padding: '1rem 1.25rem',
+                            marginBottom: '1.25rem',
+                            background: isAllCorrect ? 'rgba(16, 185, 129, 0.1)' : 'rgba(99, 102, 241, 0.08)',
+                            borderColor: isAllCorrect ? 'rgba(16, 185, 129, 0.3)' : 'rgba(99, 102, 241, 0.25)'
+                          }}
+                        >
+                          <div>
+                            <strong style={{ fontSize: '1.15rem', color: isAllCorrect ? 'var(--color-success)' : 'var(--color-indigo)' }}>
+                              {correctCount} / {blanks.length} 格正確 ({pct}%)
+                            </strong>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
+                              {isAllCorrect ? '🎉 恭喜全對！完美掌握核心概念！' : '持續加油！請參閱下方各格標準答案與解析。'}
+                            </p>
+                          </div>
+                          <Award size={32} style={{ color: isAllCorrect ? 'var(--color-warning)' : 'var(--color-indigo)' }} />
+                        </div>
+
+                        <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                          {lang === 'zh' ? '各空格作答對照：' : 'Blank Comparison:'}
+                        </h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                          {blanks.map(b => {
+                            const acc = (b.acceptableAnswers || []).map(a => a.toLowerCase().trim());
+                            const val = (fillAnswers[b.id] || '').trim();
+                            const cleanVal = val.toLowerCase();
+                            const isCorrect = cleanVal && acc.some(a => cleanVal === a || (a.length >= 4 && cleanVal.includes(a)));
+
+                            return (
+                              <div
+                                key={b.id}
+                                className="glass-card"
+                                style={{
+                                  padding: '0.85rem 1rem',
+                                  background: isCorrect ? 'rgba(16, 185, 129, 0.06)' : 'rgba(239, 68, 68, 0.05)',
+                                  borderColor: isCorrect ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.2)',
+                                  borderRadius: '10px'
+                                }}
+                              >
+                                <div className="flex-between" style={{ marginBottom: '0.35rem' }}>
+                                  <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                                    {b.label}
+                                  </span>
+                                  <span className={`badge ${isCorrect ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.75rem' }}>
+                                    {isCorrect ? '✓ 正確' : (val ? '✗ 錯誤' : '未作答')}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
+                                  你的作答：<strong style={{ color: isCorrect ? '#34d399' : '#f87171' }}>{val || '(無)'}</strong>
+                                </div>
+                                <div style={{ fontSize: '0.85rem', color: '#38bdf8' }}>
+                                  標準答案：<strong>{b.displayAnswer}</strong>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Live Status Notice Footer */}
                   <div style={{ marginTop: '1.25rem', textAlign: 'center', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid var(--border-light)' }}>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
@@ -2523,6 +2681,225 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                     disabled={submitting || !pairSummary.trim()}
                   >
                     送出討論結果 Submit Discussion <CornerDownRight size={18} />
+                  </button>
+                </div>
+              ) : activeQuestion.type === 'fill' ? (
+                /* Fill-in-the-blank Form with Word Bank */
+                <div>
+                  {activeQuestion.description && (() => {
+                    const cleanDesc = activeQuestion.description
+                      .replace(/^\s*[*•-]?\s*🔍?\s*\*\*?(?:詞彙庫|字詞庫|詞庫|選項池|Word\s*Bank)[^：:\n]*[：:][\s\S]*?(?=\n\s*(?:[1-9]\.|\*|【|<details)|$)/i, '')
+                      .trim();
+                    return cleanDesc ? (
+                      <div className="glass-card" style={{ padding: '1rem 1.15rem', marginBottom: '1.25rem', background: 'rgba(99, 102, 241, 0.05)', borderColor: 'rgba(99, 102, 241, 0.25)', borderRadius: '12px' }}>
+                        <div style={{ fontSize: '0.92rem', color: 'var(--text-primary)', lineHeight: '1.65' }}>
+                          <FormattedMarkdown text={cleanDesc} />
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+
+                  {/* Word Bank / 候選詞彙池 (方案 A) */}
+                  {(() => {
+                    const blanks = activeQuestion.blanks || [];
+                    const wordBank = (activeQuestion.wordBank && activeQuestion.wordBank.length > 0)
+                      ? activeQuestion.wordBank
+                      : blanks.map(b => b.displayAnswer).filter(Boolean);
+                    const usedWords = Object.values(fillAnswers).filter(Boolean);
+                    const currentActiveBlank = blanks.find(b => b.id === activeBlankId) || blanks[0];
+
+                    const handleSelectWord = (word) => {
+                      const targetId = activeBlankId || (blanks[0]?.id || 1);
+                      setFillAnswers(prev => ({ ...prev, [targetId]: word }));
+
+                      // Auto-advance activeBlankId to next empty blank
+                      const curIdx = blanks.findIndex(b => b.id === targetId);
+                      for (let i = 1; i <= blanks.length; i++) {
+                        const nextB = blanks[(curIdx + i) % blanks.length];
+                        if (!fillAnswers[nextB.id] || nextB.id === targetId) {
+                          setActiveBlankId(nextB.id);
+                          break;
+                        }
+                      }
+                    };
+
+                    const handleClearBlank = (bId, e) => {
+                      if (e) e.stopPropagation();
+                      setFillAnswers(prev => {
+                        const next = { ...prev };
+                        delete next[bId];
+                        return next;
+                      });
+                      setActiveBlankId(bId);
+                    };
+
+                    const handleResetAll = () => {
+                      setFillAnswers({});
+                      if (blanks[0]) setActiveBlankId(blanks[0].id);
+                    };
+
+                    return (
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        {/* Word Bank Section */}
+                        {wordBank.length > 0 && (
+                          <div 
+                            className="glass-card" 
+                            style={{ 
+                              padding: '1rem 1.15rem', 
+                              marginBottom: '1.25rem', 
+                              background: 'rgba(99, 102, 241, 0.08)', 
+                              border: '1.5px solid rgba(99, 102, 241, 0.3)',
+                              borderRadius: '12px' 
+                            }}
+                          >
+                            <div className="flex-between" style={{ marginBottom: '0.65rem' }}>
+                              <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--color-indigo)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                🔍 詞彙庫（點選直接填入空格）：
+                              </span>
+                              {usedWords.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={handleResetAll}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.2rem 0.5rem', fontSize: '0.72rem', height: '24px' }}
+                                >
+                                  清空重選 (Reset)
+                                </button>
+                              )}
+                            </div>
+
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              {wordBank.map((word, wIdx) => {
+                                const isUsed = usedWords.includes(word);
+                                return (
+                                  <button
+                                    key={wIdx}
+                                    type="button"
+                                    onClick={() => handleSelectWord(word)}
+                                    className="animate-pop"
+                                    style={{
+                                      padding: '0.45rem 0.85rem',
+                                      borderRadius: '999px',
+                                      fontSize: '0.86rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      transition: 'all 0.18s ease',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.35rem',
+                                      background: isUsed ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+                                      color: isUsed ? '#a5b4fc' : 'var(--text-primary)',
+                                      border: isUsed ? '1.5px solid rgba(99, 102, 241, 0.45)' : '1px solid var(--border-light)',
+                                      transform: isUsed ? 'scale(0.96)' : 'none',
+                                      opacity: isUsed ? 0.75 : 1
+                                    }}
+                                  >
+                                    <span>{word}</span>
+                                    {isUsed && <span style={{ fontSize: '0.72rem' }}>✓</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Blanks target notification */}
+                        <div className="flex-between" style={{ marginBottom: '0.65rem' }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            目前選取：<strong style={{ color: 'var(--color-indigo)', fontSize: '0.95rem' }}>【空格 {currentActiveBlank?.label}】</strong>
+                          </span>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            已填 {usedWords.length} / {blanks.length} 格
+                          </span>
+                        </div>
+
+                        {/* Blanks list */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.65rem' }}>
+                          {blanks.map(b => {
+                            const isCurrent = (activeBlankId === b.id);
+                            const val = fillAnswers[b.id] || '';
+
+                            return (
+                              <div
+                                key={b.id}
+                                onClick={() => setActiveBlankId(b.id)}
+                                className="glass-card animate-pop"
+                                style={{
+                                  padding: '0.7rem 0.9rem',
+                                  borderRadius: '10px',
+                                  cursor: 'pointer',
+                                  border: isCurrent ? '2px solid var(--color-indigo)' : '1px solid var(--border-light)',
+                                  background: isCurrent ? 'rgba(99, 102, 241, 0.12)' : (val ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.01)'),
+                                  boxShadow: isCurrent ? '0 0 14px rgba(99, 102, 241, 0.3)' : 'none',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: 0 }}>
+                                  <span style={{ 
+                                    width: '28px', 
+                                    height: '28px', 
+                                    borderRadius: '50%', 
+                                    background: isCurrent ? 'var(--color-indigo)' : 'rgba(99, 102, 241, 0.2)', 
+                                    color: '#fff', 
+                                    display: 'inline-flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    fontWeight: 'bold',
+                                    fontSize: '0.9rem',
+                                    flexShrink: 0
+                                  }}>
+                                    {b.label}
+                                  </span>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    {val ? (
+                                      <span style={{ fontWeight: 700, color: '#38bdf8', fontSize: '0.92rem' }}>
+                                        {val}
+                                      </span>
+                                    ) : (
+                                      <span style={{ color: isCurrent ? 'var(--color-indigo)' : 'var(--text-muted)', fontSize: '0.82rem' }}>
+                                        {isCurrent ? '👉 點上方詞彙填入' : '點選此格填入...'}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {val && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleClearBlank(b.id, e)}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'var(--text-muted)',
+                                      cursor: 'pointer',
+                                      padding: '0.2rem 0.4rem',
+                                      fontSize: '0.95rem',
+                                      lineHeight: 1
+                                    }}
+                                    title="清除此格"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '0.95rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                    onClick={submitFillAnswer}
+                    disabled={submitting || (activeQuestion.blanks && activeQuestion.blanks.length > 0 && Object.values(fillAnswers).filter(v => (v || '').trim()).length === 0)}
+                  >
+                    送出所有填空答案 Submit All Answers <CornerDownRight size={18} />
                   </button>
                 </div>
               ) : activeQuestion.type === 'short' ? (

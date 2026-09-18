@@ -93,7 +93,11 @@ export const translations = {
     wordCloudPlaceholder: '輸入關鍵詞後按 Enter 送出',
     pairDiscussionTitle: '雙人小組配對與即時討論',
     pairSummaryPlaceholder: '請輸入你們討論後的共同觀點或總結（10~300 字）...',
-    orderingInstruction: '請拖曳或點選箭頭調整正確先後順序'
+    orderingInstruction: '請拖曳或點選箭頭調整正確先後順序',
+    fillInstruction: '請在下方各空格填入最適當的答案：',
+    fillPlaceholder: '請填入空格答案...',
+    fillSummary: '填空題作答統計',
+    fillAccuracy: '各空格答對率'
   },
   en: {
     // App & Common
@@ -186,7 +190,11 @@ export const translations = {
     wordCloudPlaceholder: 'Type keyword and press Enter',
     pairDiscussionTitle: 'Pair Discussion & Matching',
     pairSummaryPlaceholder: 'Enter your shared summary or takeaways (10~300 chars)...',
-    orderingInstruction: 'Drag or click arrows to reorder items correctly'
+    orderingInstruction: 'Drag or click arrows to reorder items correctly',
+    fillInstruction: 'Fill in the blanks with the most appropriate terms:',
+    fillPlaceholder: 'Type your answer for this blank...',
+    fillSummary: 'Fill-in-the-Blank Statistics',
+    fillAccuracy: 'Blank Accuracy Rate'
   }
 };
 

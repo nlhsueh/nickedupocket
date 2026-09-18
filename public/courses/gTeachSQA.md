@@ -470,6 +470,28 @@ Time: 20
 **解析**：* **選項 G 正確**：技術危害性極高（OS 崩潰死機，High Severity），但因無實際商業受眾，排修急迫性極低（Low Priority）。
 </details>
 
+### [Activity: sqa-ch02-fill] 2.7 綜合練習：核心概念填空挑戰
+#### [Fill] 請根據本章核心理論，填入最適當的軟體工程專業名詞：
+
+* 🔍 **詞彙庫 (Word Bank)**：
+  `Mistake` ｜ `Fault / Defect` ｜ `Error State` ｜ `Failure` ｜ `前置條件 (Preconditions)` ｜ `後置條件 (Postconditions)` ｜ `類別不變量 (Class Invariants)` ｜ `嚴重度 (Severity)` ｜ `優先級 (Priority)`
+
+1. **錯的因果鏈**：
+   工程師心智思維中的人為失誤稱為 **[ ① ______ ]**，反映在程式碼中成為靜態的 **[ ② ______ ]**；當該行程式碼被執行，會引發記憶體內部的 **[ ③ ______ ]**，最終造成外部可見的行為偏離，稱為 **[ ④ ______ ]**。
+2. **契約式設計 (DbC)**：
+   呼叫端必須負責滿足的是 **[ ⑤ ______ ]**；方法保證在執行完畢後達成的狀態是 **[ ⑥ ______ ]**；類別在任何公開方法執行前後皆必須恆成立的條件是 **[ ⑦ ______ ]**。
+3. **缺陷管理二維度**：
+   衡量缺陷對系統架構破壞深淺程度的是 **[ ⑧ ______ ]**；決定開發團隊排程修復順序的是 **[ ⑨ ______ ]**。
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+* **2.7 填空挑戰參考答案**：
+  * ① `Mistake`（人為失誤）、② `Fault / Defect`（靜態缺陷）、③ `Error State`（內部錯誤狀態）、④ `Failure`（系統失效）
+  * ⑤ `前置條件 (Preconditions)`、⑥ `後置條件 (Postconditions)`、⑦ `類別不變量 (Class Invariants)`
+  * ⑧ `嚴重度 (Severity)`、⑨ `優先級 (Priority)`
+</details>
+
 ## Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版)
 
 ### [Activity: sqa-ch03-ccq1] Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版) CCQ 1

@@ -69,6 +69,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
       case 'wordcloud': return 180; // 3 min for typing keywords
       case 'short': return 180;     // 3 min for typing sentences
       case 'ordering': return 180;  // 3 min for ordering
+      case 'fill': return 240;      // 4 min for Fill-in-the-blank
       case 'ccq': return 90;        // 1.5 min for CCQ
       case 'poll': return 60;       // 1 min for Poll
       case 'game': return 20;       // 20s for Game
@@ -431,6 +432,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
           event: 'question_stop', 
           questionIndex: qIndex,
           correctAnswer: q ? q.correctAnswer : null,
+          fillBlanks: q && q.type === 'fill' ? q.blanks : null,
           stats: statsObj.stats,
           totalSubmissions: statsObj.total,
           totalStudents: joinedStudentsRef.current.length || joinedStudents.length,
@@ -573,6 +575,17 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         questionText: q.questionText,
         description: q.description || '',
         items: q.items,
+        timeLimit: duration
+      }, true);
+    } else if (q.type === 'fill') {
+      broadcastState({
+        event: 'question_start',
+        type: 'fill',
+        questionIndex: idx,
+        questionText: q.questionText,
+        description: q.description || '',
+        blanks: q.blanks || [],
+        wordBank: q.wordBank || [],
         timeLimit: duration
       }, true);
     } else {
@@ -1115,6 +1128,91 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     return { correctCount, total, averages };
   };
 
+  // Helper for Fill-in-the-blank stats calculation
+  const getFillStats = () => {
+    const q = activity.questions[currentQIndex];
+    if (!q || q.type !== 'fill') return { overallAccuracy: 0, totalStudents: 0, blanksStats: [], studentScores: [] };
+    const blanks = q.blanks || [];
+    const submissions = answers;
+    const studentNames = Object.keys(submissions);
+    const totalStudents = studentNames.length;
+
+    let totalCorrectBlanks = 0;
+    const totalPossibleBlanks = totalStudents * blanks.length;
+
+    const blanksStats = blanks.map(b => {
+      let correctCount = 0;
+      const answerCounts = {};
+      const acceptable = (b.acceptableAnswers || []).map(a => a.toLowerCase().trim());
+
+      studentNames.forEach(sName => {
+        const studentAns = submissions[sName]?.answer || {};
+        const rawVal = studentAns[b.id] !== undefined ? String(studentAns[b.id]).trim() : '';
+        const cleanVal = rawVal.toLowerCase();
+
+        if (cleanVal) {
+          const isCorrect = acceptable.some(acc => {
+            if (cleanVal === acc) return true;
+            if (acc.length >= 4 && cleanVal.includes(acc)) return true;
+            return false;
+          });
+
+          if (isCorrect) {
+            correctCount++;
+            totalCorrectBlanks++;
+          }
+
+          answerCounts[rawVal] = (answerCounts[rawVal] || 0) + 1;
+        }
+      });
+
+      const accuracy = totalStudents > 0 ? (correctCount / totalStudents) * 100 : 0;
+      const sortedTopAnswers = Object.entries(answerCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([text, count]) => ({ text, count }));
+
+      return {
+        ...b,
+        correctCount,
+        accuracy,
+        topAnswers: sortedTopAnswers
+      };
+    });
+
+    const overallAccuracy = totalPossibleBlanks > 0 ? (totalCorrectBlanks / totalPossibleBlanks) * 100 : 0;
+
+    const studentScores = studentNames.map(sName => {
+      const studentAns = submissions[sName]?.answer || {};
+      let score = 0;
+      const details = {};
+
+      blanks.forEach(b => {
+        const acceptable = (b.acceptableAnswers || []).map(a => a.toLowerCase().trim());
+        const rawVal = studentAns[b.id] !== undefined ? String(studentAns[b.id]).trim() : '';
+        const cleanVal = rawVal.toLowerCase();
+        const isCorrect = cleanVal ? acceptable.some(acc => cleanVal === acc || (acc.length >= 4 && cleanVal.includes(acc))) : false;
+        if (isCorrect) score++;
+        details[b.id] = { rawVal, isCorrect };
+      });
+
+      return {
+        studentName: sName,
+        score,
+        total: blanks.length,
+        percentage: blanks.length > 0 ? (score / blanks.length) * 100 : 0,
+        details
+      };
+    }).sort((a, b) => b.score - a.score);
+
+    return {
+      overallAccuracy,
+      totalStudents,
+      blanksStats,
+      studentScores
+    };
+  };
+
   // Sort overall game scoreboard
   const getSortedScoreboard = () => {
     return Object.entries(studentScores)
@@ -1279,6 +1377,28 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
           mockAnswers[st] = {
             answer: ans,
             timestamp: now - ((10 - idx) * 600),
+            questionIndex: currentQIndex
+          };
+        });
+      } else if (q.type === 'fill') {
+        const blanks = q.blanks || [];
+        simStudents.forEach((st, idx) => {
+          const studentAns = {};
+          blanks.forEach(b => {
+            const acc = b.acceptableAnswers || [];
+            if (idx === 3 && b.id % 3 === 0) {
+              studentAns[b.id] = 'Bug';
+            } else if (idx === 7 && b.id % 2 === 1) {
+              studentAns[b.id] = 'Error';
+            } else if (idx % 2 === 0 && acc.length > 1) {
+              studentAns[b.id] = acc[1] || acc[0] || b.displayAnswer;
+            } else {
+              studentAns[b.id] = acc[0] || b.displayAnswer;
+            }
+          });
+          mockAnswers[st] = {
+            answer: studentAns,
+            timestamp: now - ((10 - idx) * 700),
             questionIndex: currentQIndex
           };
         });
@@ -3378,6 +3498,137 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                   );
                 })()}
 
+                {/* Fill-in-the-Blank Stats Review */}
+                {currentQuestion.type === 'fill' && (() => {
+                  const { overallAccuracy, totalStudents, blanksStats } = getFillStats();
+                  
+                  return (
+                    <div>
+                      {/* Overall accuracy banner */}
+                      <div 
+                        className="glass-card flex-between animate-pulse-glow" 
+                        style={{ 
+                          padding: '1.25rem 1.5rem', 
+                          background: overallAccuracy >= 70 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(99, 102, 241, 0.08)', 
+                          borderColor: overallAccuracy >= 70 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(99, 102, 241, 0.25)', 
+                          marginBottom: '1.5rem',
+                          borderRadius: '12px'
+                        }}
+                      >
+                        <div>
+                          <strong style={{ fontSize: '1.35rem', color: overallAccuracy >= 70 ? 'var(--color-success)' : 'var(--color-indigo)' }}>
+                            全體填空答對率：{overallAccuracy.toFixed(0)}%
+                          </strong>
+                          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0.3rem 0 0 0' }}>
+                            共 {totalStudents} 位學生參與作答，涵蓋 {blanksStats.length} 個核心概念挖空格。
+                          </p>
+                        </div>
+                        <Award size={36} style={{ color: overallAccuracy >= 70 ? 'var(--color-warning)' : 'var(--color-indigo)' }} />
+                      </div>
+
+                      {/* Question Description / Context Card */}
+                      {currentQuestion.description && (
+                        <div className="glass-card" style={{ padding: '1rem 1.25rem', marginBottom: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '10px' }}>
+                          <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                            📝 題目情境與挖空標記：
+                          </h4>
+                          <div style={{ fontSize: '0.92rem', color: 'var(--text-primary)', lineHeight: '1.65' }}>
+                            <FormattedMarkdown text={currentQuestion.description} />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Blanks Breakdown Grid */}
+                      <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        📊 各空格答對率與學生主要填答：
+                      </h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+                        {blanksStats.map(b => {
+                          const pct = b.accuracy || 0;
+                          const isHigh = pct >= 70;
+                          const isMid = pct >= 40 && pct < 70;
+                          
+                          return (
+                            <div 
+                              key={b.id}
+                              className="glass-card"
+                              style={{ 
+                                padding: '1rem 1.15rem', 
+                                borderRadius: '10px', 
+                                background: 'rgba(255,255,255,0.02)', 
+                                border: '1px solid var(--border-light)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between'
+                              }}
+                            >
+                              <div>
+                                <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
+                                  <span style={{ 
+                                    width: '28px', 
+                                    height: '28px', 
+                                    borderRadius: '50%', 
+                                    background: 'rgba(99, 102, 241, 0.15)', 
+                                    color: 'var(--color-indigo)', 
+                                    display: 'inline-flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    fontWeight: 'bold',
+                                    fontSize: '0.95rem'
+                                  }}>
+                                    {b.label}
+                                  </span>
+                                  <span 
+                                    className={`badge ${isHigh ? 'badge-success' : (isMid ? 'badge-warning' : 'badge-danger')}`}
+                                    style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem' }}
+                                  >
+                                    答對率: {pct.toFixed(0)}% ({b.correctCount}/{totalStudents})
+                                  </span>
+                                </div>
+
+                                <div style={{ fontSize: '0.88rem', color: '#38bdf8', marginBottom: '0.65rem' }}>
+                                  標準答案：<strong>{b.displayAnswer}</strong>
+                                </div>
+
+                                {/* Progress bar */}
+                                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.75rem' }}>
+                                  <div style={{ width: `${pct}%`, height: '100%', background: isHigh ? 'linear-gradient(90deg, #10b981, #34d399)' : 'linear-gradient(90deg, #6366f1, #8b5cf6)', transition: 'width 0.6s ease' }} />
+                                </div>
+                              </div>
+
+                              {/* Student top answers pill cloud */}
+                              <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                                  學生主要填答 ({b.topAnswers.length > 0 ? '頻率' : '無作答'}):
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                                  {b.topAnswers.length > 0 ? (
+                                    b.topAnswers.map((ans, aIdx) => {
+                                      const acc = (b.acceptableAnswers || []).map(a => a.toLowerCase().trim());
+                                      const isCorrect = acc.some(a => ans.text.toLowerCase().trim() === a || (a.length >= 4 && ans.text.toLowerCase().trim().includes(a)));
+                                      return (
+                                        <span 
+                                          key={aIdx} 
+                                          className={`badge ${isCorrect ? 'badge-success' : 'badge-secondary'}`}
+                                          style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem' }}
+                                        >
+                                          {isCorrect ? '✓ ' : ''}{ans.text} <strong style={{ opacity: 0.8 }}>({ans.count})</strong>
+                                        </span>
+                                      );
+                                    })
+                                  ) : (
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>尚未有學生填答</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Game scoreboard for current question */}
                 {currentQuestion.type === 'game' && (
                   <div>
@@ -3528,11 +3779,18 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                     <h3 style={{ fontSize: '1.1rem', margin: 0 }}>
                       Student Submissions ({joinedStudents.length})
                     </h3>
-                    {(currentQuestion.type === 'ccq' || currentQuestion.type === 'ordering') && (() => {
+                    {(currentQuestion.type === 'ccq' || currentQuestion.type === 'ordering' || currentQuestion.type === 'fill') && (() => {
                       const answeredCount = Object.keys(answers).length;
                       let correctCount = 0;
                       if (currentQuestion.type === 'ordering') {
                         correctCount = Object.values(answers).filter(a => a.questionIndex === currentQIndex && Array.isArray(a.answer) && a.answer.every((v, i) => v === currentQuestion.items[i])).length;
+                      } else if (currentQuestion.type === 'fill') {
+                        const { overallAccuracy } = getFillStats();
+                        return (
+                          <span className="badge badge-success" style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem' }}>
+                            總空格答對率: {overallAccuracy.toFixed(0)}% ({answeredCount} 人作答)
+                          </span>
+                        );
                       } else {
                         correctCount = Object.values(answers).filter(a => a.questionIndex === currentQIndex && a.answer === currentQuestion.correctAnswer).length;
                       }
@@ -3565,6 +3823,19 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
                           statusLabel = `已投 Option ${submission.answer}`;
                         } else if (currentQuestion.type === 'pair') {
                           statusLabel = `已提交雙人討論 (夥伴: ${submission.answer?.partnerName || '未填'})`;
+                        } else if (currentQuestion.type === 'fill') {
+                          const blanks = currentQuestion.blanks || [];
+                          const sAns = submission.answer || {};
+                          let cCount = 0;
+                          blanks.forEach(b => {
+                            const acc = (b.acceptableAnswers || []).map(a => a.toLowerCase().trim());
+                            const val = (sAns[b.id] !== undefined ? String(sAns[b.id]) : '').toLowerCase().trim();
+                            if (val && acc.some(a => val === a || (a.length >= 4 && val.includes(a)))) {
+                              cCount++;
+                            }
+                          });
+                          isCorrect = blanks.length > 0 && cCount === blanks.length;
+                          statusLabel = `${cCount}/${blanks.length} 格正確 (${Math.round((cCount / (blanks.length || 1)) * 100)}%)`;
                         } else {
                           statusLabel = submission.answer ? '已送出作答' : '未作答';
                         }

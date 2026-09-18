@@ -19,6 +19,7 @@ export default function StudentPreviewModal({ activity, roomCode, onClose, share
   const [orderingMap, setOrderingMap] = useState({});
   const [textMap, setTextMap] = useState({});
   const [partnerMap, setPartnerMap] = useState({});
+  const [fillMap, setFillMap] = useState({});
 
   const currentQ = questions[currentQIndex] || null;
   const qType = currentQ?.type || 'ccq';
@@ -257,7 +258,8 @@ export default function StudentPreviewModal({ activity, roomCode, onClose, share
                    qType === 'poll' ? '📊 POLL 即時投票' : 
                    qType === 'ordering' ? '🔢 ORDERING 流程排序' : 
                    qType === 'pair' ? '👥 PAIR 雙人討論' : 
-                   qType === 'wordcloud' ? '☁️ WORDCLOUD 文字雲' : qType.toUpperCase()}
+                   qType === 'wordcloud' ? '☁️ WORDCLOUD 文字雲' : 
+                   qType === 'fill' ? '📝 FILL 核心概念填空' : qType.toUpperCase()}
                 </span>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -570,6 +572,128 @@ export default function StudentPreviewModal({ activity, roomCode, onClose, share
                   )}
                 </div>
               )}
+
+              {/* Fill-in-the-Blank */}
+              {qType === 'fill' && (() => {
+                const blanks = currentQ.blanks || [];
+                const wordBank = (currentQ.wordBank && currentQ.wordBank.length > 0)
+                  ? currentQ.wordBank
+                  : blanks.map(b => b.displayAnswer).filter(Boolean);
+                const currentAnswers = fillMap[currentQIndex] || {};
+                const usedWords = Object.values(currentAnswers).filter(Boolean);
+
+                const handleSelectWordPreview = (word) => {
+                  if (hasSubmitted) return;
+                  // Find first unfilled blank, or blank 1
+                  const targetBlank = blanks.find(b => !currentAnswers[b.id]) || blanks[0];
+                  if (targetBlank) {
+                    setFillMap(prev => ({
+                      ...prev,
+                      [currentQIndex]: {
+                        ...(prev[currentQIndex] || {}),
+                        [targetBlank.id]: word
+                      }
+                    }));
+                  }
+                };
+
+                const handleClearBlankPreview = (bId) => {
+                  if (hasSubmitted) return;
+                  setFillMap(prev => {
+                    const next = { ...(prev[currentQIndex] || {}) };
+                    delete next[bId];
+                    return { ...prev, [currentQIndex]: next };
+                  });
+                };
+
+                return (
+                  <div>
+                    {currentQ.description && (() => {
+                      const cleanDesc = currentQ.description
+                        .replace(/^\s*[*•-]?\s*🔍?\s*\*\*?(?:詞彙庫|字詞庫|詞庫|選項池|Word\s*Bank)[^：:\n]*[：:][\s\S]*?(?=\n\s*(?:[1-9]\.|\*|【|<details)|$)/i, '')
+                        .trim();
+                      return cleanDesc ? (
+                        <div style={{ padding: '0.85rem 1rem', marginBottom: '1.15rem', background: 'rgba(99, 102, 241, 0.08)', borderLeft: '3px solid var(--color-indigo)', borderRadius: '6px', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                          <FormattedMarkdown text={cleanDesc} />
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Word Bank chips */}
+                    {wordBank.length > 0 && !hasSubmitted && (
+                      <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-indigo)', marginBottom: '0.45rem' }}>
+                          🔍 詞彙庫（點擊填入下一個空格）：
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          {wordBank.map((w, idx) => {
+                            const isUsed = usedWords.includes(w);
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => handleSelectWordPreview(w)}
+                                style={{
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '999px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  background: isUsed ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255,255,255,0.05)',
+                                  color: isUsed ? '#a5b4fc' : 'var(--text-primary)',
+                                  border: isUsed ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid var(--border-light)',
+                                  opacity: isUsed ? 0.7 : 1
+                                }}
+                              >
+                                {w} {isUsed ? '✓' : ''}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.65rem', marginBottom: '1rem' }}>
+                      {blanks.map(b => {
+                        const val = currentAnswers[b.id] || '';
+                        return (
+                          <div key={b.id} style={{ padding: '0.65rem 0.85rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+                              <span style={{ fontWeight: 'bold', color: 'var(--color-indigo)', fontSize: '0.95rem' }}>{b.label}</span>
+                              <span style={{ fontSize: '0.88rem', color: val ? '#38bdf8' : 'var(--text-muted)' }}>
+                                {val || '未填入'}
+                              </span>
+                            </div>
+                            {val && !hasSubmitted && (
+                              <button
+                                type="button"
+                                onClick={() => handleClearBlankPreview(b.id)}
+                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {!hasSubmitted ? (
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        style={{ width: '100%', padding: '0.85rem' }}
+                        onClick={handleSubmit}
+                      >
+                        {lang === 'zh' ? '送出填空作答' : 'Submit Answers'} <CornerDownRight size={16} />
+                      </button>
+                    ) : (
+                      <span className="badge badge-success" style={{ width: '100%', display: 'block', textAlign: 'center', padding: '0.5rem' }}>
+                        ✓ 填空作答已送出
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
 
             </div>
           ) : (

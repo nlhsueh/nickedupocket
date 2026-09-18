@@ -474,7 +474,7 @@ Time: 20
 #### [Fill] 請根據本章核心理論，填入最適當的軟體工程專業名詞：
 
 * 🔍 **詞彙庫 (Word Bank)**：
-  `Mistake` ｜ `Fault / Defect` ｜ `Error State` ｜ `Failure` ｜ `前置條件 (Preconditions)` ｜ `後置條件 (Postconditions)` ｜ `類別不變量 (Class Invariants)` ｜ `嚴重度 (Severity)` ｜ `優先級 (Priority)`
+  `前置條件 (Preconditions)` ｜ `Fault / Defect` ｜ `優先級 (Priority)` ｜ `Mistake` ｜ `類別不變量 (Class Invariants)` ｜ `Error State` ｜ `嚴重度 (Severity)` ｜ `Failure` ｜ `後置條件 (Postconditions)`
 
 1. **錯的因果鏈**：
    工程師心智思維中的人為失誤稱為 **[ ① ______ ]**，反映在程式碼中成為靜態的 **[ ② ______ ]**；當該行程式碼被執行，會引發記憶體內部的 **[ ③ ______ ]**，最終造成外部可見的行為偏離，稱為 **[ ④ ______ ]**。

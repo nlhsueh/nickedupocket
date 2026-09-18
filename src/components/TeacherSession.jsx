@@ -578,6 +578,15 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         timeLimit: duration
       }, true);
     } else if (q.type === 'fill') {
+      const rawBank = (q.wordBank && q.wordBank.length > 0)
+        ? q.wordBank
+        : (q.blanks || []).map(b => b.displayAnswer).filter(Boolean);
+      const shuffledBank = [...rawBank];
+      for (let i = shuffledBank.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledBank[i], shuffledBank[j]] = [shuffledBank[j], shuffledBank[i]];
+      }
+
       broadcastState({
         event: 'question_start',
         type: 'fill',
@@ -585,7 +594,7 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
         questionText: q.questionText,
         description: q.description || '',
         blanks: q.blanks || [],
-        wordBank: q.wordBank || [],
+        wordBank: shuffledBank,
         timeLimit: duration
       }, true);
     } else {

@@ -156,6 +156,7 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
   const [pairSummary, setPairSummary] = useState('');
   const [fillAnswers, setFillAnswers] = useState({});
   const [activeBlankId, setActiveBlankId] = useState(1);
+  const [shuffledWordBank, setShuffledWordBank] = useState([]);
   const [hasSubmitted, setHasSubmitted] = useState(() => {
     try {
       return sessionStorage.getItem(`nickpocket_survey_submitted_${roomCode}`) === 'true';
@@ -463,6 +464,20 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
         const shuffled = [...itemsWithIndex].sort(() => Math.random() - 0.5);
         setOrderingItems(shuffled);
       }
+
+      if (payload.type === 'fill') {
+        const rawBank = (payload.wordBank && payload.wordBank.length > 0)
+          ? payload.wordBank
+          : (payload.blanks || []).map(b => b.displayAnswer).filter(Boolean);
+        const shuffled = [...rawBank];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        setShuffledWordBank(shuffled);
+      } else {
+        setShuffledWordBank([]);
+      }
       
       if (payload.timeLimit) {
         setTimeLeft(payload.timeLimit);
@@ -707,6 +722,23 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
     }, 1000);
     return () => clearInterval(timer);
   }, [roomState]);
+
+  // Fallback: Ensure fill candidate word bank is always shuffled
+  useEffect(() => {
+    if (activeQuestion?.type === 'fill' && shuffledWordBank.length === 0) {
+      const rawBank = (activeQuestion.wordBank && activeQuestion.wordBank.length > 0)
+        ? activeQuestion.wordBank
+        : (activeQuestion.blanks || []).map(b => b.displayAnswer).filter(Boolean);
+      if (rawBank.length > 0) {
+        const shuffled = [...rawBank];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        setShuffledWordBank(shuffled);
+      }
+    }
+  }, [activeQuestion?.index, activeQuestion?.type]);
 
   // 3. Option choice submission
   const selectOptionValue = (letter) => {
@@ -2702,9 +2734,11 @@ export default function StudentSession({ roomCode, onLeave, activity, course, ch
                   {/* Word Bank / 候選詞彙池 (方案 A) */}
                   {(() => {
                     const blanks = activeQuestion.blanks || [];
-                    const wordBank = (activeQuestion.wordBank && activeQuestion.wordBank.length > 0)
-                      ? activeQuestion.wordBank
-                      : blanks.map(b => b.displayAnswer).filter(Boolean);
+                    const wordBank = (shuffledWordBank && shuffledWordBank.length > 0)
+                      ? shuffledWordBank
+                      : (activeQuestion.wordBank && activeQuestion.wordBank.length > 0)
+                        ? activeQuestion.wordBank
+                        : blanks.map(b => b.displayAnswer).filter(Boolean);
                     const usedWords = Object.values(fillAnswers).filter(Boolean);
                     const currentActiveBlank = blanks.find(b => b.id === activeBlankId) || blanks[0];
 

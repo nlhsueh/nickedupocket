@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   X, ExternalLink, RefreshCw, Smartphone, Tablet, CheckCircle, 
   ChevronLeft, ChevronRight, CornerDownRight, 
@@ -18,11 +18,26 @@ export default function StudentPreviewModal({ activity, roomCode, onClose, share
   const [submittedMap, setSubmittedMap] = useState({});
   const [orderingMap, setOrderingMap] = useState({});
   const [textMap, setTextMap] = useState({});
+
   const [partnerMap, setPartnerMap] = useState({});
   const [fillMap, setFillMap] = useState({});
 
   const currentQ = questions[currentQIndex] || null;
   const qType = currentQ?.type || 'ccq';
+
+  // Shuffle candidate Word Bank for cloze questions so options are never in answer order
+  const shuffledWordBank = useMemo(() => {
+    if (currentQ?.type !== 'fill') return [];
+    const raw = (currentQ.wordBank && currentQ.wordBank.length > 0)
+      ? currentQ.wordBank
+      : (currentQ.blanks || []).map(b => b.displayAnswer).filter(Boolean);
+    const shuffled = [...raw];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, [currentQIndex, currentQ]);
 
   const selectedAnswer = answersMap[currentQIndex] || null;
   const hasSubmitted = Boolean(submittedMap[currentQIndex]);
@@ -576,9 +591,11 @@ export default function StudentPreviewModal({ activity, roomCode, onClose, share
               {/* Fill-in-the-Blank */}
               {qType === 'fill' && (() => {
                 const blanks = currentQ.blanks || [];
-                const wordBank = (currentQ.wordBank && currentQ.wordBank.length > 0)
-                  ? currentQ.wordBank
-                  : blanks.map(b => b.displayAnswer).filter(Boolean);
+                const wordBank = (shuffledWordBank && shuffledWordBank.length > 0)
+                  ? shuffledWordBank
+                  : (currentQ.wordBank && currentQ.wordBank.length > 0)
+                    ? currentQ.wordBank
+                    : blanks.map(b => b.displayAnswer).filter(Boolean);
                 const currentAnswers = fillMap[currentQIndex] || {};
                 const usedWords = Object.values(currentAnswers).filter(Boolean);
 

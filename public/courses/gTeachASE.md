@@ -429,7 +429,7 @@
 - Maintainability
 - Portability
 - Compatibility
-Time: 20
+Time: 30
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
@@ -449,7 +449,7 @@ Time: 20
 - Maintainability
 - Portability
 - Compatibility
-Time: 20
+Time: 30
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
@@ -468,7 +468,7 @@ Time: 20
 - Maintainability
 - Portability
 - Compatibility
-Time: 20
+Time: 30
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
@@ -487,7 +487,7 @@ Time: 20
 - Maintainability (Correct)
 - Portability
 - Compatibility
-Time: 20
+Time: 30
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
@@ -506,7 +506,7 @@ Time: 20
 - Maintainability
 - Portability
 - Compatibility
-Time: 20
+Time: 30
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
@@ -525,7 +525,7 @@ Time: 20
 - Maintainability
 - Portability
 - Compatibility (Correct)
-Time: 20
+Time: 30
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
@@ -544,7 +544,7 @@ Time: 20
 - Maintainability
 - Portability
 - Compatibility
-Time: 20
+Time: 30
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
@@ -563,7 +563,7 @@ Time: 20
 - Maintainability
 - Portability (Correct)
 - Compatibility
-Time: 20
+Time: 30
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
@@ -582,7 +582,7 @@ Time: 20
 - Maintainability
 - Portability
 - Compatibility
-Time: 20
+Time: 30
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
@@ -601,7 +601,7 @@ Time: 20
 - Maintainability
 - Portability (Correct)
 - Compatibility
-Time: 20
+Time: 30
 
 <details>
 <summary>Click to view Answer & Explanation</summary>

@@ -875,6 +875,70 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
     URL.revokeObjectURL(url);
   };
 
+  const getGameTournamentCSVContent = () => {
+    let csv = '\uFEFF'; // UTF-8 BOM for Microsoft Excel
+    csv += `"${activity.title} - 限時搶答錦標賽成果總榜"\n`;
+    csv += `"${lang === 'zh' ? '活動代碼' : 'Activity Code'}","${roomCode}","${lang === 'zh' ? '匯出時間' : 'Export Time'}","${new Date().toLocaleString()}"\n`;
+    csv += `"${lang === 'zh' ? '總題數' : 'Total Questions'}","${activity.questions.length}","${lang === 'zh' ? '參賽人數' : 'Participants'}","${Object.keys(studentScores).length}","${lang === 'zh' ? '在線人數' : 'Online Students'}","${joinedStudents.length}"\n\n`;
+
+    // Part 1: Leaderboard Standings
+    csv += `"[ 榮譽排行榜總結算 ]"\n`;
+    csv += `"名次","學生暱稱","總積分","答對題數","答題準確率"\n`;
+    const sorted = getSortedScoreboard();
+    sorted.forEach((st, idx) => {
+      let correctTotal = 0;
+      activity.questions.forEach((_, qIdx) => {
+        const stats = getQuestionSubmissionStats(qIdx);
+        const q = activity.questions[qIdx];
+        if (q && q.correctAnswer && stats.answersMap[st.name] === q.correctAnswer) {
+          correctTotal++;
+        }
+      });
+      const acc = activity.questions.length > 0 ? ((correctTotal / activity.questions.length) * 100).toFixed(0) + '%' : '0%';
+      csv += `"${idx + 1}","${st.name.replace(/"/g, '""')}","${st.score}","${correctTotal}/${activity.questions.length}","${acc}"\n`;
+    });
+
+    // Part 2: Question Summary & Accuracy
+    csv += `\n"[ 各題題目與全班答對率總覽 ]"\n`;
+    csv += `"題號","題型","題目內容","標準答案","全班作答人數","全班答對人數","全班答對率"\n`;
+    activity.questions.forEach((q, qIdx) => {
+      const stats = getQuestionSubmissionStats(qIdx);
+      const accStr = stats.accuracy !== null ? `${stats.accuracy}%` : 'N/A';
+      const cleanQ = String(q.questionText || '').replace(/"/g, '""').replace(/\r?\n/g, ' ');
+      csv += `"第 ${qIdx + 1} 題","${q.type}","${cleanQ}","${q.correctAnswer || ''}","${stats.total}","${stats.correctCount}","${accStr}"\n`;
+    });
+
+    // Part 3: Detailed Student Answers matrix
+    csv += `\n"[ 全體學生各題選答明細 (作答答案 / 正誤) ]"\n`;
+    const qHeaders = activity.questions.map((_, i) => `"Q${i + 1} 答案","Q${i + 1} 正誤"`).join(',');
+    csv += `"學生暱稱","總積分",${qHeaders}\n`;
+
+    sorted.forEach(st => {
+      const ansCols = activity.questions.map((q, qIdx) => {
+        const stats = getQuestionSubmissionStats(qIdx);
+        const ans = stats.answersMap[st.name] || '';
+        const isCorrect = (q.correctAnswer && ans === q.correctAnswer) ? 'O' : (ans ? 'X' : '-');
+        return `"${ans}","${isCorrect}"`;
+      }).join(',');
+      csv += `"${st.name.replace(/"/g, '""')}","${st.score}",${ansCols}\n`;
+    });
+
+    return csv;
+  };
+
+  const exportGameCSV = () => {
+    const csv = getGameTournamentCSVContent();
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${activity.title || 'game'}_錦標賽成果總榜_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // 4.1 Email report via Google Apps Script (點擊時才寄送)
   const [emailStatus, setEmailStatus] = useState('idle'); // 'idle' | 'sending' | 'success' | 'error'
   const [emailStatusMsg, setEmailStatusMsg] = useState('');
@@ -914,6 +978,48 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
             q.options.forEach((opt, optIdx) => {
               const letter = String.fromCharCode(65 + optIdx);
               summaryHtml += `<li><strong>${letter}.</strong> ${opt}</li>`;
+            });
+            summaryHtml += `</ul>`;
+          }
+          summaryHtml += `</div>`;
+        });
+      } else if (type === 'game') {
+        csvContent = getGameTournamentCSVContent();
+        csvFilename = `${activity.title || 'game'}_錦標賽成果總榜_${new Date().toISOString().slice(0, 10)}.csv`;
+        const sorted = getSortedScoreboard();
+        responsesCount = sorted.length;
+
+        summaryHtml = `<h3 style="color: #1e293b; margin: 0 0 12px 0;">🏆 限時搶答錦標賽總結算報告（共 ${activity.questions.length} 題，參賽 ${sorted.length} 人）：</h3>`;
+
+        // Podium Top 5
+        if (sorted.length > 0) {
+          summaryHtml += `<div style="margin-bottom: 16px; padding: 14px 18px; background: #fffbeb; border-radius: 10px; border: 1px solid #fef3c7;">`;
+          summaryHtml += `<div style="font-weight: bold; color: #b45309; margin-bottom: 10px; font-size: 15px;">👑 榮譽排行榜（前五名）：</div>`;
+          summaryHtml += `<table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #78350f;">`;
+          summaryHtml += `<tr style="border-bottom: 1px solid #fde68a; text-align: left;"><th style="padding: 6px 8px;">名次</th><th style="padding: 6px 8px;">學生暱稱</th><th style="padding: 6px 8px; text-align: right;">總積分</th></tr>`;
+          sorted.slice(0, 5).forEach((p, idx) => {
+            const medal = idx === 0 ? '🥇 冠軍 1st' : idx === 1 ? '🥈 亞軍 2nd' : idx === 2 ? '🥉 季軍 3rd' : `第 ${idx + 1} 名`;
+            summaryHtml += `<tr style="border-bottom: 1px solid #fef3c7;"><td style="padding: 6px 8px; font-weight: bold;">${medal}</td><td style="padding: 6px 8px;">${p.name}</td><td style="padding: 6px 8px; text-align: right; font-weight: bold; color: #d97706;">${p.score} 分</td></tr>`;
+          });
+          summaryHtml += `</table></div>`;
+        }
+
+        // Questions accuracy
+        summaryHtml += `<div style="margin-bottom: 10px; font-weight: bold; color: #1e293b; font-size: 15px;">📊 各題全班答對率與選項分佈：</div>`;
+        activity.questions.forEach((q, idx) => {
+          const stats = getQuestionSubmissionStats(idx);
+          const accStr = stats.accuracy !== null ? `${stats.accuracy}%` : 'N/A';
+          const badgeColor = stats.accuracy >= 70 ? '#10b981' : stats.accuracy >= 40 ? '#f59e0b' : '#ef4444';
+          summaryHtml += `<div style="margin-bottom: 12px; padding: 12px 16px; background: #f8fafc; border-radius: 8px; border-left: 4px solid ${badgeColor};">`;
+          summaryHtml += `<div style="font-weight: bold; color: #1e293b; margin-bottom: 6px;">第 ${idx + 1} 題：${q.questionText}</div>`;
+          summaryHtml += `<div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">標準答案：<strong style="color: #10b981;">${q.correctAnswer || '無'}</strong> ｜ 全班答對率：<strong style="color: ${badgeColor};">${accStr}</strong> (${stats.correctCount}/${stats.total} 人答對)</div>`;
+          if (q.options && q.options.length > 0) {
+            summaryHtml += `<ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #475569;">`;
+            q.options.forEach((opt, optIdx) => {
+              const letter = String.fromCharCode(65 + optIdx);
+              const isCorrect = q.correctAnswer === letter;
+              const votersCount = Object.values(stats.answersMap).filter(a => a === letter).length;
+              summaryHtml += `<li><strong>${letter}.</strong> ${opt} ${isCorrect ? '✅ (標準答案)' : ''} <span style="color: #64748b;">— ${votersCount} 人</span></li>`;
             });
             summaryHtml += `</ul>`;
           }
@@ -2756,42 +2862,82 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
               {/* Action buttons: Next & Start for Game, or Next Question for Multi-question Surveys/Activities, or Return */}
               <div>
                 {currentQuestion.type === 'game' ? (
-                currentQIndex < activity.questions.length - 1 ? (
-                  <button 
-                    className="btn btn-primary" 
-                    style={{ 
-                      padding: '0.75rem 1.5rem', 
-                      fontSize: '1rem', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.5rem',
-                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                      boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
-                    }} 
-                    onClick={nextQuestionAndStart}
-                    title={lang === 'zh' ? '進入下一題並立即開始搶答計時' : 'Next Question and Start'}
-                  >
-                    <Play size={18} fill="white" /> {lang === 'zh' ? '下一題並立即搶答' : 'Next & Start'}
-                  </button>
-                ) : (
-                  <button 
-                    className="btn btn-primary" 
-                    style={{ 
-                      padding: '0.75rem 1.5rem', 
-                      fontSize: '1rem', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.5rem',
-                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                      boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)'
-                    }} 
-                    onClick={nextQuestionAndStart}
-                    title={lang === 'zh' ? '結算總分並揭曉最終冠軍頒獎台' : 'View Final Tournament Podium'}
-                  >
-                    <Award size={18} /> {lang === 'zh' ? '🏆 揭曉最終冠軍頒獎台' : '🏆 View Final Podium'}
-                  </button>
-                )
-              ) : activity.questions.length > 1 && currentQIndex < activity.questions.length - 1 ? (
+                  <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {currentQIndex < activity.questions.length - 1 ? (
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ 
+                          padding: '0.75rem 1.5rem', 
+                          fontSize: '1rem', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '0.5rem',
+                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
+                        }} 
+                        onClick={nextQuestionAndStart}
+                        title={lang === 'zh' ? '進入下一題並立即開始搶答計時' : 'Next Question and Start'}
+                      >
+                        <Play size={18} fill="white" /> {lang === 'zh' ? '下一題並立即搶答' : 'Next & Start'}
+                      </button>
+                    ) : (
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ 
+                          padding: '0.75rem 1.5rem', 
+                          fontSize: '1rem', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '0.5rem',
+                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                          boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)'
+                        }} 
+                        onClick={nextQuestionAndStart}
+                        title={lang === 'zh' ? '結算總分並揭曉最終冠軍頒獎台' : 'View Final Tournament Podium'}
+                      >
+                        <Award size={18} /> {lang === 'zh' ? '🏆 揭曉最終冠軍頒獎台' : '🏆 View Final Podium'}
+                      </button>
+                    )}
+                    <button 
+                      className="btn btn-secondary no-print" 
+                      style={{ 
+                        padding: '0.75rem 1.05rem', 
+                        fontSize: '0.88rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.4rem', 
+                        color: emailStatus === 'success' ? '#10b981' : emailStatus === 'error' ? '#ef4444' : '#38bdf8', 
+                        borderColor: emailStatus === 'success' ? 'rgba(16, 185, 129, 0.4)' : emailStatus === 'error' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(56, 189, 248, 0.4)',
+                        background: 'rgba(56, 189, 248, 0.08)'
+                      }} 
+                      onClick={() => handleSendEmailReport('single')}
+                      disabled={emailStatus === 'sending'}
+                      title={lang === 'zh' ? '點擊將本題作答成果與 CSV 附件寄至信箱' : 'Email Question Report'}
+                    >
+                      {emailStatus === 'sending' ? (
+                        <>
+                          <RefreshCw size={15} className="animate-spin" /> {lang === 'zh' ? '寄送中...' : 'Sending...'}
+                        </>
+                      ) : emailStatus === 'success' ? (
+                        <>
+                          <CheckCircle2 size={15} /> {lang === 'zh' ? '已寄送！' : 'Sent!'}
+                        </>
+                      ) : (
+                        <>
+                          <Mail size={15} /> {lang === 'zh' ? '寄送本題成果' : 'Email Question'}
+                        </>
+                      )}
+                    </button>
+                    <button 
+                      className="btn btn-secondary no-print" 
+                      style={{ padding: '0.75rem 1.05rem', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)' }} 
+                      onClick={exportSingleQuestionCSV}
+                      title={lang === 'zh' ? '匯出本題 CSV' : 'Export Question CSV'}
+                    >
+                      <Download size={15} /> {lang === 'zh' ? '匯出本題 CSV' : 'Export CSV'}
+                    </button>
+                  </div>
+                ) : activity.questions.length > 1 && currentQIndex < activity.questions.length - 1 ? (
                 /* Multi-question Survey / Activity */
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button 
@@ -4365,9 +4511,91 @@ export default function TeacherSession({ activity, roomCode, onBack, onLaunchIns
             </div>
           )}
 
-          <button className="btn btn-primary" style={{ marginTop: '2.5rem', padding: '0.9rem 2.5rem', fontSize: '1rem' }} onClick={onBack}>
-            {lang === 'zh' ? '返回活動列表 / 儀表板' : 'Return to Dashboard'}
-          </button>
+          <div style={{ marginTop: '2.5rem', display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button 
+              className="btn btn-secondary no-print" 
+              style={{ 
+                padding: '0.8rem 1.4rem', 
+                fontSize: '0.95rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.45rem', 
+                color: emailStatus === 'success' ? '#10b981' : emailStatus === 'error' ? '#ef4444' : '#38bdf8', 
+                borderColor: emailStatus === 'success' ? 'rgba(16, 185, 129, 0.4)' : emailStatus === 'error' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(56, 189, 248, 0.4)',
+                background: 'rgba(56, 189, 248, 0.08)'
+              }} 
+              onClick={() => handleSendEmailReport(activity.questions.some(q => q.type === 'game') ? 'game' : 'survey')}
+              disabled={emailStatus === 'sending'}
+              title={`點擊將錦標賽成果統計與 CSV 附件寄至 ${DEFAULT_RECIPIENT}`}
+            >
+              {emailStatus === 'sending' ? (
+                <>
+                  <RefreshCw size={16} className="animate-spin" /> {lang === 'zh' ? '寄送中...' : 'Sending...'}
+                </>
+              ) : emailStatus === 'success' ? (
+                <>
+                  <CheckCircle2 size={16} /> {lang === 'zh' ? '已寄送！' : 'Sent!'}
+                </>
+              ) : (
+                <>
+                  <Mail size={16} /> {lang === 'zh' ? '寄送成果至信箱' : 'Email Report'}
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary no-print"
+              style={{ padding: '0.8rem 0.85rem', color: 'var(--text-muted)' }}
+              onClick={() => setShowGasModal(true)}
+              title={lang === 'zh' ? '設定 Google Apps Script 發信網址' : 'Configure Mailer'}
+            >
+              <Settings size={16} />
+            </button>
+            <button 
+              className="btn btn-secondary no-print" 
+              style={{ padding: '0.8rem 1.35rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)' }} 
+              onClick={exportGameCSV}
+              title={lang === 'zh' ? '匯出本場搶答錦標賽全班成績與各題明細 CSV' : 'Export tournament results to CSV'}
+            >
+              <Download size={16} /> {lang === 'zh' ? '匯出總榜 CSV' : 'Export CSV'}
+            </button>
+            <button 
+              className="btn btn-secondary no-print" 
+              style={{ padding: '0.8rem 1.35rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }} 
+              onClick={() => window.print()}
+              title={lang === 'zh' ? '列印或儲存最終成果排行榜為 PDF' : 'Print or save as PDF'}
+            >
+              <Printer size={16} /> {lang === 'zh' ? '列印 / 儲存 PDF' : 'Print / Save PDF'}
+            </button>
+            <button 
+              className="btn btn-primary" 
+              style={{ padding: '0.8rem 2rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }} 
+              onClick={onBack}
+            >
+              <ArrowLeft size={16} /> {lang === 'zh' ? '返回活動列表 / 儀表板' : 'Return to Dashboard'}
+            </button>
+          </div>
+
+          {emailStatusMsg && (
+            <div 
+              style={{ 
+                marginTop: '1.25rem',
+                padding: '0.75rem 1.4rem',
+                borderRadius: '10px',
+                fontSize: '0.92rem',
+                background: emailStatus === 'error' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                color: emailStatus === 'error' ? '#f87171' : '#34d399',
+                border: `1px solid ${emailStatus === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+              }}
+            >
+              {emailStatus === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+              {emailStatusMsg}
+            </div>
+          )}
           </div>
         )}
 

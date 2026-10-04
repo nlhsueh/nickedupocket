@@ -1,8 +1,8 @@
 # Advanced Software Engineering (進階軟體工程)
 
-## Chapter 1: Introduction to Software Engineering
+## Introduction to Software Engineering
 
-### [Activity: ase-ch01-ccq1] Concept Check (CCQ 1) — The Software Crisis
+### [Activity: ase-ch01-ccq1] Introduction to Software Engineering CCQ 1
 #### [CCQ] Why couldn't the 1968 Software Crisis be resolved simply by purchasing faster computer hardware or larger memory?
 - Computer hardware manufacturing and memory fabrication completely stagnated in the late 1960s, preventing computational speedups.
 - The crisis was fundamentally an intellectual and organizational challenge of system complexity, which faster hardware only amplified. (Correct)
@@ -16,7 +16,7 @@
 **Explanation**: The crisis was fundamentally an intellectual and organizational failure in managing system complexity. Increasing hardware capacity allowed organizations to build systems of unprecedented scale, which human programmers using ad-hoc, informal techniques could not manage. Faster CPU chips do not fix missing requirements, tangled spaghetti dependencies, or miscommunicated interface contracts.
 </details>
 
-### [Activity: ase-ch01-ccq2] Concept Check (CCQ 2) — The IEEE Definition of Software
+### [Activity: ase-ch01-ccq2] Introduction to Software Engineering CCQ 2
 #### [CCQ] According to the IEEE standard definition of software, which of the following is NOT considered a component of software?
 - Executable computer programs and source code files.
 - System database schemas and configuration files.
@@ -30,7 +30,7 @@
 **Explanation**: The IEEE standard defines software as computer programs, procedures, and possibly associated documentation and data. CPU hardware and physical memory are physical electronic devices (hardware) that execute software, rather than components of the software itself.
 </details>
 
-### [Activity: ase-ch01-ccq3] Concept Check (CCQ 3) — Core Universal Activities of the Software Process
+### [Activity: ase-ch01-ccq3] Introduction to Software Engineering CCQ 3
 #### [CCQ] Which of the following pairs correctly matches a specific software engineering action with its corresponding universal core activity?
 - Conducting stakeholder interviews to draft user stories $\rightarrow$ Software Specification (Correct)
 - Writing automated unit tests to mock database responses $\rightarrow$ Software Design & Implementation
@@ -44,7 +44,7 @@
 **Explanation**: Eliciting and modeling requirements through stakeholder interviews is a direct action in Software Specification. Writing unit tests is part of Software Validation (specifically verification). Refactoring database schemas is Software Evolution (preventive/perfective maintenance). Swapping APIs is Design & Implementation or Evolution.
 </details>
 
-### [Activity: ase-ch01-ccq4] Concept Check (CCQ 4) — Brooks's Law and Project Dynamics
+### [Activity: ase-ch01-ccq4] Introduction to Software Engineering CCQ 4
 #### [CCQ] A project is 3 weeks behind schedule with 2 weeks remaining before release. The manager hires 4 junior programmers to speed up progress. What will happen according to Brooks's Law?
 - The project will finish 1 week early.
 - The project will be delayed further because senior engineers must spend time onboarding and mentoring new hires. (Correct)
@@ -58,7 +58,7 @@
 **Explanation**: Frederick Brooks demonstrated in The Mythical Man-Month that complex software development is not partitionable like manual labor. Adding people to a late project increases communication overhead quadratically according to n(n-1)/2, while senior engineers must stop productive coding to onboard newcomers.
 </details>
 
-### [Activity: ase-ch01-ccq5] Concept Check (CCQ 5) — Fundamental Design Principles
+### [Activity: ase-ch01-ccq5] Introduction to Software Engineering CCQ 5
 #### [CCQ] An order-processing module directly handles HTTP requests, executes payment transactions, queries the SQL database, and generates HTML receipt emails. Which fundamental design principle is most severely violated?
 - Separation of Concerns: Multiple distinct responsibilities are tightly tangled in a single module. (Correct)
 - YAGNI: Speculative future features are implemented before actual business requirements emerge.
@@ -72,7 +72,7 @@
 **Explanation**: Separation of Concerns (and the Single Responsibility Principle) dictates that a module should have only one reason to change and encapsulate a single coherent responsibility. Tangling HTTP routing, business payment processing, database access, and UI rendering in one module creates severe coupling and high fragility.
 </details>
 
-### [Activity: ase-ch01-ccq6] Concept Check (CCQ 6) — Matching Real-World Issues to ISO 25010 Quality Characteristics
+### [Activity: ase-ch01-ccq6] Introduction to Software Engineering CCQ 6
 #### [CCQ] Which of the following matches a real-world software issue with its corresponding ISO 25010 quality characteristic?
 - A database query taking 15 seconds to return results $\rightarrow$ Maintainability (Testability)
 - A system crash occurring when a third-party API goes offline $\rightarrow$ Reliability (Fault Tolerance) (Correct)
@@ -86,7 +86,7 @@
 **Explanation**: A system's ability to cope with external service failures without crashing is the definition of Fault Tolerance (a sub-characteristic of Reliability). Slow query execution is Performance Efficiency (Time Behavior). Struggling to write unit tests is Maintainability (Testability). Unencrypted session cookies belong to Security (Confidentiality).
 </details>
 
-### [Activity: ase-ch01-ccq7] Concept Check (CCQ 7) — Engineering Ethics and the Public Interest
+### [Activity: ase-ch01-ccq7] Introduction to Software Engineering CCQ 7
 #### [CCQ] Under the ACM/IEEE Code of Ethics, if an employer directs an engineer to implement an algorithm that falsifies safety compliance reports, what is the engineer's obligation?
 - Comply, because the employer pays the engineer's salary.
 - Refuse and escalate, because the Public Interest takes precedence over Employer loyalty. (Correct)
@@ -100,7 +100,7 @@
 **Explanation**: Principle 1 of the ACM/IEEE Software Engineering Code of Ethics states that software engineers shall act consistently with the public interest, which takes absolute precedence over loyalty to an employer or client.
 </details>
 
-### [Activity: ase-ch01-ccq8] Concept Check (CCQ 8) — AI Coding & Code Churn
+### [Activity: ase-ch01-ccq8] Introduction to Software Engineering CCQ 8
 #### [CCQ] In empirical studies evaluating AI coding assistants (such as GitClear's analysis of 150M lines of code), "Code Churn" emerged as a major warning sign. What does high Code Churn indicate in an AI-assisted codebase?
 - Code is rapidly rewritten, deleted, or patched shortly after commit, indicating brittle code accepted without sufficient verification. (Correct)
 - Compilers and bundlers are aggressively removing unreachable dead code from application binaries during automated deployment.
@@ -114,7 +114,7 @@
 **Explanation**: Code churn measures the percentage of code that is modified, replaced, or deleted within two weeks of being committed. In AI coding environments, high code churn reveals that developers rapidly accept AI suggestions that compile on localhost but fail under real-world integration, forcing frequent rewrites and accumulating maintainability debt.
 </details>
 
-### [Activity: ase-ch01-ccq9] Concept Check (CCQ 9) — AI Verification & Echo-Chamber Testing
+### [Activity: ase-ch01-ccq9] Introduction to Software Engineering CCQ 9
 #### [CCQ] An engineer prompts an AI to generate a complex payment calculation module, and then asks the same AI to write unit tests without providing a formal specification. All tests pass. What is the primary risk?
 - Echo-chamber validation: The generated tests merely mirror the AI's internal flawed assumptions rather than actual business requirements. (Correct)
 - Performance bottleneck: AI-generated test assertions take significantly longer to execute than human-written assertions.
@@ -128,9 +128,9 @@
 **Explanation**: When AI writes both the implementation and its own test cases without an independent specification contract, it falls into "echo-chamber testing"—validating only what it assumed, rather than what the system is actually required to do. Independent verification is required ("Who tests the tester?").
 </details>
 
-## Chapter 2: Software Development Processes & Methodologies
+## Software Development Processes & Methodologies
 
-### [Activity: ase-ch02-ccq1] Concept Check (CCQ 1) — Operational Drawbacks of the Waterfall Model
+### [Activity: ase-ch02-ccq1] Software Development Processes & Methodologies CCQ 1
 #### [CCQ] What is the primary operational drawback of the traditional Waterfall model?
 - It produces inadequate documentation for external auditing and compliance.
 - It makes accommodating changing requirements extremely difficult and costly once underway. (Correct)
@@ -144,7 +144,7 @@
 **Explanation**: The Waterfall model rigidly partitions activities into sequential stages with formal handoffs. Accommodating changing user needs requires costly backward iterations, contract renegotiation, and massive specification rework.
 </details>
 
-### [Activity: ase-ch02-ccq2] Concept Check (CCQ 2) — V-Model Proactive Test Planning
+### [Activity: ase-ch02-ccq2] Software Development Processes & Methodologies CCQ 2
 #### [CCQ] What is the primary engineering advantage of the V-Model over the classic Waterfall model?
 - It produces working software increments in short two-week sprint iterations.
 - It enforces test planning and acceptance criteria design concurrently with early specification phases. (Correct)
@@ -158,7 +158,7 @@
 **Explanation**: The V-Model's definitive breakthrough is horizontal symmetry: test suites are authored concurrently with their corresponding specification phases (e.g., acceptance tests designed during requirements analysis), front-loading defect discovery.
 </details>
 
-### [Activity: ase-ch02-ccq3] Concept Check (CCQ 3) — Incremental vs. Iterative Distinction
+### [Activity: ase-ch02-ccq3] Software Development Processes & Methodologies CCQ 3
 #### [CCQ] In software process engineering, what is the fundamental conceptual difference between "Incremental" and "Iterative" development?
 - Incremental focuses on automated testing; Iterative focuses on UI design.
 - Incremental delivers finished functional slices stage-by-stage; Iterative refines an end-to-end working draft over repeated cycles. (Correct)
@@ -172,7 +172,7 @@
 **Explanation**: Incremental builds software piece by piece by vertical functional slices; iterative starts with a rough draft of the entire system and progressively refines depth, fidelity, and polish through repeated cycles.
 </details>
 
-### [Activity: ase-ch02-ccq4] Concept Check (CCQ 4) — MVP Skateboard Analogy Anti-Pattern
+### [Activity: ase-ch02-ccq4] Software Development Processes & Methodologies CCQ 4
 #### [CCQ] In Henrik Kniberg's famous Minimum Viable Product (MVP) analogy (Skateboard to Car), why is delivering a standalone car wheel in the first release considered an anti-pattern?
 - Because manufacturing an isolated wheel is significantly more expensive than building a skateboard.
 - Because an isolated wheel provides zero end-to-end transportation value, preventing users from validating core problem assumptions. (Correct)
@@ -186,7 +186,7 @@
 **Explanation**: An MVP must deliver standalone, end-to-end usable value that solves a real user problem. A single wheel cannot transport a person, leaving the user dissatisfied and generating zero empirical feedback on transportation needs.
 </details>
 
-### [Activity: ase-ch02-ccq5] Concept Check (CCQ 5) — Working Software over Comprehensive Documentation
+### [Activity: ase-ch02-ccq5] Software Development Processes & Methodologies CCQ 5
 #### [CCQ] The Agile Manifesto states: *"Working software over comprehensive documentation."* What does this value primarily advocate in practice?
 - Engineering teams are completely prohibited from writing architecture blueprints or API specifications.
 - While documentation has value, delivering working, tested, and validated software is the primary measure of progress and customer value. (Correct)
@@ -200,7 +200,7 @@
 **Explanation**: The Agile Manifesto emphasizes that running, tested software delivering actual business value takes precedence over generating exhaustive paperwork. Documentation is authored when it serves an essential communicative purpose, but never at the expense of working software.
 </details>
 
-### [Activity: ase-ch02-ccq6] Concept Check (CCQ 6) — Sustainable Pace
+### [Activity: ase-ch02-ccq6] Software Development Processes & Methodologies CCQ 6
 #### [CCQ] Agile Principle 8 states: *"Agile processes promote sustainable development. The sponsors, developers, and users should be able to maintain a constant pace indefinitely."* What is the primary engineering motivation?
 - To prevent code quality degradation, accumulated defects, and developer burnout caused by chronic overtime and crunch periods. (Correct)
 - To mandate that developers submit at least 50 pull requests per day.
@@ -214,7 +214,7 @@
 **Explanation**: Chronic overtime causes severe cognitive fatigue, multiplying defect injection rates and accelerating developer burnout. A sustainable, predictable pace produces higher quality code and predictable delivery velocity over years.
 </details>
 
-### [Activity: ase-ch02-ccq7] Concept Check (CCQ 7) — Kanban WIP Limits
+### [Activity: ase-ch02-ccq7] Software Development Processes & Methodologies CCQ 7
 #### [CCQ] In the Kanban process framework, what is the primary operational purpose of enforcing strict "Work In Progress" (WIP) limits on columns?
 - To prevent developers from modifying automated unit test scripts.
 - To expose bottlenecks, reduce multitasking context-switching waste, and maximize delivery flow throughput. (Correct)
@@ -228,7 +228,7 @@
 **Explanation**: By restricting WIP limits, teams prevent hidden queues, eliminate context-switching waste, and immediately highlight process bottlenecks where cards pile up.
 </details>
 
-### [Activity: ase-ch02-ccq8] Concept Check (CCQ 8) — Sprint Retrospective Objective
+### [Activity: ase-ch02-ccq8] Software Development Processes & Methodologies CCQ 8
 #### [CCQ] In the Scrum framework, what is the primary operational objective of the **Sprint Retrospective** held at the end of each sprint?
 - To demonstrate working software increments to external business stakeholders.
 - To inspect internal team collaboration, engineering practices, and tools, and identify actionable process improvements for the next sprint. (Correct)
@@ -242,7 +242,7 @@
 **Explanation**: While the Sprint Review focuses on inspecting the product with stakeholders, the Sprint Retrospective focuses inward on the team's processes, collaboration dynamics, and engineering practices to implement continuous self-improvement.
 </details>
 
-### [Activity: ase-ch02-ccq9] Concept Check (CCQ 9) — Compounding Interest of Technical Debt
+### [Activity: ase-ch02-ccq9] Software Development Processes & Methodologies CCQ 9
 #### [CCQ] According to Ward Cunningham's Technical Debt metaphor, what represents the "compounding interest" paid by a software organization?
 - The annual licensing fees paid for cloud hosting infrastructure and IDEs.
 - The ongoing extra time, degraded velocity, and regression defects suffered during all future development. (Correct)
@@ -256,7 +256,7 @@
 **Explanation**: The interest on technical debt is the extra friction and slowed velocity encountered every time engineers attempt to add new features or modify brittle, untested, poorly factored code.
 </details>
 
-### [Activity: ase-ch02-ccq10] Concept Check (CCQ 10) — Martin Fowler's "Flaccid Scrum"
+### [Activity: ase-ch02-ccq10] Software Development Processes & Methodologies CCQ 10
 #### [CCQ] Martin Fowler coined the term **"Flaccid Scrum"** to describe which critical software engineering failure?
 - Adopting Scrum management ceremonies (daily standups, sprints, story points) while completely neglecting technical engineering practices like TDD, refactoring, and CI. (Correct)
 - Refusing to use Jira or commercial issue tracking software in favor of physical sticky notes.
@@ -270,7 +270,7 @@
 **Explanation**: Flaccid Scrum occurs when organizations adopt agile project management rituals but ignore engineering craftsmanship. Without automated tests, refactoring, and clean architecture, code quickly becomes fragile and unmaintainable.
 </details>
 
-### [Activity: ase-ch02-ccq11] Concept Check (CCQ 11) — Extreme Programming: The Navigator Role
+### [Activity: ase-ch02-ccq11] Software Development Processes & Methodologies CCQ 11
 #### [CCQ] In Extreme Programming (XP), what is the primary role of the "Navigator" during a pair programming session?
 - Typing out code syntax and executing local terminal commands.
 - Thinking strategically, reviewing code in real time, considering edge cases, and looking at the broader architecture. (Correct)
@@ -284,7 +284,7 @@
 **Explanation**: In pair programming, the Driver types the code while the Navigator thinks strategically, reviews code in real time, catches bugs, considers edge cases, and ensures the implementation aligns with overall architecture.
 </details>
 
-### [Activity: ase-ch02-ccq12] Concept Check (CCQ 12) — TDD: The Refactor Step
+### [Activity: ase-ch02-ccq12] Software Development Processes & Methodologies CCQ 12
 #### [CCQ] In Extreme Programming's Test-Driven Development (TDD), what is the specific objective of the **"Refactor"** step in the Red-Green-Refactor cycle?
 - Adding new functional capabilities and expanding the module's public API contract.
 - Improving the internal structure and readability of the code while ensuring all existing automated tests continue to pass. (Correct)
@@ -298,7 +298,7 @@
 **Explanation**: Refactoring strictly means altering the internal structure of software to make it easier to understand and cheaper to modify without changing its observable external behavior, protected by passing unit tests.
 </details>
 
-### [Activity: ase-ch02-ccq13] Concept Check (CCQ 13) — Continuous Delivery vs. Continuous Deployment
+### [Activity: ase-ch02-ccq13] Software Development Processes & Methodologies CCQ 13
 #### [CCQ] What is the defining operational distinction between "Continuous Delivery" and "Continuous Deployment"?
 - Continuous Delivery requires manual code compilation; Continuous Deployment automates compilation.
 - Continuous Delivery stops at staging and requires human business approval to release; Continuous Deployment automatically deploys passing builds directly to live production. (Correct)
@@ -312,7 +312,7 @@
 **Explanation**: Continuous Delivery ensures that every build passing the automated pipeline is immediately deployable to production, but waits for a human business decision. Continuous Deployment automatically promotes every passing build straight to production with zero manual gates.
 </details>
 
-### [Activity: ase-ch02-ccq14] Concept Check (CCQ 14) — AI Specification-Driven CI/CD Verification Gates
+### [Activity: ase-ch02-ccq14] Software Development Processes & Methodologies CCQ 14
 #### [CCQ] In modern AI Specification-Driven development, what is the primary role of automated CI/CD verification gates?
 - To prevent human developers from reviewing artificial intelligence output.
 - To enforce deterministic quality, test compliance, and defect containment before AI-generated code merges into production. (Correct)
@@ -328,7 +328,7 @@
 
 ## Chapter 3: Requirements Engineering
 
-### [Activity: ase-ch03-ccq1] Concept Check (CCQ 1) — User Requirements vs. System Requirements
+### [Activity: ase-ch03-ccq1] Chapter 3: Requirements Engineering CCQ 1
 #### [CCQ] In requirements engineering, what is the critical operational distinction between **User Requirements** and **System Requirements**?
 - User requirements are high-level stakeholder goals; system requirements are detailed functional contracts for developers. (Correct)
 - User requirements specify UI wireframes; system requirements specify backend database schemas.
@@ -342,7 +342,7 @@
 **Explanation**: User requirements communicate the overarching business capabilities to non-technical stakeholders, while system requirements bridge those desires into precise, contract-level engineering specifications.
 </details>
 
-### [Activity: ase-ch03-ccq2] Concept Check (CCQ 2) — Domain Requirements Classification
+### [Activity: ase-ch03-ccq2] Chapter 3: Requirements Engineering CCQ 2
 #### [CCQ] Consider the following specification for the UberEats platform: > *"Due to municipal food hygiene regulations, perishable warm food delivery transit time shall not exceed 45 minutes, and containers must maintain a temperature above 60°C throughout transit."* What category of software requirement does this statement represent?
 - Domain Requirement (a constraint imposed by the operational environment, industry regulations, or physical laws) (Correct)
 - Functional Requirement (a specification of an active software computation, user feature, or system service)
@@ -356,7 +356,7 @@
 **Explanation**: While this requirement mentions a 45-minute timing constraint, it does not arise from user preference or general system performance tuning. Instead, it is dictated by external municipal health laws and thermodynamic physical properties of food safety. In software engineering, constraints that originate from industry regulations, physics, or the operating domain are classified as Domain Requirements.
 </details>
 
-### [Activity: ase-ch03-ccq3] Concept Check (CCQ 3) — Verifiable Non-Functional Requirements & Metrics
+### [Activity: ase-ch03-ccq3] Chapter 3: Requirements Engineering CCQ 3
 #### [CCQ] A client provides an imprecise non-functional goal: *"The order checkout system must be blazing fast and highly reliable."* Which of the following correctly transforms this vague goal into a **verifiable, testable engineering metric**?
 - 99% of checkouts shall have response time $\le 500$ ms, and peak uptime shall be $\ge 99.95\%$. (Correct)
 - The checkout UI shall use sleek animations so customers perceive maximum speed.
@@ -370,7 +370,7 @@
 **Explanation**: A verifiable NFR must be quantifiable so that test engineers can objectively measure pass or fail. Specifying 95th- or 99th-percentile latency under 500 milliseconds and four-nines availability provides an unambiguous, enforceable engineering contract.
 </details>
 
-### [Activity: ase-ch03-ccq4] Concept Check (CCQ 4) — Root Cause Elicitation & The 5 Whys
+### [Activity: ase-ch03-ccq4] Chapter 3: Requirements Engineering CCQ 4
 #### [CCQ] During a requirements elicitation interview, an executive insists: *"Our clinical software must include a blockchain ledger to record patient vitals."* What is the most effective engineering interview heuristic to apply?
 - Apply the "5 Whys" to investigate the underlying data integrity and audit problem rather than prematurely locking in the suggested technology. (Correct)
 - Immediately begin drafting smart contracts and relational database schemas for the requested blockchain feature.
@@ -384,7 +384,7 @@
 **Explanation**: Stakeholders frequently suggest specific technical tools because they heard a buzzword, when their real business requirement is data integrity or regulatory traceability. An engineer's job is to uncover the underlying problem, not prematurely implement proposed technical band-aids.
 </details>
 
-### [Activity: ase-ch03-ccq5] Concept Check (CCQ 5) — Ethnography & Tacit Knowledge
+### [Activity: ase-ch03-ccq5] Chapter 3: Requirements Engineering CCQ 5
 #### [CCQ] In requirements engineering, why is **Ethnography (workplace observation)** uniquely vital when analyzing complex operational environments such as hospital emergency rooms or air traffic control?
 - It uncovers tacit knowledge—ingrained habits, physical workarounds, and unwritten shortcuts that users perform automatically but never mention during interviews. (Correct)
 - It automatically compiles natural language requirements directly into executable acceptance test suites without human intervention.
@@ -398,7 +398,7 @@
 **Explanation**: People often cannot articulate everything they do because habits become second nature. By observing practitioners in their actual physical workspace, engineers uncover critical tacit knowledge—like sticky notes, manual spreadsheets, and physical handoffs—that never appear in official manuals or interviews.
 </details>
 
-### [Activity: ase-ch03-ccq6] Concept Check (CCQ 6) — Use Case Diagrams vs. Textual Descriptions
+### [Activity: ase-ch03-ccq6] Chapter 3: Requirements Engineering CCQ 6
 #### [CCQ] A software engineering team creates a UML Use Case Diagram showing an actor connected to the "Withdraw Cash" use case. Why must engineers author a detailed textual **Use Case Description** in addition to the diagram?
 - Diagrams only show high-level scope; descriptions define sequential flows, preconditions, postconditions, and exception handling. (Correct)
 - UML diagrams cannot be rendered by web browsers without accompanying markdown text.
@@ -412,7 +412,7 @@
 **Explanation**: A use case diagram is just a visual table of contents; it shows who interacts with what feature. But engineers cannot write code or tests from an ellipse alone. They need the textual use case description to know the exact preconditions, the sequential normal flow, and how to handle exception flows when things go wrong.
 </details>
 
-### [Activity: ase-ch03-ccq7] Concept Check (CCQ 7) — Cost of Late Requirements Defects
+### [Activity: ase-ch03-ccq7] Chapter 3: Requirements Engineering CCQ 7
 #### [CCQ] Why is fixing a requirements error after software delivery significantly more expensive than fixing an error during early development?
 - Requirements documents cannot be legally modified once signed by clients.
 - A late fix requires redesigning, recoding, retesting, and redeploying cascading components that were built on the flawed premise. (Correct)
@@ -426,7 +426,7 @@
 **Explanation**: When a requirement defect escapes into production, all the downstream work built on that false premise—the architectural design, database schemas, API contracts, frontend views, and automated tests—must be ripped out and rebuilt. That cascading rework is what causes the 100x cost explosion.
 </details>
 
-### [Activity: ase-ch03-ccq8] Concept Check (CCQ 8) — Generative AI & Human-in-the-Loop Verification
+### [Activity: ase-ch03-ccq8] Chapter 3: Requirements Engineering CCQ 8
 #### [CCQ] When software engineering teams use Large Language Models (LLMs) to generate requirements specifications from stakeholder interview transcripts, what is the primary operational risk requiring human-in-the-loop verification?
 - The LLM may hallucinate plausible-sounding but fictitious business logic, omitted edge-case constraints, and non-existent external API integrations. (Correct)
 - The LLM cannot output text formatted in Markdown bullet points or standard user story Given-When-Then acceptance criteria.

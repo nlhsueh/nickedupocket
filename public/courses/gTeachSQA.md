@@ -222,6 +222,90 @@
 **解析**：* **選項 B 正確**：吞掉例外（Swallowing Exceptions）是嚴重的反模式（Anti-pattern）。它只是掩蓋了錯誤徵兆，實質上的並發競爭依然存在，並會導致資料悄悄被破壞。
 </details>
 
+### [Activity: sqa-ch02-ccq6a] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 8
+#### [CCQ] 在以下關於 Java 斷言（`assert`）的實務作法中，哪一項是**最危險的嚴重錯誤（Anti-Pattern）**？
+- 在私有排序演算法結束前，斷言 `assert isSorted(data);` 確保演算法無後置邏輯缺陷
+- 在公開 API 入口使用 `assert amount > 0;` 來校驗外部呼叫端傳入的轉帳金額 (Correct)
+- 在 `switch-case` 處理完所有枚舉狀態後，在 `default:` 加上 `assert false;` 防範未列舉狀態
+- 在 Maven Surefire 設定 `<enableAssertions>true</enableAssertions>` 以便在 CI/CD 捕捉不變量違規
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：公開 API 在生產環境因預設關閉斷言 (`-da`)，`assert` 會被直接跳過導致非法參數直接穿透！公開方法必須拋出例外（如 `IllegalArgumentException`，保證 100% 執行）。
+</details>
+
+### [Activity: sqa-ch02-ccq6b] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 9
+#### [CCQ] **情境**：一位工程師寫下了 `assert activeUsers.remove(targetUser) : "找不到欲登出的使用者";`。 當這套系統在正式營運環境以預設 JVM 參數（未開啟 `-ea`）執行時，會引發什麼最嚴重的問題？
+- 程式在執行該行時拋出 `AssertionError` 並異常中斷
+- `remove()` 仍然會被呼叫，只是如果找不到使用者時不會拋出警告訊息
+- 整行敘述直接被 JVM 跳過忽略，`targetUser` **完全沒有被從名單中移除**，引發記憶體洩漏與狀態混亂！ (Correct)
+- JVM 會自動將 `assert` 轉譯為 `IllegalArgumentException` 進行前置攔截
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：C
+**解析**：斷言條件式必須是 Pure Expression；當 `-ea` 關閉時整個表達式不被執行，導致 `remove()` 根本未呼叫，產生記憶體洩漏與狀態混亂。
+</details>
+
+### [Activity: sqa-ch02-ccq7a] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 10
+#### [CCQ] Java 將 `NullPointerException` 歸為 `RuntimeException`（未檢例外），而將 `IOException` 歸為 Checked Exception（受檢例外）。這背後的核心軟體架構思維為何？
+- Checked Exception 代表可預期的外部環境異常，編譯器強制呼叫端擬定降級或因應方案 (遵循 CDR 原則) (Correct)
+- Unchecked Exception 代表系統底層硬體損毀，應用程式絕不應進行處理
+- 面對 `NullPointerException` 最佳做法是在每一處呼叫外層加上 `try-catch` 予以掩飾
+- 兩者僅是命名風格差異，編譯器在編譯時期的檢查行為完全相同
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：A
+**解析**：Checked Exception 代表可預期外部環境異常，編譯器強制要求呼叫端提供因應降級（CDR 原則）；Unchecked 代表內部程式邏輯瑕疵。
+</details>
+
+### [Activity: sqa-ch02-ccq7b] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 11
+#### [CCQ] **情境**：工程師寫了如下讀檔代碼： `try { var r = new BufferedReader(...); return r.readLine(); } catch (Exception e) { return null; }` 這段程式碼包含哪兩大嚴重軟體品質缺陷？
+- 缺乏泛型安全檢查，且未將變數宣告為 `final`
+- 未釋放作業系統檔案控制代碼造成資源洩漏；生吞例外遮蔽真兇並引發下游連鎖 NPE (Correct)
+- 應將 `catch (Exception e)` 擴大改為 `catch (Throwable t)`
+- `BufferedReader` 效率過低，應全面改用 `Scanner`
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：未用 `try-with-resources` 導致 OS 檔案描述符耗盡；`catch(Exception) return null` 生吞例外遮蔽故障根因並在下游連鎖觸發 NPE。
+</details>
+
+### [Activity: sqa-ch02-ccq8a] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 12
+#### [CCQ] **情境**：在 `log4j2.xml` 中為某個業務類別配置了獨立的 `<Logger>` 與 `ConsoleAppender`。執行時發現終端機上的每一行日誌都**連續印出兩次一模一樣的訊息**！ 造成此問題的底層機制是什麼？在 XML 中應如何修正？
+- JVM 啟動了雙執行緒通道；應在 VM options 設定 `-Dlog.threads=1`
+- 日誌事件向上冒泡至 `<Root>` 造成重複打印；應在 `<Logger>` 加上 `additivity="false"` (Correct)
+- PatternLayout 格式重複宣告；應從 pattern 移除 `%msg`
+- Log4j 2 缺少 SLF4J 橋接器依賴；應在 `pom.xml` 加入轉接層
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：Log4j2 預設將日誌事件向上冒泡至 Root 造成重複打印；應在 Logger 加上 `additivity="false"`。
+</details>
+
+### [Activity: sqa-ch02-ccq8b] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 13
+#### [CCQ] **程式填空題**：請選出在日誌效能防衛與多執行緒鏈路追蹤中，最符合工業級標準的代碼組合： ① 輸出大型陣列日誌前防衛門檻：`if (__________) logger.debug("...", Arrays.toString(huge));` ② 執行緒任務結束後清理 MDC 避免污染：`finally { __________; }`
+- ① `logger.isDebugEnabled()` | ② `MDC.clear()` (Correct)
+- ① `logger.isInfoEnabled()` | ② `System.gc()`
+- ① `huge.length > 0` | ② `logger.flush()`
+- ① `assert huge != null` | ② `Thread.yield()`
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：A
+**解析**：即使關閉 DEBUG，方法參數仍會先執行字串序列化導致 GC 飆高，需用 `isDebugEnabled()` 防衛；執行緒池任務結束後必須在 `finally` 呼叫 `MDC.clear()` 防止污染。
+</details>
+
 ### [Activity: sqa-ch02-ccq2] 實證研究與行業報告 (Empirical Studies & Industry Reports)
 #### [CCQ] 實證研究與行業報告 (Empirical Studies & Industry Reports)
 - **Boehm / NIST 指數級修復成本定律**：
@@ -288,7 +372,10 @@
 #### [Short] ##### 💡 SQA 2.0 應對 Test Oracle 難題的三大前沿技術：
 
 ### [Activity: sqa-ch03-ccq1] ✍️ 3.6 綜合練習
-#### [CCQ] ✍️ 3.6 綜合練習
+#### [CCQ] ### 一、測試原則與理論辨析
+- 為了確保軟體絕對正確，我們是否應該進行窮盡式測試（Exhaustive Testing）？為什麼？
+- 說明何謂測試的「殺蟲劑效應（Pesticide Paradox）」？當使用 AI 輔助生成測試時，為什麼更容易產生殺蟲劑效應？
+- 比較 Verification 與 Validation 的核心差異。
 
 ## Chapter 4: 軟體檢視
 
@@ -508,7 +595,11 @@
 </details>
 
 ### [Activity: sqa-ch05-ccq11] ✍️ 練習
-#### [CCQ] ✍️ 練習
+#### [CCQ] ### 5.ex.spec 設計規格 一個功能模組的「規格」包含該模組的參數、回傳型態、前置條件、後置條件。寫出以下功能的規格，嘗試以正規的方式來描述之。並設計期測試案例。
+- 由一群陣列中找出最大的值回傳
+- 針對一個陣列做由小到大的排序
+- 輸入一段文字和一個單字，回傳該單字在該文字出現的位置
+- 輸入兩個字串型態的實數，回傳其相加的結果
 
 ## Chapter 6: 白箱測試
 

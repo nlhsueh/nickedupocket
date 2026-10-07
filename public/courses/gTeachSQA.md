@@ -43,10 +43,20 @@
   * **AI 時代的警訊**：AI 輔助寫程式讓工程師能輕易「一鍵採納」大段程式碼，但這些程式碼往往缺乏對邊界條件、架構約束與業務邏輯的深思熟慮。一旦進入測試或整合便漏洞百出，導致工程師必須頻繁推翻重寫。這種「產出快、丟棄也快」的高流失現象，正是 AI 生成程式碼帶來**長期維護性技術債（Maintainability Debt）**與**系統脆弱性**的具體體現。
 </details>
 
+### [Activity: sqa-ch01-ccq1] 五大品質觀點的深度工程實例與對照
+#### [CCQ] *   **1. 超自然觀點 (Transcendental View) ——「說不出來哪裡好，但一用就被驚豔的靈魂美學」** *   例如：**Apple iOS** 介面的手勢滑動物理慣性阻尼、**Notion** 極簡直覺的斜線指令 (`/`)、或是頂級 IDE 行雲流水毫無卡頓的微互動。你無法用單一測試斷言定義它，但一旦觸碰，那種絲滑、精緻與直覺感會讓人發自內心讚嘆：「這就是極致的好品質！」 *   反之：早期政府的報稅或學校選課系統，功能雖然全部齊全，但介面如同 90 年代的老舊表格，按鍵延遲、排版擁擠，操作時令人挫折焦躁。 *   **2. 使用者觀點 (User View) ——「合用才是王道 (Fitness for Use)」** *   例如：**Zoom** 在疫情期間擊敗眾多老牌視訊巨頭，並非因為底層技術最深奧，而是因為使用者「點一個連結 3 秒就能開會」，連長輩與學童都能無障礙上手，極致解決「我要立刻開會」的痛點。 *   反之：工程團隊花了半年研發具備超高難度演算法、支援 50 種冷門格式的播放器，但終端使用者只想要一鍵播放 MP4。功能極其強大，但無人想用，淪為數位庫存 (Shelfware)。 *   **3. 製造觀點 (Manufacturing View) ——「分毫不差的規格符合度 (Conformance to Requirements)」** *   例如：**航太飛控系統**或**銀行核心帳務系統**。規格書明確定義「轉帳交易必須在 100ms 內完成，數值必須精確至小數點後 4 位」，實作程式碼就必須 100% 通過單元測試、靜態掃描與 Continuous Quality Gate，零偏差、零缺陷。 *   盲點：若當初需求規格書本身就有嚴重的設計盲點（如急診室系統規格未考慮現場醫護動線），製造觀點就算拿下 100 分，也只是「分毫不差地造出了一套完全合規的廢品」。 *   **4. 產品觀點 (Product View) ——「內在架構與骨相之美 (Internal Characteristics)」** *   例如：**Linux 核心**或 **Spring Framework** 的架構設計。模組高度內聚、彼此鬆散耦合 (Loose Coupling)，圈複雜度極低，並具備 90% 以上自動化測試保護。即使歷經十餘年版本迭代，依然能穩健重構擴展。 *   反之：**義大利麵程式碼 (Spaghetti Code)**。外表介面看起來堪用，但原始碼沒有分層、充斥複製貼上與全域變數，改動結帳頁面的一個按鈕顏色，竟導致會員登入功能全面崩潰。 *   **5. 價值觀點 (Value-based View) ——「商業性價比與投資報酬率 (ROI)」** *   例如：新創團隊在驗證商業模式初期，採用 Serverless 與開源元件以極小預算在兩週內打造出 **MVP（最小可行產品）** 搶佔市場，以最低成本取得最大商業回饋。 *   反之：在產品商業模式尚未驗證前，工程團隊執意耗資數百萬引進複雜的分散式架構與自建機房，結果產品上線前資金便已耗盡，商業上宣告破產。 | 品質觀點 | 核心定義 | 軟體工程實例 | 忽略該觀點的後果 | | :--- | :--- | :--- | :--- | | **超自然觀點**<br>(Transcendental) | 無法精確量化，但一體驗就能感受到其精緻與美感 | 極致流暢的 UI/UX、細膩的動畫微互動 (iOS/Notion) | 軟體感覺粗製濫造、冰冷卡頓，使用者體驗差 | | **使用者觀點**<br>(User View) | 符合使用者真實需求與期望 (Fitness for Use) | 解決使用者痛點、操作直覺易上手 (Zoom 一鍵入會) | 功能很強但沒人想用，淪為陳列品 (Shelfware) | | **製造觀點**<br>(Manufacturing View) | 符合工程規格與標準流程 (Conformance) | 遵循 Clean Code 規範、零規格偏離、通過 Quality Gate | 規格本身有漏洞時，做出一套符合規格的垃圾 | | **產品觀點**<br>(Product View) | 產品本身的內在技術特性與架構材質 | 高內聚低耦合、強固型態、低圈複雜度 (Linux/Spring) | 架構腐化，改一個小功能引發全面崩潰 | | **價值觀點**<br>(Value-based View) | 顧客願意支付的成本與性價比 (ROI) | 軟體帶來的商業價值大於開發與維運成本 (精實 MVP) | 開發成本失控超支，商業上不可行 | > 👍 **程式必須是為了給人看而寫，命令機器執行只是附帶任務。** —— *Abelson & Sussman* > 👍 **品質不是動作，是一種習慣。** —— *Aristotle*
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* 愛國者系統採用 24-bit 浮點數記錄時間，每小時有微小的截斷誤差。連開 100 小時累積了 0.33 秒延遲，對 4.2 馬赫的飛彈造成約 600 公尺偏差，導致雷達搜尋窗無法鎖定飛彈。
+</details>
+
 ### [Activity: sqa-ch01-wordcloud1] 品質觀點
 #### [WordCloud] 你覺得哪一個觀點是最重要的品質指標？請寫下來。
 
-### [Activity: sqa-ch01-ccq3] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 5
+### [Activity: sqa-ch01-ccq3] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 6
 #### [CCQ] 某專案團隊開發的電商 App 完全符合合約規格書上的每一條需求（製造觀點合格），但因為底層架構高度耦合且完全沒有寫單元測試，半年後客戶想新增一個促銷功能時，工程團隊發現必須重寫整個系統。這代表該軟體在 Garvin 的哪一個品質觀點上嚴重不及格？
 - 產品觀點 (Product View) (Correct)
 - 製造觀點 (Manufacturing View)
@@ -60,7 +70,7 @@
 **解析**：* **選項 A 正確**：產品觀點著重於軟體內在結構特性（如模組化、架構整潔、可維護性與可測試性）。雖然符合製造觀點的合約規格，但內在架構腐敗。
 </details>
 
-### [Activity: sqa-ch01-ccq4] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 6
+### [Activity: sqa-ch01-ccq4] Chapter 1: 軟體危機、品質模型與 AI 時代的可靠性工程 CCQ 7
 #### [CCQ] 某軟體團隊為醫院開發一套急診掛號分流系統。開發團隊嚴格按照原先簽訂的「系統需求規格書」完成所有功能實作，且單元測試與程式碼審查（Code Review）皆 100% 通過、完全無錯誤（Bug）。但實際上線在急診室臨床試用時，醫護人員發現分流操作流程完全不符合急救現場的真實節奏與急迫需求，導致無法在實務中使用。根據軟體工程定義，此系統在下列哪一項做得很好，但在哪一項嚴重失敗？
 - Verification（驗證）做得很好，但 Validation（確認）嚴重失敗 (Correct)
 - Validation（確認）做得很好，但 Verification（驗證）嚴重失敗
@@ -87,186 +97,20 @@
 8. 驗收測試執行 (Acceptance Testing)
 
 ### [Activity: sqa-ch01-game] 課堂挑戰遊戲：ISO 25010 八大產品品質特性情境連連看 (10 題連環戰)
+#### [CCQ] > 🎮 **遊戲規則**： > 以下列出 10 個軟體工程日常開發、維運或慘痛故障的真實議題與事件。請根據 **ISO 25010 八大產品品質特性**，判斷每一項情境最主要是在考驗或違反哪一項品質特性？ > > **【八大品質特性選項池】**： > `A. 功能適合性 (Functional Suitability)` ｜ `B. 可靠性 (Reliability)` ｜ `C. 效能效率 (Performance Efficiency)` ｜ `D. 易用性 (Usability)` > `E. 安全性 (Security)` ｜ `F. 可維護性 (Maintainability)` ｜ `G. 可移植性 (Portability)` ｜ `H. 相容性 (Compatibility)` *   **第 1 題【吐鈔卡死危機】**：使用者在 ATM 提款 10,000 元，系統扣款成功並列印明細，但吐鈔口機械卡死分文未出，帳戶卻已被扣款。 *   **第 2 題【雙十一流量海嘯】**：電商平台午夜開賣，瞬間湧入 50 萬人搶購，伺服器 CPU 飆到 100%，API 響應時間從 150ms 暴增至 40 秒，大量連線超時。 *   **第 3 題【致命的相鄰按鈕】**：雲端後台介面將「重啟伺服器」與「永久銷毀主機」按鈕放在相鄰位置且顏色相同，點擊時缺乏防呆二次確認，導致維運工程師手滑刪除正式環境資料庫。 *   **第 4 題【牽一髮動全身的義大利麵】**：工程團隊想在會員資料中新增一個「暱稱」欄位，結果引發購物車、金流與推薦引擎等 8 個模組連鎖編譯錯誤，耗費 3 天重構修復。 *   **第 5 題【斷電重啟秒級自癒】**：微服務資料庫節點突發斷電，備援機制在 3 秒內自動完成容錯移轉 (Failover)，並重放 WAL 日誌確保交易零遺失，外部連線僅感知微小抖動。 *   **第 6 題【跨系統托運單格式打架】**：電商系統與黑貓宅急便 API 進行跨系統資料交換，因雙方日期協定格式不符（`YYYY-MM-DD` vs `DD/MM/YYYY`），造成所有物流單批次傳送失敗。 *   **第 7 題【URL 改個數字看光他人隱私】**：駭客在瀏覽器將個人資料頁的 URL 從 `userId=1001` 改為 `userId=1002`，系統竟然毫無攔截，直接秀出另一位顧客的信用卡卡號與地址。 *   **第 8 題【Mac 開發很順，推上 Linux 容器全掛】**：開發者在 macOS 本地端測試正常的服務，部署至生產環境的 Linux Docker 容器時，因寫死路徑大小寫（Linux 嚴格區分大小寫）導致找不到檔案崩潰。 *   **第 9 題【地下室離線暫存與自動重送】**：外送員騎車進入收訊不良的地下停車場，手機 App 自動切換為離線模式快取送達狀態，當回到地面偵測到 5G 訊號時自動重送同步。 *   **第 10 題【容器映像檔一鍵秒級部署】**：後端微服務封裝成標準 Docker 映像檔，無論部署在 AWS ECS、GCP GKE 還是地端 Kubernetes，皆能在 10 秒內透過統一設定檔一鍵拉起成功運行。
 
-#### [Game] 第 1 題：【吐鈔卡死危機】使用者在 ATM 提款 10,000 元，系統扣款成功並列印明細，但吐鈔口機械卡死分文未出，帳戶卻已被扣款。這最主要違反了 ISO 25010 的哪一項品質特性？
-- 功能適合性 (Functional Suitability) (Correct)
-- 可靠性 (Reliability)
-- 效能效率 (Performance Efficiency)
-- 易用性 (Usability)
-- 安全性 (Security)
-- 可維護性 (Maintainability)
-- 可移植性 (Portability)
-- 相容性 (Compatibility)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：A
-**解析**：* **選項 A 正確**：**功能適合性 (Functional Suitability)** 涵蓋功能完整性與正確性（Functional Correctness: 提供符合規格與精確要求的正確結果）。ATM 扣款卻未能履行吐鈔的核心業務功能，屬於功能正確性與適合性的重大失效。
-* **選項 B 說明**：雖然硬體故障引發異常，但核心問題是該業務功能未能達成正確的結果狀態。
-</details>
-
-#### [Game] 第 2 題：【雙十一流量海嘯】電商平台午夜開賣，瞬間湧入 50 萬人搶購，伺服器 CPU 飆到 100%，API 響應時間從 150ms 暴增至 40 秒，大量連線超時。這最主要是在考驗或違反哪一項品質特性？
-- 功能適合性 (Functional Suitability)
-- 可靠性 (Reliability)
-- 效能效率 (Performance Efficiency) (Correct)
-- 易用性 (Usability)
-- 安全性 (Security)
-- 可維護性 (Maintainability)
-- 可移植性 (Portability)
-- 相容性 (Compatibility)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：C
-**解析**：* **選項 C 正確**：**效能效率 (Performance Efficiency)** 評估系統在特定條件下的效能表現，包括時間表現 (Time Behavior: 響應時間、吞吐量) 與容量 (Capacity: 系統承受最大負載能力)。CPU 飆高、響應時間急劇惡化至超時，為典型的效能效率問題。
-</details>
-
-#### [Game] 第 3 題：【致命的相鄰按鈕】雲端後台介面將「重啟伺服器」與「永久銷毀主機」按鈕放在相鄰位置且顏色相同，點擊時缺乏防呆二次確認，導致維運工程師手滑刪除正式環境資料庫。這最主要違反了哪一項品質特性？
-- 功能適合性 (Functional Suitability)
-- 可靠性 (Reliability)
-- 效能效率 (Performance Efficiency)
-- 易用性 (Usability) (Correct)
-- 安全性 (Security)
-- 可維護性 (Maintainability)
-- 可移植性 (Portability)
-- 相容性 (Compatibility)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：D
-**解析**：* **選項 D 正確**：**易用性 (Usability)** 中的關鍵子特性為「使用者錯誤防禦 (User Error Protection)」，系統介面應預防使用者犯錯或在執行破壞性指令時提供防呆確認機制。高危險按鈕同色且相鄰為嚴重的易用性缺陷。
-</details>
-
-#### [Game] 第 4 題：【牽一髮動全身的義大利麵】工程團隊想在會員資料中新增一個「暱稱」欄位，結果引發購物車、金流與推薦引擎等 8 個模組連鎖編譯錯誤，耗費 3 天重構修復。這最主要凸顯了系統在何種品質特性的嚴重欠缺？
-- 功能適合性 (Functional Suitability)
-- 可靠性 (Reliability)
-- 效能效率 (Performance Efficiency)
-- 易用性 (Usability)
-- 安全性 (Security)
-- 可維護性 (Maintainability) (Correct)
-- 可移植性 (Portability)
-- 相容性 (Compatibility)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：F
-**解析**：* **選項 F 正確**：**可維護性 (Maintainability)** 衡量修改軟體的有效性與效率，包含模組化 (Modularity) 與可修改性 (Modifiability)。小幅修改單一欄位卻造成跨模組連鎖破壞，反映高耦合的架構，嚴重缺乏可維護性。
-</details>
-
-#### [Game] 第 5 題：【斷電重啟秒級自癒】微服務資料庫節點突發斷電，備援機制在 3 秒內自動完成容錯移轉 (Failover)，並重放 WAL 日誌確保交易零遺失，外部連線僅感知微小抖動。這最主要展現了哪一項品質特性的卓越表現？
-- 功能適合性 (Functional Suitability)
-- 可靠性 (Reliability) (Correct)
-- 效能效率 (Performance Efficiency)
-- 易用性 (Usability)
-- 安全性 (Security)
-- 可維護性 (Maintainability)
-- 可移植性 (Portability)
-- 相容性 (Compatibility)
-Time: 20
+### [Activity: sqa-ch01-ccq2] ✍️ 1.7 綜合練習與思維激盪
+#### [CCQ] ✍️ 1.7 綜合練習與思維激盪
+- **AI 時代的品質反思**：
+- **ISO 25010 維度分析**：
+- **愛國者飛彈與數值精度**：
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：B
-**解析**：* **選項 B 正確**：**可靠性 (Reliability)** 衡量系統在特定時間內維持規定效能水準的能力，包含容錯性 (Fault Tolerance) 與可復原性 (Recoverability: 在故障後復原資料與恢復運作的能力)。斷電自動容錯移轉與日誌重放零遺失是可靠性的核心指標。
-</details>
-
-#### [Game] 第 6 題：【跨系統托運單格式打架】電商系統與黑貓宅急便 API 進行跨系統資料交換，因雙方日期協定格式不符（`YYYY-MM-DD` vs `DD/MM/YYYY`），造成所有物流單批次傳送失敗。這最主要是在考驗或違反哪一項品質特性？
-- 功能適合性 (Functional Suitability)
-- 可靠性 (Reliability)
-- 效能效率 (Performance Efficiency)
-- 易用性 (Usability)
-- 安全性 (Security)
-- 可維護性 (Maintainability)
-- 可移植性 (Portability)
-- 相容性 (Compatibility) (Correct)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：H
-**解析**：* **選項 H 正確**：**相容性 (Compatibility)** 指產品在共享同一硬體或軟體環境下交換資訊的能力，關鍵子特性為「互通性 (Interoperability: 兩個以上系統交換資訊並有效使用被交換資訊的能力)」。日期格式不相容導致無法跨系統溝通即為互通性失敗。
-</details>
-
-#### [Game] 第 7 題：【URL 改個數字看光他人隱私】駭客在瀏覽器將個人資料頁的 URL 從 `userId=1001` 改為 `userId=1002`，系統竟然毫無攔截，直接秀出另一位顧客的信用卡卡號與地址。這屬於哪一項品質特性的嚴重漏洞？
-- 功能適合性 (Functional Suitability)
-- 可靠性 (Reliability)
-- 效能效率 (Performance Efficiency)
-- 易用性 (Usability)
-- 安全性 (Security) (Correct)
-- 可維護性 (Maintainability)
-- 可移植性 (Portability)
-- 相容性 (Compatibility)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：E
-**解析**：* **選項 E 正確**：**安全性 (Security)** 確保資訊與資料受到保護，使未授權人員無法存取。此案例為典型 BOLA / IDOR (不安全的物件直接參照) 越權漏洞，嚴重違反安全性中的「機密性 (Confidentiality)」。
-</details>
-
-#### [Game] 第 8 題：【Mac 開發很順，推上 Linux 容器全掛】開發者在 macOS 本地端測試正常的服務，部署至生產環境的 Linux Docker 容器時，因寫死路徑大小寫（Linux 嚴格區分大小寫）導致找不到檔案崩潰。這最主要違反或考驗了哪一項品質特性？
-- 功能適合性 (Functional Suitability)
-- 可靠性 (Reliability)
-- 效能效率 (Performance Efficiency)
-- 易用性 (Usability)
-- 安全性 (Security)
-- 可維護性 (Maintainability)
-- 可移植性 (Portability) (Correct)
-- 相容性 (Compatibility)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：G
-**解析**：* **選項 G 正確**：**可移植性 (Portability)** 衡量系統能從一個硬體、軟體或其他操作環境轉移至另一個環境的有效性與效率，其關鍵子特性為「適應性 (Adaptability: 適應不同作業系統或執行環境的能力)」。跨 macOS/Linux 失敗屬於適應性不足。
-</details>
-
-#### [Game] 第 9 題：【地下室離線暫存與自動重送】外送員騎車進入收訊不良的地下停車場，手機 App 自動切換為離線模式快取送達狀態，當回到地面偵測到 5G 訊號時自動重送同步。這最主要是在展現系統的哪一項品質特性？
-- 功能適合性 (Functional Suitability)
-- 可靠性 (Reliability) (Correct)
-- 效能效率 (Performance Efficiency)
-- 易用性 (Usability)
-- 安全性 (Security)
-- 可維護性 (Maintainability)
-- 可移植性 (Portability)
-- 相容性 (Compatibility)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：B
-**解析**：* **選項 B 正確**：**可靠性 (Reliability)** 之子特性「容錯性 (Fault Tolerance)」與「可用性 (Availability)」，指系統在部分環境故障（如網路中斷）時仍能維持指定運作水準，並在連線恢復後自癒同步。
-</details>
-
-#### [Game] 第 10 題：【容器映像檔一鍵秒級部署】後端微服務封裝成標準 Docker 映像檔，無論部署在 AWS ECS、GCP GKE 還是地端 Kubernetes，皆能在 10 秒內透過統一設定檔一鍵拉起成功運行。這最主要展現了哪一項品質特性？
-- 功能適合性 (Functional Suitability)
-- 可靠性 (Reliability)
-- 效能效率 (Performance Efficiency)
-- 易用性 (Usability)
-- 安全性 (Security)
-- 可維護性 (Maintainability)
-- 可移植性 (Portability) (Correct)
-- 相容性 (Compatibility)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：G
-**解析**：* **選項 G 正確**：**可移植性 (Portability)** 涵蓋「易安裝性 (Installability: 在指定環境成功安裝/部署的難易度)」與「適應性 (Adaptability: 能夠運行在不同雲平台或基礎設施)」。利用標準容器一鍵多雲部署是現代可移植性的代表作。
+**解析**：* **Code Churn（程式碼流失率 / 變動率）**：衡量剛提交 (Commit) 的程式碼在短時間內（通常為 2 週內）就被後續 Commit 刪除或重寫的行數比例。
+  * **AI 時代的警訊**：AI 輔助寫程式讓工程師能輕易「一鍵採納」大段程式碼，但這些程式碼往往缺乏對邊界條件、架構約束與業務邏輯的深思熟慮。一旦進入測試或整合便漏洞百出，導致工程師必須頻繁推翻重寫。這種「產出快、丟棄也快」的高流失現象，正是 AI 生成程式碼帶來**長期維護性技術債（Maintainability Debt）**與**系統脆弱性**的具體體現。
 </details>
 
 ## Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging)
@@ -289,16 +133,16 @@ Time: 20
 
 ### [Activity: sqa-ch02-ccq2] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 2
 #### [CCQ] 某專案經理向客戶抱怨：「使用者輸入了負數的年齡導致伺服器當機，這是使用者的操作錯誤，不是我們程式的 Bug，因為規格書上根本沒寫年齡可以是負數！」從現代軟體工程與 SQA 的角度，下列評述何者最為正確？
-- 專案經理說得完全正確，未在規格書載明的輸入情況，開發團隊不負任何責任
-- 這是典型的「規格遺漏」與「缺乏防禦性設計」，專業軟體應主動對非法輸入進行驗證並優雅回傳錯誤，而非直接 Crash (Correct)
-- 只要資料庫欄位設為 Integer，任何數字輸入都不應該算是 Bug
-- 只要客戶願意加錢，所有未明訂的規格才需要被修復
+- 經理說法完全合理，合約規格未載明的邊界輸入，團隊無防禦義務
+- 資料庫欄位只要設為整數，程式遭遇任何數值當機皆屬於環境問題
+- 此屬典型規格遺漏與防禦缺失，系統應驗證非法輸入並優雅回報錯誤 (Correct)
+- 未明訂之規格只能當作新需求變更，驗收前不應要求修復當機異常
 
 <details>
 <summary>點擊查看答案與解析</summary>
 
-**正確答案**：B
-**解析**：* **選項 B 正確**：專業軟體品質保證強調防禦性架構（Robustness & Input Validation）。即使規格書未詳盡列出所有非法數值，系統也絕不能因為未受檢驗的輸入而發生未捕獲的例外或崩潰。
+**正確答案**：C
+**解析**：* **選項 C 正確**：專業軟體品質保證強調防禦性架構（Robustness & Input Validation）。即使規格書未詳盡列出所有非法數值，系統也絕不能因為未受檢驗的輸入而發生未捕獲的例外或崩潰，應主動驗證邊界並回報友善錯誤。
 </details>
 
 ### [Activity: sqa-ch02-ccq3] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 3
@@ -335,7 +179,36 @@ Time: 20
   * **選項 D 錯誤**：Clean Code 是跨領域適用的核心工程實踐。
 </details>
 
-### [Activity: sqa-ch02-ccq5] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 5
+### [Activity: sqa-ch02-ccq-logic] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 5
+#### [CCQ] 某後端微服務的崩潰與監控規則為：「若發生記憶體流失 ($p$) 或 資料庫連線池耗盡 ($q$)，則系統必會觸發警報 ($r$) 且 寫入崩潰日誌 ($s$)」。符號化表示為： $$(p \lor q) \implies (r \land s)$$ 今日維運團隊觀察到：「**系統目前正常運作中，未觸發監控警報 ($\neg r$)**」。工程師欲推論當前系統的底層狀態，下列哪一個推論在形式邏輯（逆否命題與笛摩根定律）上是**唯一必然為真**的正確推論？
+- 系統此時既沒有發生記憶體流失，也沒有發生資料庫連線池耗盡 ($\neg p \land \neg q$) (Correct)
+- 系統可能正在發生記憶體流失，但因連線池未耗盡，所以尚未觸發警報
+- 只要確認沒有寫入崩潰日誌，就能推斷伺服器必定發生了資料庫連線池耗盡
+- 只要重新啟動資料庫以確保連線池正常 ($\neg q$)，系統日後就絕對不可能再觸發警報
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：A
+**解析**：* **原命題**：$(p \lor q) \implies (r \land s)$。
+  * **觀察事實**：已知未觸發警報 ($\neg r$)。因為後項 $(r \land s)$ 為交集（AND 連結），若 $r$ 為假，則 $(r \land s)$ 必為假，即 $\neg (r \land s)$ 為真。
+  * **逆否命題等價性**：$(A \implies B) \iff (\neg B \implies \neg A)$。因此 $\neg (r \land s) \implies \neg (p \lor q)$ 必然為真。
+  * **笛摩根定律 (De Morgan's Laws)**：$\neg (p \lor q) \iff (\neg p \land \neg q)$。
+  * **結論**：當前系統「既沒有記憶體流失，也沒有連線池耗盡」($\neg p \land \neg q$)，因此**選項 A** 必然為真！
+  * **選項 B 錯誤**：若存在記憶體流失 ($p$ 為真)，則依規則必會引爆警報 ($r$)，與已知事實 $\neg r$ 矛盾。
+  * **選項 C 錯誤**：混淆了充分條件與必要條件。
+  * **選項 D 錯誤**：犯了「否定前項謬誤 (Inverse Error)」。即便連線池正常 ($\neg q$)，若未來發生記憶體流失 ($p$)，依然會引發警報。
+</details>
+
+### [Activity: sqa-ch02-ccq1] ⚠️ AI 除錯的兩大常見陷阱
+#### [CCQ] ⚠️ AI 除錯的兩大常見陷阱
+- 「**膠帶式修復 (Band-aid / Patch Fix)**」：
+- 自我印證偏誤與回歸破壞：
+- **提供充分上下文 (Context)**：不要只貼單行報錯，必須提供完整的 **Stack Trace、相關方法程式碼、輸入資料與預期業務規則**。
+- **要求根因解釋而非直接給程式碼**：Prompt：「*請分析引發此 Exception 的 3 個可能根本原因，並指出此修復是否會破壞任何前置條件。*」
+- **先寫測試再修復 (Test-First Bug Fix)**：利用 AI 生成一個「**專門重現該 Bug 的失敗單元測試**」，修復後測試轉綠，並跑完整體 CI 測試確認無回歸。
+
+### [Activity: sqa-ch02-ccq5] Chapter 2: 錯與除錯 (Bugs, Faults, and Debugging) CCQ 7
 #### [CCQ] 當生產環境拋出 `ConcurrentModificationException` 時，工程師直接將整段程式碼貼給 AI，AI 建議在出錯的迴圈外層直接包裹一個空的 `try-catch` 區塊將例外吞掉。關於這種做法，下列評價何者最為精準？
 - 這是絕佳的快速修復方案，因為系統再也不會拋出例外中斷服務
 - 這是危險的「治標不治本（Swallowing Exception）」，雖然表象不報錯，但底層多執行緒並發衝突與資料不一致依然存在，日後會引發更嚴重的資料損壞 (Correct)
@@ -349,189 +222,38 @@ Time: 20
 **解析**：* **選項 B 正確**：吞掉例外（Swallowing Exceptions）是嚴重的反模式（Anti-pattern）。它只是掩蓋了錯誤徵兆，實質上的並發競爭依然存在，並會導致資料悄悄被破壞。
 </details>
 
-### [Activity: sqa-ch02-fill1] 2.7 綜合練習 (3/5)：核心概念填空挑戰 (一)
-#### [Fill] 請根據本章核心理論，從下方詞彙庫選出最適當的專業名詞填入：
+### [Activity: sqa-ch02-ccq2] 實證研究與行業報告 (Empirical Studies & Industry Reports)
+#### [CCQ] 實證研究與行業報告 (Empirical Studies & Industry Reports)
+- **Boehm / NIST 指數級修復成本定律**：
+- **微軟研究院 (Microsoft Research) 缺陷實證報告**：
+- **Google SRE / 技術債度量**：
 
-* 🔍 **備選詞彙庫 (Word Bank，含干擾項)**：
-  * `前置條件 (Preconditions)` ｜ `Fault / Defect` ｜ `例外處理 (Exception Handling)` ｜ `Mistake`
-  * `類別不變量 (Class Invariants)` ｜ `Error State` ｜ `語法錯誤 (Syntax Error)` ｜ `Failure`
-  * `後置條件 (Postconditions)`
+### [Activity: sqa-ch02-ccq3] ✍️ 2.7 綜合練習
+#### [CCQ] 
+- **Bug / Fault / Failure 辨析**：
+- **邏輯推理除錯**：
+- **MaxHeap 除錯實戰**：
+- capacity = capacity;
+- size = 0;
+- heap = new int[capacity];
 
-1. **錯的因果鏈** (2.1 臭蟲因果理論)：
-   工程師心智思維中的人為失誤稱為 **[ ① ______ ]**，反映在程式碼中成為靜態的 **[ ② ______ ]**；當該行程式碼被執行，會引發記憶體內部的 **[ ③ ______ ]**，最終造成外部可見的行為偏離，稱為 **[ ④ ______ ]**。
-2. **契約式設計** (2.5 契約防禦 DbC)：
-   呼叫端必須負責滿足的是 **[ ⑤ ______ ]**；方法保證在執行完畢後達成的狀態是 **[ ⑥ ______ ]**；類別在任何公開方法執行前後皆必須恆成立的條件是 **[ ⑦ ______ ]**。
+### [Activity: sqa-ch02-fill1] 4. 核心概念填空挑戰 (一)：缺陷因果與契約防禦
+#### [CCQ] 請根據本章核心理論，從下方詞彙庫選出最適當的軟體工程專業名詞填入： * 🔍 **備選詞彙庫 (Word Bank，含干擾項)**： `Mistake` ｜ `Fault / Defect` ｜ `Error State` ｜ `Failure` ｜ `前置條件 (Preconditions)` ｜ `後置條件 (Postconditions)` ｜ `類別不變量 (Class Invariants)` ｜ `語法錯誤 (Syntax Error)` ｜ `例外處理 (Exception Handling)`
+- **錯的因果鏈** (2.1 臭蟲因果理論)：工程師心智思維中的人為失誤稱為 **[ ① ______ ]**，反映在程式碼中成為靜態的 **[ ② ______ ]**；當該行程式碼被執行，會引發記憶體內部的 **[ ③ ______ ]**，最終造成外部可見的行為偏離，稱為 **[ ④ ______ ]**。
+- **契約式設計** (2.5 契約防禦 DbC)：呼叫端必須負責滿足的是 **[ ⑤ ______ ]**；方法保證在執行完畢後達成的狀態是 **[ ⑥ ______ ]**；類別在任何公開方法執行前後皆必須恆成立的條件是 **[ ⑦ ______ ]**。
 
-<details>
-<summary>點擊查看答案與解析</summary>
+### [Activity: sqa-ch02-fill2] 5. 核心概念填空挑戰 (二)：缺陷治理與除錯實務
+#### [CCQ] 請根據本章核心理論，從下方詞彙庫選出最適當的軟體工程專業名詞填入： * 🔍 **備選詞彙庫 (Word Bank，含干擾項)**： `嚴重度 (Severity)` ｜ `優先級 (Priority)` ｜ `衛語句 (Guard Clauses)` ｜ `程式碼壞味道 (Code Smells)` ｜ `重現 (Reproduce)` ｜ `條件斷點 (Conditional Breakpoints)` ｜ `迴歸測試 (Regression Testing)` ｜ `熱修復 (Hotfix)` ｜ `冒煙測試 (Smoke Testing)`
+- **缺陷管理二維度** (2.6 團隊治理)：衡量缺陷對系統架構破壞深淺程度的是 **[ ① ______ ]**；決定開發團隊排程修復順序的是 **[ ② ______ ]**。
+- **整潔程式碼與防錯設計** (2.2 源頭預防)：提早判斷無效條件並直接回傳、消除多層巢狀結構的重構技巧是 **[ ③ ______ ]**；程式碼中雖能正常運作但暗示結構不良、日後難以維護的特徵稱為 **[ ④ ______ ]**。
+- **科學除錯與工具實務** (2.3 科學排查 ＆ 2.4 IDE 工具)：排查問題的第一步是穩定且完全 **[ ⑤ ______ ]** 臭蟲；在 IDE 中僅在特定表達式成立時才中斷程式的工具是 **[ ⑥ ______ ]**；修復後執行既有測試以確保未破壞其他功能的程序稱為 **[ ⑦ ______ ]**。
 
-* **2.7 填空挑戰 (一) 參考答案**：
-  * ① `Mistake`（人為失誤）、② `Fault / Defect`（靜態缺陷）、③ `Error State`（內部錯誤狀態）、④ `Failure`（系統失效）
-  * ⑤ `前置條件 (Preconditions)`、⑥ `後置條件 (Postconditions)`、⑦ `類別不變量 (Class Invariants)`
-</details>
-
-### [Activity: sqa-ch02-fill2] 2.7 綜合練習 (4/5)：核心概念填空挑戰 (二)
-#### [Fill] 請根據本章核心理論，從下方詞彙庫選出最適當的專業名詞填入：
-
-* 🔍 **備選詞彙庫 (Word Bank，含干擾項)**：
-  * `衛語句 (Guard Clauses)` ｜ `優先級 (Priority)` ｜ `冒煙測試 (Smoke Testing)`
-  * `嚴重度 (Severity)` ｜ `重現 (Reproduce)` ｜ `程式碼壞味道 (Code Smells)`
-  * `條件斷點 (Conditional Breakpoints)` ｜ `熱修復 (Hotfix)` ｜ `迴歸測試 (Regression Testing)`
-
-1. **缺陷管理二維度** (2.6 團隊治理)：
-   衡量缺陷對系統架構破壞深淺程度的是 **[ ① ______ ]**；決定開發團隊排程修復順序的是 **[ ② ______ ]**。
-2. **整潔程式碼與防錯設計** (2.2 源頭預防)：
-   提早判斷無效條件並直接回傳、消除多層巢狀結構的重構技巧是 **[ ③ ______ ]**；程式碼中雖能正常運作但暗示結構不良、日後難以維護的特徵稱為 **[ ④ ______ ]**。
-3. **科學除錯與工具實務** (2.3 科學排查 ＆ 2.4 IDE 工具)：
-   排查問題的第一步是穩定且完全 **[ ⑤ ______ ]** 臭蟲；在 IDE 中僅在特定表達式成立時才中斷程式的工具是 **[ ⑥ ______ ]**；修復後執行既有測試以確保未破壞其他功能的程序稱為 **[ ⑦ ______ ]**。
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-* **2.7 填空挑戰 (二) 參考答案**：
-  * ① `嚴重度 (Severity)`、② `優先級 (Priority)`
-  * ③ `衛語句 (Guard Clauses)`、④ `程式碼壞味道 (Code Smells)`
-  * ⑤ `重現 (Reproduce)`、⑥ `條件斷點 (Conditional Breakpoints)`、⑦ `迴歸測試 (Regression Testing)`
-</details>
-
-### [Activity: sqa-ch02-game] 2.7 綜合練習 (5/5)：除錯偵探所 (Game 挑戰 7 題)
-
-#### [Game] 第 1 題：【遺漏負數與邊界】電商折扣系統規格書僅註明「滿千享 8 折」，未定義負數金額或退款情境，導致負數金額折抵後反向入帳。這在軟體工程定義中屬於何者？
-- 規格遺漏缺陷 (Missing Specification) (Correct)
-- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
-- 吞掉例外反模式 (Swallowing Exceptions)
-- 條件斷點應用 (Conditional Breakpoint)
-- 斷言與例外的誤用 (Assertion vs Exception Misuse)
-- 低嚴重度、高優先級 (Low Severity, High Priority)
-- 迴歸缺陷導致回開 (Regression Defect & Reopened)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：A
-**解析**：* **選項 A 正確**：需求未定義極端邊界與負數行為，源頭需求規格即存在遺漏缺陷 (Missing Specification Defect)。
-</details>
-
-#### [Game] 第 2 題：【計算總額暗藏玄機】名為 `calculateTotal()` 的函式在計算訂單金額時，內部偷偷修改了全域購物車快取狀態。這屬於何種軟體工程問題？
-- 規格遺漏缺陷 (Missing Specification)
-- 隱蔽副作用與壞味道 (Side Effect & Code Smell) (Correct)
-- 吞掉例外反模式 (Swallowing Exceptions)
-- 條件斷點應用 (Conditional Breakpoint)
-- 斷言與例外的誤用 (Assertion vs Exception Misuse)
-- 低嚴重度、高優先級 (Low Severity, High Priority)
-- 迴歸缺陷導致回開 (Regression Defect & Reopened)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：B
-**解析**：* **選項 B 正確**：查詢與計算函式暗藏全域狀態修改，違反單一職責原則且具備隱蔽副作用 (Hidden Side Effect / Code Smell)。
-</details>
-
-#### [Game] 第 3 題：【空的 Catch 假裝沒事】工程師為了不讓系統拋出 500 錯誤，加上 `try { ... } catch (Exception e) {}` 空實作，導致帳戶餘額資料悄悄損毀。這屬於何種危害？
-- 規格遺漏缺陷 (Missing Specification)
-- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
-- 吞掉例外反模式 (Swallowing Exceptions) (Correct)
-- 條件斷點應用 (Conditional Breakpoint)
-- 斷言與例外的誤用 (Assertion vs Exception Misuse)
-- 低嚴重度、高優先級 (Low Severity, High Priority)
-- 迴歸缺陷導致回開 (Regression Defect & Reopened)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：C
-**解析**：* **選項 C 正確**：吞掉例外 (Swallowing Exceptions Anti-Pattern) 會掩蓋真實系統錯誤狀態，使缺陷在深層發酵造成毀滅性資料損壞。
-</details>
-
-#### [Game] 第 4 題：【百萬迴圈的精準排查】在處理 100 萬筆交易的迴圈中，系統只在特定 `user_id == 888888` 時崩潰，工程師欲避免無效單步除錯。在 IDE 工具中最適合使用何種機制？
-- 規格遺漏缺陷 (Missing Specification)
-- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
-- 吞掉例外反模式 (Swallowing Exceptions)
-- 條件斷點應用 (Conditional Breakpoint) (Correct)
-- 斷言與例外的誤用 (Assertion vs Exception Misuse)
-- 低嚴重度、高優先級 (Low Severity, High Priority)
-- 迴歸缺陷導致回開 (Regression Defect & Reopened)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：D
-**解析**：* **選項 D 正確**：條件斷點 (Conditional Breakpoints) 能讓程式僅在滿足指定布林表達式時暫停，大幅節省海量迴圈除錯時間。
-</details>
-
-#### [Game] 第 5 題：【線上環境失效的防線】後端工程師使用 `assert request.getBody() != null` 驗證外部使用者的 HTTP 請求參數，因正式環境未開 `-ea` 導致防線全失。這反映了何種設計謬誤？
-- 規格遺漏缺陷 (Missing Specification)
-- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
-- 吞掉例外反模式 (Swallowing Exceptions)
-- 條件斷點應用 (Conditional Breakpoint)
-- 斷言與例外的誤用 (Assertion vs Exception Misuse) (Correct)
-- 低嚴重度、高優先級 (Low Severity, High Priority)
-- 迴歸缺陷導致回開 (Regression Defect & Reopened)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：E
-**解析**：* **選項 E 正確**：斷言 (Assertion) 僅用於開發除錯與內部契約驗證；對外部不可信之使用者輸入必須使用穩固的例外處理機制 (Exception Handling)。
-</details>
-
-#### [Game] 第 6 題：【不痛不癢但商譽暴跌】跨國金融公司官網首頁正中央的主視覺，將英文單字 `Security` 拼錯為 `Securty`，系統一切運行正常無崩潰。在缺陷管理維度中屬於？
-- 規格遺漏缺陷 (Missing Specification)
-- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
-- 吞掉例外反模式 (Swallowing Exceptions)
-- 條件斷點應用 (Conditional Breakpoint)
-- 斷言與例外的誤用 (Assertion vs Exception Misuse)
-- 低嚴重度、高優先級 (Low Severity, High Priority) (Correct)
-- 迴歸缺陷導致回開 (Regression Defect & Reopened)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：F
-**解析**：* **選項 F 正確**：技術架構損害極輕微（文字拼錯），但嚴重損及企業專業形象與公關信任，屬於典型的「低嚴重度、高優先級 (Low Severity, High Priority)」。
-</details>
-
-#### [Game] 第 7 題：【修好了 A 卻弄壞了 B】工程師修復登入頁面排版並關閉 Ticket，上線後忘記密碼功能卻因此損毀，測試團隊緊急重啟該 Ticket。這在 BTS 流程中反映何者？
-- 規格遺漏缺陷 (Missing Specification)
-- 隱蔽副作用與壞味道 (Side Effect & Code Smell)
-- 吞掉例外反模式 (Swallowing Exceptions)
-- 條件斷點應用 (Conditional Breakpoint)
-- 斷言與例外的誤用 (Assertion vs Exception Misuse)
-- 低嚴重度、高優先級 (Low Severity, High Priority)
-- 迴歸缺陷導致回開 (Regression Defect & Reopened) (Correct)
-Time: 20
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：G
-**解析**：* **選項 G 正確**：修復既有缺陷時衍生了新的副作用破壞其他功能（迴歸缺陷 Regression Defect），導致本已 Closed 的工單必須被重啟回開 (Reopened)。
-</details>
+### [Activity: sqa-ch02-game] 6. 課堂挑戰遊戲：除錯偵探所 (Game 挑戰 7 題)
+#### [Game] 請從下列選項中，為七大真實軟體工程案件做出最精準的法律判決： `A. 規格遺漏缺陷 (Missing Specification)` | `B. 隱蔽副作用與壞味道 (Side Effect & Code Smell)` | `C. 吞掉例外反模式 (Swallowing Exceptions)` `D. 條件斷點應用 (Conditional Breakpoint)` | `E. 斷言與例外的誤用 (Assertion vs Exception Misuse)` `F. 低嚴重度、高優先級 (Low Severity, High Priority)` | `G. 迴歸缺陷導致回開 (Regression Defect & Reopened)` * **案件 1【遺漏負數與邊界】**：電商折扣系統規格書僅註明「滿千享 8 折」，未定義負數金額或退款情境，導致負數金額折抵後反向入帳。 * **案件 2【計算總額暗藏玄機】**：名為 `calculateTotal()` 的函式在計算訂單金額時，內部偷偷修改了全域購物車快取狀態。 * **案件 3【空的 Catch 假裝沒事】**：工程師為了不讓系統拋出 500 錯誤，加上 `try { ... } catch (Exception e) {}` 空實作，導致帳戶餘額資料悄悄損毀。 * **案件 4【百萬迴圈的精準排查】**：在處理 100 萬筆交易的迴圈中，系統只在特定 `user_id == 888888` 時崩潰，工程師欲避免無效單步除錯。 * **案件 5【線上環境失效的防線】**：後端工程師使用 `assert request.getBody() != null` 驗證外部使用者的 HTTP 請求參數，因正式環境未開 `-ea` 導致防線全失。 * **案件 6【不痛不癢但商譽暴跌】**：跨國金融公司官網首頁正中央的主視覺，將英文單字 `Security` 拼錯為 `Securty`，系統一切運行正常無崩潰。 * **案件 7【修好了 A 卻弄壞了 B】**：工程師修復登入頁面排版並關閉 Ticket，上線後忘記密碼功能卻因此損毀，測試團隊緊急重啟該 Ticket。
 
 ## Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版)
 
-### [Activity: sqa-ch03-ccq1] Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版) CCQ 1
-#### [CCQ] 在契約式設計 (Design by Contract) 中，由「呼叫者 (Caller)」負責滿足、若不滿足則被呼叫方法將拒絕執行，這在契約三要素中屬於？
-- 前置條件 (Preconditions) (Correct)
-- 後置條件 (Postconditions)
-- 類別不變量 (Class Invariants)
-- 異常防護 (Exceptions)
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：A
-**解析**：* **選項 A 正確**：前置條件 (Preconditions) 是呼叫者必須滿足的契約條件，用以保護被呼叫方法免於不合法的輸入；後置條件由被呼叫者保證達成；類別不變量是物件狀態在方法執行前後均須滿足的約束。
-</details>
-
-### [Activity: sqa-ch03-ccq2] Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版) CCQ 2
+### [Activity: sqa-ch03-ccq2] Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版) CCQ 1
 #### [CCQ] 某工程師使用 AI 秒速生成了一套複雜的利息計算演算法，並隨即讓同一個 AI 幫忙生成單元測試。測試跑出 100% 覆蓋率全綠燈通過，但在實際上線後卻被金融主管機關判定年息計算公式違反法規。依據 ISTQB 軟體測試 7 大原則，這最主要反映了何種問題？
 - 測試工程師未安裝最新的 JDK 執行環境
 - AI 測試陷入「殺蟲劑悖論（自我印證盲區）」與「原則 7：無錯謬誤（程式碼無語法錯誤但偏離法規與真實業務需求）」 (Correct)
@@ -544,6 +266,9 @@ Time: 20
 **正確答案**：B
 **解析**：* **選項 B 正確**：讓 AI 為自己生成的程式碼寫測試，極易陷入自我印證的殺蟲劑抗藥性；同時，程式碼無編譯錯誤並不等於符合業務與法規需求（無錯謬誤）。人類工程師必須親自定義領域規格（Domain Spec）與 Test Oracle。
 </details>
+
+### [Activity: sqa-ch03-ccq1] 單元模組的可測試性 (Testability)
+#### [CCQ] 模組設計應遵循「邏輯與 UI 分離」： ```java // ❌ 不良設計：業務邏輯與 UI 輸入強耦合，無法自動化單元測試 double div(double x, double y) { while (y == 0) { y = input("除數不可為 0，請重新輸入："); // 依賴 UI } return x / y; } // ✅ 良好設計：純邏輯模組，拋出明確例外，極易進行 JUnit 自動化測試 double div(double x, double y) { if (y == 0) { throw new IllegalArgumentException("除數不得為 0"); } return x / y; } ```
 
 ### [Activity: sqa-ch03-ccq3] Chapter 3: 軟體測試原則、理論與架構模型 (AI 時代前沿版) CCQ 3
 #### [CCQ] 在標準 V 開發模型中，依據「高階架構設計文件 (ADD)」所定義的模組介面與通訊協定，所對應執行的測試層級為何？
@@ -559,8 +284,11 @@ Time: 20
 **解析**：* **選項 B 正確**：高階架構設計定義了子系統與模組間的 API 介面與資料傳遞協定，其直接對應的驗證層級為整合測試 (Integration Testing)。
 </details>
 
-### [Activity: sqa-ch03-short1] 課堂互動：SQA 2.0 應對 Test Oracle 難題
-#### [Short] 如何為沒有唯一標準答案的 AI 與複雜系統建立 Test Oracle？（請簡述變質測試 Metamorphic Testing、差分測試 Differential Testing 或 LLM-as-a-Judge 的實務應用思路）
+### [Activity: sqa-ch03-short1] 課堂互動：SQA 2.0 應對 Test Oracle 難題 (Short 簡答)
+#### [Short] ##### 💡 SQA 2.0 應對 Test Oracle 難題的三大前沿技術：
+
+### [Activity: sqa-ch03-ccq1] ✍️ 3.6 綜合練習
+#### [CCQ] ✍️ 3.6 綜合練習
 
 ## Chapter 4: 軟體檢視
 
@@ -659,7 +387,10 @@ Time: 20
 
 ## Chapter 5: 黑箱測試
 
-### [Activity: sqa-ch05-ccq1] Chapter 5: 黑箱測試 CCQ 1
+### [Activity: sqa-ch05-ccq1] 軟體測試之父：Glenford J. Myers
+#### [CCQ] > 1979 年，美國電腦科學家 **Glenford J. Myers** 出版了軟體工程史上的奠基經典巨著 **《The Art of Software Testing》（軟體測試的藝術）**。 > Myers 提出了一句徹底顛覆軟體業界的革命性名言： > **「測試是為了發現錯誤而執行程式的過程，而不是為了證明程式沒有錯誤。」** > *(Testing is the process of executing a program with the intent of finding errors.)* > 他破除了「測試全部通過 = 系統毫無瑕疵」的盲目樂觀，率先將黑箱測試三大核心技術——**等價類分割 (Equivalence Partitioning)**、**邊界值分析 (Boundary Value Analysis)** 與 **錯誤猜測 (Error Guessing)** 系統化。書中所提出的「經典三角形分類問題 (The Triangle Problem)」更成為五十年來全球資訊界檢驗黑箱測試案例完整性的教科書級標竿。
+
+### [Activity: sqa-ch05-ccq2] Chapter 5: 黑箱測試 CCQ 2
 #### [CCQ] 在 JUnit 中，`assertSame(a, b)` 斷言的作用與 `assertEquals(a, b)` 完全相同，都是在驗證兩個物件的內容值是否相等（即比對 `a.equals(b)`）。
 
 <details>
@@ -670,7 +401,7 @@ Time: 20
   * `assertEquals(a, b)` 驗證的是**內容等價性 (Value Equality)**，即呼叫 `a.equals(b)`。兩者概念不同，是 Java 測試中最常混淆的地方。
 </details>
 
-### [Activity: sqa-ch05-ccq2] Chapter 5: 黑箱測試 CCQ 2
+### [Activity: sqa-ch05-ccq3] Chapter 5: 黑箱測試 CCQ 3
 #### [CCQ] 假設某個受測方法接受 3 個彼此獨立的輸入參數。若採用「獨立型強固邊界測試 (Independent Robust BVA)」，其設計出的測試案例數量應為多少？
 - 13
 - 19 (Correct)
@@ -686,7 +417,7 @@ Time: 20
   * 選項 A 為一般邊界測試 (4n + 1)，選項 C 為最壞狀況測試 (5ⁿ)。
 </details>
 
-### [Activity: sqa-ch05-ccq3] Chapter 5: 黑箱測試 CCQ 3
+### [Activity: sqa-ch05-ccq4] Chapter 5: 黑箱測試 CCQ 4
 #### [CCQ] 在等價分割測試 (Equivalence Partitioning) 中，「弱 (Weak)」與「強 (Strong)」分類法的主要區別是什麼？
 - 「弱」只涵蓋有效等價類，而「強」同時涵蓋有效與無效等價類
 - 「弱」基於單一錯誤假設（每個測試案例只測試一個區間的代表值），而「強」則基於多重錯誤假設（測試參數間代表值的笛卡爾積組合） (Correct)
@@ -701,7 +432,7 @@ Time: 20
   * **強等價**基於「多重錯誤假設」，要求測試所有變數等價類的笛卡爾積組合（所有組合皆要測到），因此強等價生成的測試案例數量會遠多於弱等價。
 </details>
 
-### [Activity: sqa-ch05-ccq4] Chapter 5: 黑箱測試 CCQ 4
+### [Activity: sqa-ch05-ccq5] Chapter 5: 黑箱測試 CCQ 5
 #### [CCQ] 全成對測試 (Pairwise / All-Pairs Testing) 能夠大幅縮減測試案例數量，其在工程上的核心理論依據是什麼？
 - 軟體系統中的缺陷通常需要至少三個以上的參數交互作用才會觸發
 - 絕大多數的軟體缺陷都是由「單一變數」或「任意兩個變數之間的交互作用 (2-way Interaction)」所引起的 (Correct)
@@ -716,7 +447,7 @@ Time: 20
   * 因此，全成對測試只要求「任意兩個變數的可能取值組合都至少出現過一次」，在大幅減少測試案例數量（從指數級降為多項式級）的同時，仍能保持極高的缺陷發現率。
 </details>
 
-### [Activity: sqa-ch05-ccq5] Chapter 5: 黑箱測試 CCQ 5
+### [Activity: sqa-ch05-ccq6] Chapter 5: 黑箱測試 CCQ 6
 #### [CCQ] 關於「正交表測試 (Orthogonal Array Testing)」與一般「成對測試 (Pairwise Testing)」的比較，下列敘述何者正確？
 - 正交表測試是隨機產生的，而 Pairwise 必須透過數學嚴格推導
 - 兩者都關注參數間的配對，但正交表更強調各因子組合的「均勻平衡性（正交性）」，而 Pairwise 僅要求任意兩因子的組合至少出現一次，因此 Pairwise 的案例數量通常更少且更有彈性 (Correct)
@@ -731,7 +462,7 @@ Time: 20
   * Pairwise 則打破了次數必須相等的平衡限制，只求「至少出現一次（>= 1）」，因此在處理不規則水平時，Pairwise 能產生更精簡、更具彈性的測試套件。
 </details>
 
-### [Activity: sqa-ch05-ccq6] Chapter 5: 黑箱測試 CCQ 6
+### [Activity: sqa-ch05-ccq7] Chapter 5: 黑箱測試 CCQ 7
 #### [CCQ] 在軟體測試實務中，下列哪一種受測情境最適合優先採用「決策表測試 (Decision Table Testing)」來設計案例？
 - 系統輸入參數彼此完全獨立，且有連續性數值邊界
 - 輸入參數之間存在複雜的商務邏輯與制約關係，不同的條件組合會觸發不同的系統動作或輸出結果 (Correct)
@@ -746,7 +477,7 @@ Time: 20
   * 選項 A 適合邊界值分析，選項 D 適合狀態測試 (State Testing)。
 </details>
 
-### [Activity: sqa-ch05-ccq7] Chapter 5: 黑箱測試 CCQ 7
+### [Activity: sqa-ch05-ccq8] Chapter 5: 黑箱測試 CCQ 8
 #### [CCQ] 在狀態測試 (State Testing) 中，關於「狀態覆蓋 (State Coverage)」與「轉移覆蓋 (Transition Coverage)」的強度關係，下列敘述何者正確？
 - 達到狀態覆蓋必定代表同時達到了轉移覆蓋
 - 轉移覆蓋的強度大於狀態覆蓋；若測試案例達到了轉移覆蓋（驗證了所有可能的轉移路徑），則必定已涵蓋了所有狀態（達到狀態覆蓋） (Correct)
@@ -761,7 +492,10 @@ Time: 20
   * **轉移覆蓋**要求系統中每條合法的狀態轉移弧線（邊，Edges）都至少被執行過一次。由於要走過每條邊，勢必會造訪所有的狀態節點，因此轉移覆蓋的測試強度高於狀態覆蓋。
 </details>
 
-### [Activity: sqa-ch05-ccq8] Chapter 5: 黑箱測試 CCQ 8
+### [Activity: sqa-ch05-ccq9] 屬性基礎測試先驅：John Hughes 與 QuickCheck
+#### [CCQ] > **屬性基礎測試 (PBT)** 最初由瑞典查爾摩斯工學院教授、ACM Fellow **John Hughes** 與 Koen Claessen 於 2000 年共同提出，並發表了劃時代的函式庫 **QuickCheck**（榮獲 ACM SIGPLAN 最具影響力論文獎）。 > > John Hughes 的核心倡議是：**「不要手寫測試案例，定義程式屬性！(Don't write tests, specify properties!)」** > 他認為傳統範例測試讓工程師浪費過多時間在思考個別測資，卻依然無法防範極端情境；PBT 讓人類回歸高層次的抽象規格思考，並交由電腦自動生成萬組隨機輸入。更關鍵的是，Hughes 發明了**「測資收縮 (Shrinking)」** 演算法，當隨機測資中觸發錯誤時，框架會自動二分逼近並縮減成最小反例（例如將長度 100 的亂碼陣列縮減至 `[0, -1]`），讓工程師能在數秒內抓出缺陷根本原因。現代主流生態系中的 Java `jqwik`、Python `Hypothesis` 與 TypeScript `fast-check`，皆源於 QuickCheck 的設計哲學。
+
+### [Activity: sqa-ch05-ccq10] Chapter 5: 黑箱測試 CCQ 10
 #### [CCQ] 在屬性基礎測試 (Property-Based Testing) 中，我們不需要手動為每一組測試寫出確切的預期輸出數值，而是定義程式執行時必須永遠維持的「屬性或不變量」，並交由測試框架隨機生成大量測資來尋找反例。
 - 正確 (True) (Correct)
 - 錯誤 (False)
@@ -772,6 +506,9 @@ Time: 20
 **正確答案**：A
 **解析**：* **正確**：PBT 的核心就是「規格即測試」。它不關注個別的特定輸入與輸出配對（Example），而是關注系統通用不變量（Property），框架會模擬極端狀態自動發送上萬組隨機輸入，若發現任何失敗的反例，還會進行收斂（Shrinking）以回報最簡潔的錯誤測資。
 </details>
+
+### [Activity: sqa-ch05-ccq11] ✍️ 練習
+#### [CCQ] ✍️ 練習
 
 ## Chapter 6: 白箱測試
 
@@ -846,15 +583,8 @@ Time: 20
   * **B 正確**：等價變異體（Equivalent Mutant）在語意上與原程式完全等價，代表對於所有可能的輸入，其輸出都與原程式相同。因此，沒有測試案例能夠區分兩者並將其殺死。
   * **C 錯誤**：等價變異體是程式碼本身的邏輯語意問題（例如把整數的 `a < b` 變成 `a <= b - 1`），與編譯器優化無關。
   * **D 錯誤**：在計算變異分數時，公式為 `MS = K / (M - E)`，其中等價變異體數 E 應從總變異體數 M 中扣除，以反映真實的測試集殺死率。
-#### [CCQ] 在實務上，變異測試需要搭配工具才能使用，因為一個程式所產生出的變異體需要很多，這需要自動化的產生，而比對變異體的執行結果與原程式是否相異也需要透過系統自動檢查，才能發揮此方法的效益。
-Correct: True
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：True
-**解析**：變異測試需要自動注入大量變異體，並需逐一執行既有測試案例集來比對輸出是否相異（殺死變異體），若無自動化工具輔助產生與判別，手動執行將極不切實際。
 </details>
+#### [CCQ] 在實務上，變異測試需要搭配工具才能使用，因為一個程式所產生出的變異體需要很多，這需要自動化的產生，而比對變異體的執行結果與原程式是否相異也需要透過系統自動檢查，才能發揮此方法的效益。
 
 ### [Activity: sqa-ch06-ccq6] 6.5.5 概念核對問答 (CCQ 6)
 #### [CCQ] 利用 LLM 輔助生成白箱測試單元測試（如使用 JUnit 生成測試套件）以提高覆蓋率時，下列何者通常是 AI 最難以自動驗證、最需要軟體工程師介入進行人工審查（做為 Oracle）的核心部分？
@@ -884,7 +614,7 @@ Correct: True
 **解析**：* 若要測試多組不同的輸入值與預期輸出值（參數化測試），應該使用 **`Scenario Outline`（情境大綱）** 搭配 **`Examples`（範例表格）**，而非 `Scenario` 搭配 `Background`。`Background` 是用於在每個情境執行前設定共同的前置步驟（例如登入系統），無法實現表格化的參數對照測試。
 </details>
 
-### [Activity: sqa-ch08-ccq2] 8.3.5 概念核對問答 (CCQ 2)：AI 畫面模擬與無頭瀏覽器技術本質
+### [Activity: sqa-ch08-ccq1] 8.3.5 概念核對問答 (CCQ 2)：AI 畫面模擬與無頭瀏覽器技術本質
 #### [CCQ] 在現代 E2E 系統測試架構中，關於無頭瀏覽器 (Headless Browser)、桌面端自動化框架 (Spectron) 與 AI 瀏覽器代理人 (Browser Subagent) 的技術原理，下列敘述何者**最正確**？
 - 無頭瀏覽器因為沒有圖形介面 (No GUI)，因此在執行測試時不會載入 CSS 與排版引擎 (Layout Engine)，僅執行純粹的 JavaScript 邏輯運算以加快速度
 - Spectron 框架主要用於純 Web 應用的效能壓測，無法直接跨入 Electron 的主行程 (Main Process) 控制桌面原生對話框
@@ -895,14 +625,13 @@ Correct: True
 <summary>點擊查看答案與解析</summary>
 
 **正確答案**：C
-
 **解析**：*   **A 選項錯誤**：無頭瀏覽器（如 Headless Chromium）依然會完整執行 DOM 解析、CSS 樣式運算、Layout 排版與記憶體畫布光柵化 (Rasterization)，才能支援精確的元素重疊檢驗與像素級截圖，並非「不載入 CSS」。
 *   **B 選項錯誤**：Spectron 是專門為 Electron 桌面應用設計的測試框架，其核心特點正是能夠透過 ChromeDriver 同時管理 Electron 的主行程 (Main Process) 與渲染行程 (Renderer Process)，控制原生選單與系統對話框。
 *   **C 選項正確**：傳統 E2E 測試最大的維護噩夢在於前端程式碼重構（如 Tailwind CSS 類別更動）導致 XPath/CSS 定位器失效；AI 代理人透過多模態視覺與語意推斷，具備自我修復 (Self-healing) 與視覺辨識能力，有效攻克此痛點。
 *   **D 選項錯誤**：AI 瀏覽器代理人可完美在無頭 (Headless) 模式下運行，利用記憶體緩衝區光柵化即時擷取畫面送交多模態模型，並自動在背景將整個操作過程編碼存檔為 WebP 視訊軌與 DOM 工件。
 </details>
 
-## Unit 1: AI 程式碼破壞實驗 (AI Code Attack & Reliability Lab)
+## Unit 2: AI 程式碼破壞實驗 (AI Code Attack & Reliability Lab)
 
 ### [Activity: sqa-u01-codebreak-ccq1] AI 寫程式與單元測試的「自我印證盲區」
 #### [CCQ] 工程師使用 LLM 快速生成了電子錢包扣款邏輯，接著又請同一個 AI 為該方法生成單元測試。測試執行結果呈現 100% 綠燈通過，且涵蓋率高達 100%。然而一上線面對促銷搶購的高並發情境，帳戶卻瞬間被超賣穿透、餘額變成負數破產。依據軟體測試與 SQA 原則，這主要體現了何種核心問題？
@@ -1016,7 +745,12 @@ Correct: True
   * **選項 A/C/D 錯誤**：皆非技術事實。
 </details>
 
-## Unit 1: 除錯實務與科學假設檢驗 (Debug Lab)
+## Unit 2: 除錯實務與科學假設檢驗 (Debug Lab)
+
+### [Activity: sqa-u02-debug-ccq1] 🖥️ Demo
+#### [CCQ] 設計一個程式，要求使用者輸入一個直徑，然後輸出其面積： ```java import java.util.Scanner; public class BreakpointDemo { public static void main(String[] args) { computeArea(); } public static void computeArea() { Scanner input = new Scanner(System.in);
+- out.print("Enter diameter: ");
+- out.println(area);
 
 ### [Activity: sqa-u01-debug-ccq1] 中斷點暫停時機與變數狀態
 #### [CCQ] 在 Java 程式碼中： ```java int a = 100; a = a + 1; // 👈 在此行設定中斷點 ``` 當除錯器執行到該行並高亮暫停時，在 Variables 變數監視視窗中，變數 `a` 此時呈現的值是多少？
@@ -1292,3 +1026,111 @@ Correct: True
 #### [問卷] 第 5 題：沒有用 AI, 我可以說是不會寫程式了
 - A. 同意
 - B. 不同意
+
+## Unit 2: 實習 01：防禦性程式設計與斷言 (Defensive Programming & Assertions)
+
+### [Activity: sqa-u02-assertion-ccq1] 6. 🧠 觀念核對問答 (CCQ - Concept Check Questions)
+#### [CCQ] 在開始自主動手練習前，請透過以下自我測驗題檢驗自己對**防禦性程式設計與斷言機制**的掌握度。先自行思考或在草稿紙寫下答案，再點開摺疊區塊核對！
+
+### [Activity: sqa-u02-assertion-ccq2] CCQ 1：公開 API 參數檢查 vs. 斷言陷阱（觀念辨析）
+#### [CCQ] **情境**：一位新進工程師在負責轉帳模組的公開函式庫時，寫了如下程式碼： ```java public class BankTransferService { // 供外部前端或外部系統調用的公開轉帳 API public void transferMoney(Account from, Account to, double amount) { assert from != null && to != null : "帳戶物件不可為 null"; assert amount > 0 : "轉帳金額必須大於 0"; // 執行轉帳業務邏輯... } } ```
+- 當這段程式碼部署到正式營運（Production）的伺服器時，最嚴重的安全隱患是什麼？為什麼？
+- 針對公開方法（Public API）的防衛性檢查，業界標準的最佳實踐是什麼？
+
+### [Activity: sqa-u02-assertion-ccq3] CCQ 2：斷言內部具副作用 (Side Effects) 的致命 Bug（程式辨析）
+#### [CCQ] **情境**：請觀察以下這段管理在線名單的程式碼： ```java public class SessionManager { private List<User> activeUsers = new ArrayList<>(); public void logout(User targetUser) { // 工程師希望移除使用者，同時斷言移除必定成功 assert activeUsers.remove(targetUser) : "登出失敗：該使用者原本就不在線上清單中！";
+- out.println("使用者登出流程完成，目前在線人數: " + activeUsers.size());
+
+### [Activity: sqa-u02-assertion-ccq4] CCQ 3：控制流程不變量與狀態斷言（程式填空題）
+#### [CCQ] **題目**：請閱讀下方的訂單狀態處理器，在程式碼中的 `【空格 A】` 與 `【空格 B】` 填入正確且符合防禦性規範的程式碼： ```java public enum OrderStatus { CREATED, PAID, SHIPPED, CANCELLED } public class OrderWorkflow { public void processDiscount(OrderStatus status, double originalTotal, double discountRate) { // 公開方法前置防衛 if (originalTotal < 0 || discountRate < 0 || discountRate > 1.0) { throw new IllegalArgumentException("折扣率或原始金額非法"); } double finalTotal = originalTotal * (1.0 - discountRate); // 【空格 A】：請在此撰寫斷言，驗證折扣後的實付金額必須大於等於 0 且不可超過原價 __________________________________________________________________________________ switch (status) { case CREATED: notifyCustomerToPay(); break; case PAID: dispatchWarehouse(); break; case SHIPPED: case CANCELLED: archiveOrder(); break; default: // 【空格 B】：所有列舉值均已於上面列出，正常情況下絕不可能執行到此處（控制流程不變量） __________________________________________________________________________ } } } ```
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**解析**：1. **空格 A**：屬於典型「內部數值不變量」，原價經由合法折扣率計算後，結果必定座落在 `[0, originalTotal]` 區間內。若違反，代表背後有負數乘積溢位或邏輯錯誤。
+2. **空格 B**：屬於「控制流程不變量（Control-Flow Invariant）」。在 `switch` 中即使所有 `enum` 值都已覆蓋，加上 `default: assert false;` 可以在未來有同事新增了新的 enum 常數（例如 `REFUNDING`）卻忘記修改此處時，第一時間在測試階段報警中斷，避免產生靜默缺陷。
+</details>
+#### [CCQ] > 💡 **自主學習流程**： > 1. 打開練習程式碼，依據 `TODO` 註解動手實作。 > 2. 執行對應的單元測試驗證是否全部通過。 > 3. 若卡關或想確認最佳寫法，再點開下方的摺疊區塊參考解答。
+
+## Unit 2: 實習 02：例外處理 (Exception Handling)
+
+### [Activity: sqa-u02-exception-ccq1] 8. 🧠 觀念核對問答 (CCQ - Concept Check Questions)
+#### [CCQ] 在開始動手寫練習前，請透過以下 3 道自我測驗題目檢核自己對 **Java 例外體系、資源管理與自訂例外設計** 的掌握度。請先自行思考，再點開摺疊區塊對照詳細解析！
+
+### [Activity: sqa-u02-exception-ccq2] CCQ 1：Checked vs. Unchecked Exception 的根本差異與設計哲學（架構觀念題）
+#### [CCQ] 
+- 在 Java 的 `Throwable` 階層中，為什麼 `NullPointerException` 與 `ArrayIndexOutOfBoundsException` 被設計為 `RuntimeException`（未檢例外），而 `IOException` 卻被設計為 Checked Exception（受檢例外）？
+- 對於身為軟體工程師的你，在面對這兩種類型的例外時，在編寫程式碼的防禦思維與因應策略上有何根本上的不同？
+
+### [Activity: sqa-u02-exception-ccq3] CCQ 2：生吞例外 (Swallowing Exception) 與資源外洩（程式除錯題）
+#### [CCQ] **情境**：一位實習生提交了以下讀取設定檔的程式碼： ```java public static String readFirstLine(String filePath) { try { BufferedReader reader = new BufferedReader(new FileReader(filePath)); return reader.readLine(); } catch (Exception e) { // 為了避免伺服器因錯誤中斷崩潰，先回傳 null return null; } } ``` 請指出這段程式碼中潛藏的 **兩大嚴重軟體品質與架構缺陷**，並使用現代 Java（Java 7+）標準語法將其完整改寫。
+
+### [Activity: sqa-u02-exception-ccq4] CCQ 3：BubbleSort 的後置條件驗證與自訂受檢例外（程式填空題）
+#### [CCQ] **題目**：在氣泡排序的驗證防線中，排序執行完成後我們執行 `isSorted(data)` 後置檢查。若演算法發生瑕疵導致陣列未正確排列，我們希望拋出自訂受檢例外 `SortingException`，請填空完成以下程式碼中的 `【空格 A】`、`【空格 B】` 與 `【空格 C】`： ```java // 【空格 A】：設計為自訂受檢例外（Checked Exception），必須繼承哪一個類別？ public class SortingException extends ____________________ { private final int failedIndex; public SortingException(String message, int failedIndex) { super(message);
+- failedIndex = failedIndex;
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**解析**：若要設計為 Checked Exception，直接繼承 `java.lang.Exception`；若繼承 `RuntimeException` 則會變成 Unchecked Exception)*
+- **【空格 B】**：
+  ```java
+  throws SortingException
+  ```
+  *(說明：依據捕捉或宣告原則 (CDR)，受檢例外若未在方法內部 try-catch，必須在簽名以 `throws` 宣告交給呼叫者處理)*
+- **【空格 C】**：
+  ```java
+  throw new SortingException("排序後置驗證失敗：元素未依遞增排列", i)
+  ```
+  *(說明：使用 `throw new` 關鍵字主動實例化並拋出例外)*
+</details>
+
+## Unit 2
+
+### [Activity: sqa-u02-logging-ccq1] 3. ⚠️ 必考避坑點：什麼是 `additivity="false"`？
+#### [CCQ] * **初學者最常見的困惑**：*「為什麼我的控制台每行日誌都被重複印了兩遍？？」* * **原因剖析**： - Log4j 2 預設採取「事件向上傳播（Bubbling）」機制。如果沒有寫 `additivity="false"`（預設為 `true`），當自訂 Logger 印完之後，會將這條日誌**再往上傳遞給它的父層（Root Logger）**，導致 Root 的 Appender 又印了一次！ * **黃金口訣**： - **「自訂 Logger 只要有綁定自己的 Appender，一律務必加上 `additivity="false"`！」**（白話：*到我這裡處理完就結案，別再往上呈報了！*）
+
+### [Activity: sqa-u02-logging-ccq2] 3. 🧠 觀念核對問答 (CCQ - Concept Check Questions)
+#### [CCQ] 在開始自主動手練習前，請透過以下 3 道精選自我測驗題目檢核自己對 **日誌架構 (Log4j 2/SLF4J)、配置除錯、效能防衛與 MDC 鏈路追蹤** 的掌握度。請先自行思考，再點開摺疊區塊核對！
+
+### [Activity: sqa-u02-logging-ccq3] CCQ 1：日誌重複打印與事件傳播 (additivity) 踩坑（除錯實戰題）
+#### [CCQ] **情境**：一位新同仁在設定 `log4j2.xml` 時，為了將氣泡排序的除錯日誌印在終端機螢幕上，寫下了如下配置： ```xml <Loggers> <Root level="INFO"> <AppenderRef ref="ConsoleAppender"/> </Root> <Logger name="u02_robust.log.BubbleSortLoggingDemo" level="DEBUG"> <AppenderRef ref="ConsoleAppender"/> </Logger> </Loggers> ``` 當他執行程式時，發現所有來自 `BubbleSortLoggingDemo` 的日誌，在終端機上竟然**連續印出兩次一模一樣的訊息**！
+- 請問造成這種「靈異雙倍打印」的底層原因是什麼？
+- 在 `log4j2.xml` 中應該如何修正？
+
+### [Activity: sqa-u02-logging-ccq4] CCQ 2：效能防衛 (Guard Statement) 與字串序列化代價（效能架構題）
+#### [CCQ] **情境**：現代日誌框架（SLF4J / Log4j 2）都支援參數化佔位符（`{}`），例如 `logger.debug("目前進度: {}", count);`，可以避免手動字串拼接。但是，在排序演算法迴圈中，有位工程師寫了這行： ```java // largeArray 包含 100 萬筆整數資料
+- debug("第 {} 輪排序後陣列狀態: {}", pass, Arrays.toString(largeArray));
+- 這行日誌明明不會被印出來，但為什麼系統的 CPU 使用率依然飆高，甚至頻繁引發 JVM 垃圾回收暫停（GC Stop-The-World）？
+- 針對這種高開銷運算，正確的防衛寫法（Guard Statement）應該如何編寫？
+
+### [Activity: sqa-u02-logging-ccq5] CCQ 3：多執行緒鏈路追蹤與 MDC 資源清理（程式填空題）
+#### [CCQ] **情境**：在後端高併發服務中，若多個執行緒同時處理外送訂單，控制台輸出的日誌會交織混亂，難以分辨哪行日誌屬於哪筆訂單。為了將日誌串接追蹤，我們會使用 SLF4J 的 **MDC (Mapped Diagnostic Context)**。 **題目**：請閱讀下方的訂單處理方法，在程式碼中的 `【空格 A】`、`【空格 B】` 與 `【空格 C】` 填入正確的程式碼： ```java import org.slf4j.Logger; import org.slf4j.LoggerFactory; import org.slf4j.MDC; public class OrderDeliveryService { private static final Logger logger = LoggerFactory.getLogger(OrderDeliveryService.class); public void processOrder(String orderId) { // 【空格 A】：將訂單編號放入 MDC 上下文，供 PatternLayout %X{orderId} 自動輸出 __________________________________________________; try {
+- info("外送訂單處理流程啟動");
+- info("外送訂單配送成功");
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**解析**：最後一個參數傳入 `e`，日誌框架會自動打印完整 Stack Trace；切勿手動印 `e.printStackTrace()`)*
+- **【空格 C】**：
+  ```java
+  MDC.clear(); // 或者 MDC.remove("orderId");
+  ```
+  *(說明：Web 伺服器普遍採用執行緒池 ThreadPool 重複利用執行緒，若不在 `finally` 清除 MDC，下一個借用該執行緒的請求日誌將會殘留上一個請求的 `orderId`，造成致命的追蹤污染！)*
+</details>
+
+## Unit 5: Code Metrics
+
+### [Activity: sqa-u05-metrics-ccq1] 總結與關聯性
+#### [CCQ] MetricsReloaded 提供的這些指標通常需要**結合起來**看，才能全面評估程式碼品質： | 情境 | 指標組合 | 潛在問題 | 解決建議 | | :--- | :--- | :--- | :--- | | **方法過於複雜** | `v(G)` 或 `CogC` **高** | 單個方法邏輯分支太多，難以測試和理解。 | 應將複雜方法**拆解**成多個更小、功能單一的方法。 | | **類別職責過多** | `WMC` **高** 且 `LOC` **高** | 類別承擔了過多的責任（神級物件）。 | 應使用**設計模式**，將類別**拆分**成多個更專業的類別。 | | **方法複雜度不一** | `WMC` 高，但 `OCavg` 低 | 類別有很多簡單方法，但可能有一兩個**極度複雜**的方法。 | 專注於重構那幾個特別複雜的方法。 | 這些指標是您維護高品質程式碼庫的強大工具。 您想讓我針對其中一個指標，例如 **Cognitive Complexity (CogC)**，提供更多關於如何降低它的技巧嗎？
+
+## Unit 6: White Box Testing Lab (白箱測試與覆蓋度分析實作手冊)
+
+### [Activity: sqa-u06-whiteboxtest-ccq1] ⚙️ A. POM.xml 設定 (`jacoco-maven-plugin`)
+#### [CCQ] 若要自動化產生覆蓋度 HTML 報告，請在專案的 `pom.xml` 中加入以下插件配置： ```xml <plugin> <groupId>org.jacoco</groupId> <artifactId>jacoco-maven-plugin</artifactId> <version>0.8.12</version> <executions> <execution> <id>prepare-agent</id> <goals> <goal>prepare-agent</goal> </goals> </execution> <execution> <id>report</id> <phase>verify</phase> <goals> <goal>report</goal> </goals> </execution> </executions> </plugin> ```
+
+## Unit 10: 實習 12：k6 現代程式化壓測 (Load as Code) 與高併發效能工程
+
+### [Activity: sqa-u10-k6loadtesting-ccq1] 終端分析指標解讀：
+#### [CCQ] * `http_req_duration`: 包含 `avg`, `min`, `med`, `max`, `p(90)`, `p(95)`, `p(99)` 響應時間。 * `http_req_failed`: 失敗率百分比（高並發下若發生連線池耗盡會飆高）。 * `iterations`: 總共成功執行的交易次數。

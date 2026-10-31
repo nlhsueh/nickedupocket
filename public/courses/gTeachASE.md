@@ -847,3 +847,191 @@ Time: 30
 **Correct Answer**: B
 **Explanation**: Text-based modeling ("Architecture-as-Code") represents diagrams in plain text, enabling automated Git version control, visual Pull Request diffing, CI/CD automated doc generation, and LLM-driven generative architecture synthesis without vendor lock-in.
 </details>
+
+## Chapter 5: Software Design, Architecture & OO Principles
+
+### [Activity: ase-ch05-ccq1] Chapter 5: Software Design, Architecture & OO Principles CCQ 1
+#### [CCQ] In software system design, what is the primary practical benefit of combining **High Cohesion** with **Low Coupling**?
+- Maximizes raw CPU execution speed by inlining all helper methods into one monolithic binary executable.
+- Isolates internal class changes behind clean boundaries so modifications cause minimal ripple effects. (Correct)
+- Mandates storing all shared domain data structures inside a single globally mutable memory namespace.
+- Eliminates the need to run automated integration test suites or continuous regression checks in CI/CD.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Evaluating options: Option A, inlining code for raw CPU speed, is a compiler optimization that destroys modularity. Option C, global variables, is the textbook definition of poor design! Option D, eliminating tests, is unrealistic wishful thinking. The correct answer is B! High cohesion keeps classes focused, while low coupling ensures clear boundaries—so modifications in one class cause minimal ripple effects elsewhere.
+</details>
+
+### [Activity: ase-ch05-ccq2] Chapter 5: Software Design, Architecture & OO Principles CCQ 2
+#### [CCQ] When comparing a Monolithic architecture with a Microservices architecture, what is the primary structural reason that Microservices provide superior **fault isolation** (blast radius containment)?
+- All services read and write to a single shared enterprise SQL database instance with global table locks.
+- Each service runs in an isolated process with a private database, containing the blast radius of crashes. (Correct)
+- Distributed service calls completely eliminate network serialization overhead and inter-node TCP latency.
+- Decomposing a monolith into microservices drastically reduces DevOps infrastructure and monitoring costs.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Evaluating options: Option A is false: sharing a single database is a monolithic antipattern that causes data coupling! Option C is false: microservices increase network communication overhead! Option D is false: microservices usually require more operational personnel. The correct answer is B! By isolating each service in its own independent process and database, a memory leak or crash in one service cannot directly crash neighboring services.
+</details>
+
+### [Activity: ase-ch05-ccq3] Chapter 5: Software Design, Architecture & OO Principles CCQ 3
+#### [CCQ] In Stage 2 (**Interface & Contract Specification**), how do Bertrand Meyer's **Design by Contract (DbC)** and the **UML Component Diagram** work together when `Order Management` calls `Payment Component` via the `IPaymentGateway` interface?
+- `Order Management` exposes a Lollipop (`—○`) and may freely pass negative order amounts without validation.
+- Client Socket (`—(`) must satisfy the **Precondition**, while Supplier Lollipop (`—○`) guarantees the **Postcondition**. (Correct)
+- Component diagrams use 3D hardware node cubes (`«device»`) to bypass runtime Precondition and Postcondition checks.
+- Design by Contract requires the caller component to directly mutate private SQL tables inside the supplier module.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Let's evaluate each option: Option A is backwards: `Order Management` is the Client requiring the payment service, not the provider, and cannot pass invalid negative amounts. Option B is exact: As the Client, `Order Management` uses a Required Socket (`—(`) and is obligated to satisfy the **Precondition** (valid payment token and positive amount); as the Supplier, `Payment Component` exposes a Provided Lollipop (`—○`) and guarantees the **Postcondition**! Option C confuses Component Diagrams with Deployment Diagrams (3D Node cubes). Option D violates Information Hiding and Low Coupling. Therefore, the correct answer is B!
+</details>
+
+### [Activity: ase-ch05-ccq4] Chapter 5: Software Design, Architecture & OO Principles CCQ 4
+#### [CCQ] Which SOLID object-oriented design principle explicitly advocates that when introducing new system capabilities, developers should extend functionality by adding new classes rather than modifying existing, battle-tested code?
+- Single Responsibility Principle (SRP)
+- Open / Closed Principle (OCP) (Correct)
+- Interface Segregation Principle (ISP)
+- Liskov Substitution Principle (LSP)
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Let's evaluate the options: Option A, SRP, focuses on classes having only one single reason to change. Option B, OCP (Open/Closed Principle), explicitly states that software entities should be open for extension, but closed for modification! Option C, ISP, focuses on segregating fat interfaces into role-specific contracts. Option D, LSP, requires derived classes to be substitutable for base types. Therefore, the correct answer is B: Open / Closed Principle!
+</details>
+
+### [Activity: ase-ch05-ccq5] Chapter 5: Software Design, Architecture & OO Principles CCQ 5
+#### [CCQ] In Stage 4 (**Data & Persistence Design**), why does a Food Delivery Platform store `orders` and `payments` in **PostgreSQL (Relational OLTP)** while storing 50,000 real-time courier GPS coordinates in **Redis (`GeoHash` + `TTL = 30s`)**?
+- PostgreSQL lacks primary key support for tables, whereas Redis enforces Third Normal Form (3NF) foreign keys.
+- Redis archives historical financial ledgers on disk, whereas PostgreSQL evicts all unpaid orders after 30 seconds.
+- PostgreSQL ensures ACID financial integrity, while in-memory Redis serves high-frequency GPS queries in `< 5ms`. (Correct)
+- Writing live courier GPS streams into PostgreSQL eliminates all wireless network latency on mobile client devices.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: C
+**Explanation**: Let's evaluate the options: Option A is backwards: PostgreSQL enforces relational PK/FK constraints and 3NF, whereas Redis is a NoSQL key-value store. Option B is backwards: PostgreSQL durably persists financial records, whereas Redis uses a 30-second TTL for ephemeral GPS pings. Option C is exact: PostgreSQL guarantees strict ACID transactional integrity so payments are never lost or double-charged, while in-memory Redis Geo-Hash handles 10,000 GPS writes/sec and nearest-rider spatial queries in under 5 milliseconds! Option D is false: database choice on the backend cannot eliminate wireless radio latency on mobile devices. Therefore, the correct answer is C!
+</details>
+
+## Chapter 6: User Experience (UX) Design & Human-Centered AI
+
+### [Activity: ase-ch06-ccq1] Chapter 6: User Experience (UX) Design & Human-Centered AI CCQ 1
+#### [CCQ] During nationwide mask rationing, Taiwan's NHI app originally presented 20 identical square icons in an unprioritized grid. Why did this cause severe operational failure, and how did the redesign resolve it?
+- The interface lacked multi-language localization; adding English and Japanese menus resolved citizen confusion.
+- Equal visual weight buried emergency mask pre-ordering; promoting it to a top Hero Banner aligned interface hierarchy with real-world user priorities. (Correct)
+- The backend database lacked indexing; adding Redis caching allowed the 20 grid buttons to render twice as fast.
+- Mobile screens should never contain more than 3 buttons; removing all secondary hospital directories solved the problem.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Let's test our understanding with an interactive case analysis of the Taiwan NHI Mask App! Examine the original screen on the right: twenty identical square icons arranged in a uniform grid. Why did this cause massive operational failure? When millions of anxious citizens needed masks every day, the emergency feature was buried alongside routine informational links. The correct answer is Option B: Equal visual weight buried the critical task. The redesign succeeded because it promoted mask pre-ordering to a prominent top Hero Banner in the prime thumb zone, aligning interface hierarchy with situational human priorities. Option A is incorrect because language was not the bottleneck. Option C confuses backend speed with interaction design hierarchy. Option D proposes an arbitrary, incorrect limit.
+</details>
+
+### [Activity: ase-ch06-ccq2] Chapter 6: User Experience (UX) Design & Human-Centered AI CCQ 2
+#### [CCQ] When designing an e-commerce checkout flow, a team replaces raw text date inputs with an interactive calendar picker and automatically disables the "Place Order" button until all required shipping addresses pass validation. Which Nielsen Heuristic is primarily demonstrated?
+- NS01: Visibility of System Status.
+- NS05: Error Prevention. (Correct)
+- NS07: Flexibility and Efficiency of Use.
+- NS10: Help and Documentation.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Analyze the team's actions: replacing freeform text with a constrained picker, and disabling the submit button until validation rules are satisfied. The correct answer is Option B: NS05 Error Prevention. Nielsen's NS05 states that careful design which prevents mistakes from occurring in the first place is far superior to even the best error messages. Constraining input widgets and validating fields before submission eliminates invalid input before the user can make an error.
+</details>
+
+### [Activity: ase-ch06-ccq3] Chapter 6: User Experience (UX) Design & Human-Centered AI CCQ 3
+#### [CCQ] When designing an autonomous AI coding assistant that can inspect directories, edit source files, and execute shell commands, which design pattern best fulfills **Error Prevention (NS05)** and **User Agency (NS03)**?
+- Allowing the agent to execute all file deletions and shell scripts silently in the background without user interruption.
+- Requiring explicit human-in-the-loop review and confirmation before executing high-risk file modifications or system terminal commands. (Correct)
+- Removing the ability to stop or cancel running background tasks once the AI begins executing code.
+- Hiding all command execution logs from developers to avoid visual clutter and information overload.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Let's evaluate our understanding of human-centered AI design principles. Consider the severe security and stability risks of autonomous agents interacting with local filesystems. The correct answer is Option B: Requiring explicit human-in-the-loop review and confirmation before executing high-risk file modifications or system terminal commands. Autonomous agents operating on codebases can introduce irreversible damage. Fulfilling NS05 (Error Prevention) and NS03 (User Control & Freedom) requires a strict Human-in-the-Loop (HITL) architecture: the agent plans actions, but high-risk executions mandate explicit developer approval.
+</details>
+
+## Chapter 7: Software Testing & Quality Verification
+
+### [Activity: ase-ch07-ccq1] Chapter 7: Software Testing & Quality Verification CCQ 1
+#### [CCQ] According to Dijkstra's foundational testing axiom and the Shift-Left principle, what is the primary capability and economic timing of software testing?
+- It mathematically proves that a program is completely free of all defects when executed early in requirements.
+- It can show the presence of defects but never their absence, and finding bugs early is drastically cheaper. (Correct)
+- It guarantees 100% statement coverage across all modules if automated regression tests are run continuously.
+- It replaces the necessity for customer acceptance testing by eliminating defect clustering in production code.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: - **Correct Answer: B** - **Explanation:** - Edsger Dijkstra's famous axiom explicitly states: *"Program testing can be used to show the presence of bugs, but never to show their absence!"* Testing provides empirical evidence of flaws, but cannot mathematically prove zero bugs exist. - The Shift-Left principle emphasizes testing as early as requirements and design, because resolving defects early costs 10x to 100x less than fixing them in post-release maintenance. - *Why others are incorrect:* Option A contradicts Dijkstra's axiom. Option C confuses structural statement coverage with functional defect absence. Option D is false because automated tests never eliminate the need for customer acceptance testing.
+</details>
+
+### [Activity: ase-ch07-ccq2] Chapter 7: Software Testing & Quality Verification CCQ 2
+#### [CCQ] Under the Single Fault Assumption, how many test cases are required to perform Independent Normal Boundary Value Analysis on a function with $n = 4$ independent input variables?
+- 16 test cases, derived by evaluating the $2^n$ binary combinations of boundary extremes.
+- 17 test cases, derived using the $4n + 1$ formula covering 4 boundaries per input plus 1 nominal. (Correct)
+- 25 test cases, derived using the $6n + 1$ formula including robust out-of-bounds values.
+- 625 test cases, derived using the $5^n$ worst-case Cartesian product of all inputs.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: - **Correct Answer: B** - **Explanation:** - For Independent Normal Boundary Value Analysis under the Single Fault Assumption, each variable is tested at 4 boundary values (`min, min+, max-, max`) while all other variables are held at their nominal middle value (`norm`). - Across $n$ variables, this yields $4 \times n$ test cases. Adding the single common test case where all variables are nominal (`norm, norm, ...`) gives the standard formula: $$\text{Total Test Cases} = 4n + 1 = 4(4) + 1 = 17 \text{ test cases}$$ - *Why others are incorrect:* Option A (16) confuses BVA with binary truth tables. Option C (25) corresponds to Robustness testing ($6n+1 = 6(4)+1 = 25$). Option D (625) corresponds to Worst-Case testing ($5^n = 5^4 = 625$).
+</details>
+
+### [Activity: ase-ch07-ccq3] Chapter 7: Software Testing & Quality Verification CCQ 3
+#### [CCQ] Why is All-Pairs (Pairwise) testing widely considered one of the highest-ROI test design techniques in modern software engineering?
+- It tests all possible $N$-way parameter combinations, guaranteeing 100% path coverage.
+- It requires full white-box access to control flow graphs, eliminating the need for integration testing.
+- It dramatically compresses test suites while empirically catching over 70% to 90% of parameter interaction bugs. (Correct)
+- It replaces boundary value analysis by automatically generating all invalid boundary points.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: C
+**Explanation**: - **Correct Answer: C** - **Explanation:** - NIST empirical studies across diverse software domains demonstrate that the vast majority of software defects (67% to 93%) are caused by interactions between at most 2 parameters (pairs). - All-Pairs testing drastically compresses test suites from $O(v^k)$ down to $O(v^2 \log k)$ (e.g., reducing tens of thousands of tests to under 25) while detecting the overwhelming majority of interaction defects, delivering extraordinary return on investment. - *Why others are incorrect:* Option A is false because All-Pairs only tests 2-way interactions, not all $N$-way combinations. Option B is false because All-Pairs is a black-box technique requiring no source code access. Option D is false because Pairwise testing is complementary to Boundary Value Analysis, not a replacement for it.
+</details>
+
+### [Activity: ase-ch07-ccq4] Chapter 7: Software Testing & Quality Verification CCQ 4
+#### [CCQ] Given the decision statement `if (X > 10 && Y == 1)`: Which test suite achieves **100% Condition Coverage (CC100)** but completely **FAILS to achieve Branch Coverage (BC100)**?
+- $T_1: (X = 12, Y = 1)$ and $T_2: (X = 5, Y = 2)$
+- $T_1: (X = 12, Y = 2)$ and $T_2: (X = 5, Y = 1)$ (Correct)
+- $T_1: (X = 12, Y = 1)$ and $T_2: (X = 12, Y = 2)$
+- $T_1: (X = 5, Y = 1)$ and $T_2: (X = 5, Y = 2)$
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: - **Correct Answer: B** - **Explanation:** - Let atomic conditions be $c_1: (X > 10)$ and $c_2: (Y == 1)$. - **In Test Suite B:** - For $T_1(12, 2)$: $c_1 = \text{True}, c_2 = \text{False} \implies \text{Decision} = \text{False}$. - For $T_2(5, 1)$: $c_1 = \text{False}, c_2 = \text{True} \implies \text{Decision} = \text{False}$. - *Condition Coverage:* $c_1 \in \{T, F\}$ and $c_2 \in \{T, F\} \implies$ **100% Condition Coverage achieved!** - *Branch Coverage:* Both tests evaluate to False $\implies$ **0% True Branch executed! BC100 fails!** - *Why others are incorrect:* In Option A, $T_1$ produces True and $T_2$ produces False (achieving BC100). In Option C, $c_1$ is never False. In Option D, $c_1$ is never True.
+</details>
+
+### [Activity: ase-ch07-ccq5] Chapter 7: Software Testing & Quality Verification CCQ 5
+#### [CCQ] In safety-critical avionics testing conforming to DO-178B/C Level A, why is MC/DC mandated rather than Multiple Condition Combination (MCC) or standard Branch Coverage?
+- Because MC/DC is a black-box method that does not require examining boolean operators in code.
+- Because MC/DC verifies condition independence with $N+1$ tests, avoiding the $2^N$ explosion of MCC while being far stricter than Branch Coverage. (Correct)
+- Because MC/DC executes every loop iteration up to $N+1$ times, guaranteeing zero runtime deadlocks.
+- Because MC/DC eliminates the need for unit testing by proving requirement validity directly.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: - **Correct Answer: B** - **Explanation:** - DO-178B/C Level A mandates MC/DC because standard Branch Coverage is insufficient to verify that individual boolean conditions cannot cause hazardous hidden failures. - While Multiple Condition Combination (MCC) checks all truth combinations, its exponential cost ($2^N$) is prohibitive for complex logic. MC/DC delivers rigorous condition independence verification in **$N + 1$ test cases**, providing maximum defect detection with linear efficiency. - *Why others are incorrect:* Option A is false because MC/DC is an advanced white-box technique. Option C confuses MC/DC with loop boundary testing. Option D is false because MC/DC is a unit-level structural criterion and does not replace requirement validation.
+</details>

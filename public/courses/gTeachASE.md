@@ -923,17 +923,17 @@ Time: 30
 ## Chapter 6: User Experience (UX) Design & Human-Centered AI
 
 ### [Activity: ase-ch06-ccq1] Chapter 6: User Experience (UX) Design & Human-Centered AI CCQ 1
-#### [CCQ] During nationwide mask rationing, Taiwan's NHI app originally presented 20 identical square icons in an unprioritized grid. Why did this cause severe operational failure, and how did the redesign resolve it?
-- The interface lacked multi-language localization; adding English and Japanese menus resolved citizen confusion.
-- Equal visual weight buried emergency mask pre-ordering; promoting it to a top Hero Banner aligned interface hierarchy with real-world user priorities. (Correct)
-- The backend database lacked indexing; adding Redis caching allowed the 20 grid buttons to render twice as fast.
-- Mobile screens should never contain more than 3 buttons; removing all secondary hospital directories solved the problem.
+#### [CCQ] A mobile banking app has sleek animations (**polished UI**), yet **68% of new users abandon transfers** because the flow exposes raw database codes (`TXN_ROUTING_ID`). What is the root failure and proper **Design Thinking** remedy?
+- A **UI visual defect**; replace CSS animations with higher-contrast Material Design buttons.
+- A **backend latency bottleneck**; add Redis caching so transfer queries finish in under 50ms.
+- A **UX Empathy Gap failure**; research user pain points and prototype flows around customer mental models. (Correct)
+- A **user training gap**; require new customers to watch a 15-minute tutorial before transferring funds.
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
 
-**Correct Answer**: B
-**Explanation**: Let's test our understanding with an interactive case analysis of the Taiwan NHI Mask App! Examine the original screen on the right: twenty identical square icons arranged in a uniform grid. Why did this cause massive operational failure? When millions of anxious citizens needed masks every day, the emergency feature was buried alongside routine informational links. The correct answer is Option B: Equal visual weight buried the critical task. The redesign succeeded because it promoted mask pre-ordering to a prominent top Hero Banner in the prime thumb zone, aligning interface hierarchy with situational human priorities. Option A is incorrect because language was not the bottleneck. Option C confuses backend speed with interaction design hierarchy. Option D proposes an arbitrary, incorrect limit.
+**Correct Answer**: C
+**Explanation**: Examine the scenario: the mobile banking app has sleek visual styling and animations (a polished UI), yet 68% of new users drop out during money transfers because the workflow exposes raw internal database codes like TXN_ACCT_ROUTING_ID. Why did this happen? Because engineers suffered from the Curse of Knowledge and designed the workflow around their internal database schema rather than the customer's mental model! The correct answer is Option C: It is a UX and Empathy Gap failure; the team must apply Design Thinking—empathizing with real users, defining the friction points, and prototyping/testing transfer flows that speak the customer's language. Option A confuses visual UI styling with end-to-end UX workflow usability. Option B misdiagnoses cognitive confusion as a backend performance problem. Option D blames the user and tries to patch a broken interface with a 15-minute manual—the exact Norman Door mistake!
 </details>
 
 ### [Activity: ase-ch06-ccq2] Chapter 6: User Experience (UX) Design & Human-Centered AI CCQ 2
@@ -1034,4 +1034,85 @@ Time: 30
 
 **Correct Answer**: B
 **Explanation**: - **Correct Answer: B** - **Explanation:** - DO-178B/C Level A mandates MC/DC because standard Branch Coverage is insufficient to verify that individual boolean conditions cannot cause hazardous hidden failures. - While Multiple Condition Combination (MCC) checks all truth combinations, its exponential cost ($2^N$) is prohibitive for complex logic. MC/DC delivers rigorous condition independence verification in **$N + 1$ test cases**, providing maximum defect detection with linear efficiency. - *Why others are incorrect:* Option A is false because MC/DC is an advanced white-box technique. Option C confuses MC/DC with loop boundary testing. Option D is false because MC/DC is a unit-level structural criterion and does not replace requirement validation.
+</details>
+
+## Chapter 5: Software Design, Architecture & Object-Oriented Principles
+
+### [Activity: ase-ch05-ccq1] Concept Check (CCQ 1) — Cohesion & Coupling Principles
+#### [CCQ] During a code review, you find a utility class `OrderReportUtils` containing `calculateTax()`, `renderHtmlTable()`, and `sendSmtpAlert()`. Worse, `PaymentController` directly modifies `OrderService.rawSqlString` to filter unpaid orders. Which statement accurately diagnoses this design?
+- It achieves high functional cohesion and loose data coupling by sharing internal SQL strings directly across classes.
+- It suffers from low cohesion and tight content coupling; refactor into single-purpose classes communicating via DTOs. (Correct)
+- It demonstrates ideal stamp coupling and temporal cohesion, which should be preserved to maximize SQL query speed.
+- It violates hardware deployment isolation, which can be resolved simply by moving both classes into one Java file.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Grouping unrelated tax calculation, HTML rendering, and SMTP email alerts into one utility class is a classic example of **Low (Coincidental / Logical) Cohesion**. Directly mutating another class's internal `rawSqlString` field violates information hiding and constitutes **Content Coupling** (the worst level of coupling). The solution is to split responsibilities into focused, single-purpose classes and communicate strictly via **Data / Message Coupling** (passing narrow DTOs through public interfaces).
+</details>
+
+### [Activity: ase-ch05-pair1] Peer Discussion 5.3: Chess Game in MVC — UML Package Diagram (PlantUML)
+#### [Pair] * **Scenario:** You are designing a Desktop/Web **Chess Game** using the **MVC** architectural pattern with seven core classes: `ChessBoardGUI`, `MoveHistoryPanel`, `GameController`, `MoveInputHandler`, `BoardState`, `PieceRulesEngine`, and `MoveValidator`. * **Discussion Tasks:**
+
+### [Activity: ase-ch05-ccq2] Concept Check (CCQ 2) — Architectural Design & Macro UML
+#### [CCQ] In Stage 1 (**Architectural Design**), your team documents the Food Delivery Platform in the SDD using both a **UML Package Diagram** and a **UML Deployment Diagram**. How do these two macro-level UML diagrams differ in engineering purpose?
+- Package diagrams model runtime SQL row locks; Deployment diagrams model internal `if-else` method branches.
+- Package diagrams specify UI screen wireframes; Deployment diagrams specify Java class inheritance hierarchies.
+- Package diagrams model compile-time source namespaces and imports; Deployment diagrams model runtime 3D nodes and artifacts. (Correct)
+- Package diagrams are exclusively for monolithic apps, whereas Deployment diagrams only apply to client-side mobile apps.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: C
+**Explanation**: A **UML Package Diagram** models the **compile-time static organization** of source code namespaces (tabbed folders) and their `«import»` dependency rules (preventing cyclic dependencies). Conversely, a **UML Deployment Diagram** models the **runtime physical/cloud topology**, showing how compiled `«artifact»` binaries (`.jar`, containers) execute inside 3D hardware/cloud **Nodes** connected by network communication protocols.
+</details>
+
+### [Activity: ase-ch05-pair2] Peer Discussion 5.4: Write the Javadoc Design Spec for `bubbleSort(int[] arr)`
+#### [Pair] * **Scenario:** Every CS student can code `public static void bubbleSort(int[] arr)` in 2 minutes, yet most struggle to write its **complete, airtight formal Design Specification**! * **Discussion Tasks:**
+
+### [Activity: ase-ch05-ccq3] Concept Check (CCQ 3) — Design by Contract & Component UML
+#### [CCQ] In Stage 2 (**Interface & Contract Specification**), `OrderService` invokes `IPaymentGateway.charge(orderId, amount, qty)` provided by `StripeAdapter`. Under **Design by Contract (DbC)** and **UML Component Diagram** rules, who guarantees the precondition (`qty > 0`), and how is this connection drawn?
+- `StripeAdapter` checks `qty > 0` and exposes a Socket `—(`, while `OrderService` exposes a Lollipop `—○`.
+- `OrderService` (caller) guarantees `qty > 0` via a Socket `—(`, wired into `StripeAdapter`'s Lollipop `—○`. (Correct)
+- Both modules bypass preconditions by using Content Coupling to share a mutable global `qty` variable.
+- Neither module checks `qty > 0` because UML Component Diagrams only model physical 3D hardware servers.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: B
+**Explanation**: Under **Design by Contract (DbC)**, satisfying the **Precondition** (`qty > 0`) is the obligation of the **Caller / Client** (`OrderService`), whereas fulfilling the **Postcondition** is the obligation of the **Supplier** (`StripeAdapter`). In a **UML Component Diagram**, the caller's required contract is drawn as a **Socket (`—(`)** and wired into the supplier's provided **Lollipop (`—○`)**.
+</details>
+
+### [Activity: ase-ch05-pair3] Peer Discussion 5.5: Explore the GoF Observer Design Pattern
+#### [Pair] * **Scenario:** When an order's state changes in our Food Delivery System (e.g., `Order` transitions to `READY_FOR_PICKUP`), multiple modules must react immediately: **Customer Push Notifier**, **Restaurant Kitchen Display**, **Rider Map Tracker**, and **Fraud Analytics Logger**. * **Discussion Tasks:**
+
+### [Activity: ase-ch05-ccq4] Concept Check (CCQ 4) — Component & OO Design (SOLID)
+#### [CCQ] In Stage 3 (**Component & OO Design**), `OrderCheckoutService` directly instantiates `new MySqlOrderDatabase()` inside its constructor. Meanwhile, subclass `CryptoPayment` extends `PaymentProcessor` but overrides `refund()` to throw `UnsupportedOperationException`. Which SOLID principles are violated?
+- It violates DIP by binding policy to MySQL details, and violates LSP by breaking the parent `refund()` contract. (Correct)
+- It violates SRP by using interfaces, and violates OCP by allowing subclasses to be unit-tested in isolation.
+- It satisfies both DIP and LSP because `UnsupportedOperationException` is a standard built-in Java runtime class.
+- It only violates 3NF database normalization, which can be fixed by adding a foreign key index in MySQL.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: A
+**Explanation**: High-level `OrderCheckoutService` directly instantiating low-level `new MySqlOrderDatabase()` violates the **Dependency Inversion Principle (DIP)** (both should depend on an `IOrderRepository` abstraction). Subclass `CryptoPayment` throwing `UnsupportedOperationException` in an inherited `refund()` method breaks the parent class's behavioral postcondition contract, directly violating the **Liskov Substitution Principle (LSP)** (and indicating a need for **ISP** role segregation).
+</details>
+
+### [Activity: ase-ch05-ccq5] Concept Check (CCQ 5) — Data Modeling, ERD & Polyglot Storage
+#### [CCQ] In Stage 4 (**Data & Persistence Design**), why does a Food Delivery Platform store `orders` and `payments` in **PostgreSQL (Relational OLTP)** while storing 50,000 real-time courier GPS coordinates in **Redis (`GeoHash` + `TTL = 30s`)**?
+- PostgreSQL lacks primary key support for tables, whereas Redis enforces Third Normal Form (3NF) foreign keys.
+- Redis archives historical financial ledgers on disk, whereas PostgreSQL evicts all unpaid orders after 30 seconds.
+- PostgreSQL ensures ACID financial integrity, while in-memory Redis serves high-frequency GPS queries in `< 5ms`. (Correct)
+- Writing live courier GPS streams into PostgreSQL eliminates all wireless network latency on mobile client devices.
+
+<details>
+<summary>Click to view Answer & Explanation</summary>
+
+**Correct Answer**: C
+**Explanation**: **Polyglot Persistence** matches each workload to its ideal storage engine: `orders` and `payments` require strict **ACID transactions and 3NF relational integrity** in **PostgreSQL** so financial records are never corrupted or double-charged. Conversely, 50,000 couriers pinging GPS coordinates every 5 seconds (`10,000 writes/sec`) represent high-velocity ephemeral state best served by an in-memory **Redis Cluster (`GeoHash` + `TTL = 30s`)**, enabling `< 5ms` proximity queries and automatic expiration of offline couriers.
 </details>

@@ -923,17 +923,17 @@ Time: 30
 ## Chapter 6: User Experience (UX) Design & Human-Centered AI
 
 ### [Activity: ase-ch06-ccq1] Chapter 6: User Experience (UX) Design & Human-Centered AI CCQ 1
-#### [CCQ] A mobile banking app has sleek animations (**polished UI**), yet **68% of new users abandon transfers** because the flow exposes raw database codes (`TXN_ROUTING_ID`). What is the root failure and proper **Design Thinking** remedy?
-- A **UI visual defect**; replace CSS animations with higher-contrast Material Design buttons.
-- A **backend latency bottleneck**; add Redis caching so transfer queries finish in under 50ms.
-- A **UX Empathy Gap failure**; research user pain points and prototype flows around customer mental models. (Correct)
-- A **user training gap**; require new customers to watch a 15-minute tutorial before transferring funds.
+#### [CCQ] In a redesigned hospital check-in kiosk, `"Confirm Check-In"` is styled as flat, borderless grey text for a "minimalist UI." Although the screen **can** register taps there, **75% of elderly patients freeze** and ask where to press. According to **Don Norman**, what is the root flaw?
+- **Missing Affordance**; the touchscreen hardware lacks the physical touch-sensing capability to detect finger taps on text regions.
+- **Missing Signifier**; tapping works, but the flat text lacks perceivable visual cues (border, contrast, shadow) showing it is tappable. (Correct)
+- **User Training Deficit**; the hospital should tape a printed step-by-step instruction sheet beside the kiosk to guide elderly patients.
+- **System Model Latency**; the backend appointment database schema should be refactored with in-memory caching to speed up check-in queries.
 
 <details>
 <summary>Click to view Answer & Explanation</summary>
 
-**Correct Answer**: C
-**Explanation**: Examine the scenario: the mobile banking app has sleek visual styling and animations (a polished UI), yet 68% of new users drop out during money transfers because the workflow exposes raw internal database codes like TXN_ACCT_ROUTING_ID. Why did this happen? Because engineers suffered from the Curse of Knowledge and designed the workflow around their internal database schema rather than the customer's mental model! The correct answer is Option C: It is a UX and Empathy Gap failure; the team must apply Design Thinking—empathizing with real users, defining the friction points, and prototyping/testing transfer flows that speak the customer's language. Option A confuses visual UI styling with end-to-end UX workflow usability. Option B misdiagnoses cognitive confusion as a backend performance problem. Option D blames the user and tries to patch a broken interface with a 15-minute manual—the exact Norman Door mistake!
+**Correct Answer**: B
+**Explanation**: Read the scenario carefully: on a hospital check-in kiosk, the `"Confirm Check-In"` button is styled as flat, borderless grey text to look "minimalist." Even though the touchscreen *can* register taps on that text, 75% of elderly patients freeze and don't know where to press. Why is **Option B (Missing Signifier)** the exact right answer rather than Option A (Missing Affordance)? - Remember Don Norman's distinction: **Affordance** is what actions the system physically or digitally allows—since the touchscreen *can* detect taps on that region, the affordance already exists (so Option A is false). - What is missing is the **Signifier**—the perceivable visual cue (button border, high-contrast color, elevation shadow) that communicates *where* and *how* to tap! - And notice Option C: taping a printed instruction sheet next to the kiosk is the classic **Norman Door fallacy**—blaming the human instead of fixing the signifier!
 </details>
 
 ### [Activity: ase-ch06-ccq2] Chapter 6: User Experience (UX) Design & Human-Centered AI CCQ 2
@@ -947,7 +947,7 @@ Time: 30
 <summary>Click to view Answer & Explanation</summary>
 
 **Correct Answer**: B
-**Explanation**: Analyze the team's actions: replacing freeform text with a constrained picker, and disabling the submit button until validation rules are satisfied. The correct answer is Option B: NS05 Error Prevention. Nielsen's NS05 states that careful design which prevents mistakes from occurring in the first place is far superior to even the best error messages. Constraining input widgets and validating fields before submission eliminates invalid input before the user can make an error.
+**Explanation**: Read the scenario: in an e-commerce checkout flow, the engineering team replaces raw text date inputs with an interactive calendar picker and automatically disables the "Place Order" button until all required shipping fields pass validation. Which Nielsen Heuristic is primarily demonstrated? The correct answer is **Option B: NS05 (Error Prevention)**. Rather than waiting for the user to submit a malformed date string or an incomplete address and then throwing an error message (which would be NS09), the team used **input constraints** (a calendar picker) and **disabled invalid states** to prevent the error from occurring in the first place!
 </details>
 
 ### [Activity: ase-ch06-ccq3] Chapter 6: User Experience (UX) Design & Human-Centered AI CCQ 3
@@ -961,7 +961,7 @@ Time: 30
 <summary>Click to view Answer & Explanation</summary>
 
 **Correct Answer**: B
-**Explanation**: Let's evaluate our understanding of human-centered AI design principles. Consider the severe security and stability risks of autonomous agents interacting with local filesystems. The correct answer is Option B: Requiring explicit human-in-the-loop review and confirmation before executing high-risk file modifications or system terminal commands. Autonomous agents operating on codebases can introduce irreversible damage. Fulfilling NS05 (Error Prevention) and NS03 (User Control & Freedom) requires a strict Human-in-the-Loop (HITL) architecture: the agent plans actions, but high-risk executions mandate explicit developer approval.
+**Explanation**: Read the scenario carefully: *"An enterprise AI coding assistant can automatically refactor files and run terminal commands. One day, a developer asks it to 'clean up unused temporary tables in the database.' Without asking or showing a preview, the AI agent immediately executes `DROP TABLE` commands on the staging database, wiping out shared test datasets used by the whole QA team."* Which primary UX4AI / Nielsen Heuristic principle was violated, and what is the proper engineering guardrail? - Option A says it violated Aesthetic and Minimalist Design (NS08) and should hide database commands behind a dark-mode theme. - Option B says it violated Error Prevention & User Control (NS05 / NS03) and should require a Human-in-the-Loop (HITL) confirmation gate with an explicit SQL diff/impact preview before executing any state-mutating or destructive tool call. - Option C says it violated Help and Documentation (NS10) and should email a 50-page SQL manual to the developer after dropping the tables. - Option D says it violated Flexibility and Efficiency of Use (NS07) and should execute `DROP TABLE` commands twice as fast using parallel threads. Take 15 seconds to lock in your answer! And the correct answer is **B**! Autonomous agents must never execute destructive or state-mutating operations silently. A risk-tiered HITL confirmation gate paired with a clear SQL impact preview is essential to prevent catastrophic agentic errors.
 </details>
 
 ## Chapter 7: Software Testing & Quality Verification

@@ -44,7 +44,12 @@
 </details>
 
 ### [Activity: sqa-ch01-ccq1] 五大品質觀點的深度工程實例與對照
-#### [CCQ] *   **1. 超自然觀點 (Transcendental View) ——「說不出來哪裡好，但一用就被驚豔的靈魂美學」** *   例如：**Apple iOS** 介面的手勢滑動物理慣性阻尼、**Notion** 極簡直覺的斜線指令 (`/`)、或是頂級 IDE 行雲流水毫無卡頓的微互動。你無法用單一測試斷言定義它，但一旦觸碰，那種絲滑、精緻與直覺感會讓人發自內心讚嘆：「這就是極致的好品質！」 *   反之：早期政府的報稅或學校選課系統，功能雖然全部齊全，但介面如同 90 年代的老舊表格，按鍵延遲、排版擁擠，操作時令人挫折焦躁。 *   **2. 使用者觀點 (User View) ——「合用才是王道 (Fitness for Use)」** *   例如：**Zoom** 在疫情期間擊敗眾多老牌視訊巨頭，並非因為底層技術最深奧，而是因為使用者「點一個連結 3 秒就能開會」，連長輩與學童都能無障礙上手，極致解決「我要立刻開會」的痛點。 *   反之：工程團隊花了半年研發具備超高難度演算法、支援 50 種冷門格式的播放器，但終端使用者只想要一鍵播放 MP4。功能極其強大，但無人想用，淪為數位庫存 (Shelfware)。 *   **3. 製造觀點 (Manufacturing View) ——「分毫不差的規格符合度 (Conformance to Requirements)」** *   例如：**航太飛控系統**或**銀行核心帳務系統**。規格書明確定義「轉帳交易必須在 100ms 內完成，數值必須精確至小數點後 4 位」，實作程式碼就必須 100% 通過單元測試、靜態掃描與 Continuous Quality Gate，零偏差、零缺陷。 *   盲點：若當初需求規格書本身就有嚴重的設計盲點（如急診室系統規格未考慮現場醫護動線），製造觀點就算拿下 100 分，也只是「分毫不差地造出了一套完全合規的廢品」。 *   **4. 產品觀點 (Product View) ——「內在架構與骨相之美 (Internal Characteristics)」** *   例如：**Linux 核心**或 **Spring Framework** 的架構設計。模組高度內聚、彼此鬆散耦合 (Loose Coupling)，圈複雜度極低，並具備 90% 以上自動化測試保護。即使歷經十餘年版本迭代，依然能穩健重構擴展。 *   反之：**義大利麵程式碼 (Spaghetti Code)**。外表介面看起來堪用，但原始碼沒有分層、充斥複製貼上與全域變數，改動結帳頁面的一個按鈕顏色，竟導致會員登入功能全面崩潰。 *   **5. 價值觀點 (Value-based View) ——「商業性價比與投資報酬率 (ROI)」** *   例如：新創團隊在驗證商業模式初期，採用 Serverless 與開源元件以極小預算在兩週內打造出 **MVP（最小可行產品）** 搶佔市場，以最低成本取得最大商業回饋。 *   反之：在產品商業模式尚未驗證前，工程團隊執意耗資數百萬引進複雜的分散式架構與自建機房，結果產品上線前資金便已耗盡，商業上宣告破產。 | 品質觀點 | 核心定義 | 軟體工程實例 | 忽略該觀點的後果 | | :--- | :--- | :--- | :--- | | **超自然觀點**<br>(Transcendental) | 無法精確量化，但一體驗就能感受到其精緻與美感 | 極致流暢的 UI/UX、細膩的動畫微互動 (iOS/Notion) | 軟體感覺粗製濫造、冰冷卡頓，使用者體驗差 | | **使用者觀點**<br>(User View) | 符合使用者真實需求與期望 (Fitness for Use) | 解決使用者痛點、操作直覺易上手 (Zoom 一鍵入會) | 功能很強但沒人想用，淪為陳列品 (Shelfware) | | **製造觀點**<br>(Manufacturing View) | 符合工程規格與標準流程 (Conformance) | 遵循 Clean Code 規範、零規格偏離、通過 Quality Gate | 規格本身有漏洞時，做出一套符合規格的垃圾 | | **產品觀點**<br>(Product View) | 產品本身的內在技術特性與架構材質 | 高內聚低耦合、強固型態、低圈複雜度 (Linux/Spring) | 架構腐化，改一個小功能引發全面崩潰 | | **價值觀點**<br>(Value-based View) | 顧客願意支付的成本與性價比 (ROI) | 軟體帶來的商業價值大於開發與維運成本 (精實 MVP) | 開發成本失控超支，商業上不可行 | > 👍 **程式必須是為了給人看而寫，命令機器執行只是附帶任務。** —— *Abelson & Sussman* > 👍 **品質不是動作，是一種習慣。** —— *Aristotle*
+#### [CCQ] 五大品質觀點的深度工程實例與對照
+- 超自然觀點 (Transcendental View) ——「說不出來哪裡好，但一用就被驚豔的靈魂美學」**
+- 使用者觀點 (User View) ——「合用才是王道 (Fitness for Use)」**
+- 製造觀點 (Manufacturing View) ——「分毫不差的規格符合度 (Conformance to Requirements)」**
+- 產品觀點 (Product View) ——「內在架構與骨相之美 (Internal Characteristics)」**
+- 價值觀點 (Value-based View) ——「商業性價比與投資報酬率 (ROI)」**
 
 <details>
 <summary>點擊查看答案與解析</summary>
@@ -372,7 +377,10 @@
 #### [Short] ##### 💡 SQA 2.0 應對 Test Oracle 難題的三大前沿技術：
 
 ### [Activity: sqa-ch03-ccq1] ✍️ 3.6 綜合練習
-#### [CCQ] ✍️ 3.6 綜合練習
+#### [CCQ] ### 一、測試原則與理論辨析
+- 為了確保軟體絕對正確，我們是否應該進行窮盡式測試（Exhaustive Testing）？為什麼？
+- 說明何謂測試的「殺蟲劑效應（Pesticide Paradox）」？當使用 AI 輔助生成測試時，為什麼更容易產生殺蟲劑效應？
+- 比較 Verification 與 Validation 的核心差異。
 
 ## Chapter 4: 軟體檢視
 
@@ -532,7 +540,7 @@
 </details>
 
 ### [Activity: sqa-ch05-ccq6] Chapter 5: 黑箱測試 CCQ 6
-#### [CCQ] 關於「正交表測試 (Orthogonal Array Testing)」與一般「成對測試 (Pairwise Testing)」的比較，下列敘述何者正確？
+#### [CCQ] 關於「正交表測試 (Orthogonal Array Testing, OATS)」與一般「全成對測試 (Pairwise Testing)」的比較，下列敘述何者正確？
 - 正交表測試是隨機產生的，而 Pairwise 必須透過數學嚴格推導
 - 兩者都關注參數間的配對，但正交表更強調各因子組合的「均勻平衡性（正交性）」，而 Pairwise 僅要求任意兩因子的組合至少出現一次，因此 Pairwise 的案例數量通常更少且更有彈性 (Correct)
 - 只要變數的個數相同，正交表與 Pairwise 產生的測試案例清單必定完全一致
@@ -564,7 +572,7 @@
 ### [Activity: sqa-ch05-ccq8] Chapter 5: 黑箱測試 CCQ 8
 #### [CCQ] 在狀態測試 (State Testing) 中，關於「狀態覆蓋 (State Coverage)」與「轉移覆蓋 (Transition Coverage)」的強度關係，下列敘述何者正確？
 - 達到狀態覆蓋必定代表同時達到了轉移覆蓋
-- 轉移覆蓋的強度大於狀態覆蓋；若測試案例達到了轉移覆蓋（驗證了所有可能的轉移路徑），則必定已涵蓋了所有狀態（達到狀態覆蓋） (Correct)
+- 轉移覆蓋的強度大於狀態覆蓋；若測試案例達到了轉移覆蓋（驗證了所有可能的轉移弧線），則必定已涵蓋了所有狀態（達到狀態覆蓋） (Correct)
 - 兩者互相獨立，沒有任何包含或強弱關係
 - 狀態測試不需要考慮無效轉移（即在某狀態下輸入非法事件的反應）
 
@@ -579,7 +587,10 @@
 ### [Activity: sqa-ch05-ccq9] 屬性基礎測試先驅：John Hughes 與 QuickCheck
 #### [CCQ] > **屬性基礎測試 (PBT)** 最初由瑞典查爾摩斯工學院教授、ACM Fellow **John Hughes** 與 Koen Claessen 於 2000 年共同提出，並發表了劃時代的函式庫 **QuickCheck**（榮獲 ACM SIGPLAN 最具影響力論文獎）。 > > John Hughes 的核心倡議是：**「不要手寫測試案例，定義程式屬性！(Don't write tests, specify properties!)」** > 他認為傳統範例測試讓工程師浪費過多時間在思考個別測資，卻依然無法防範極端情境；PBT 讓人類回歸高層次的抽象規格思考，並交由電腦自動生成萬組隨機輸入。更關鍵的是，Hughes 發明了**「測資收縮 (Shrinking)」** 演算法，當隨機測資中觸發錯誤時，框架會自動二分逼近並縮減成最小反例（例如將長度 100 的亂碼陣列縮減至 `[0, -1]`），讓工程師能在數秒內抓出缺陷根本原因。現代主流生態系中的 Java `jqwik`、Python `Hypothesis` 與 TypeScript `fast-check`，皆源於 QuickCheck 的設計哲學。
 
-### [Activity: sqa-ch05-ccq10] Chapter 5: 黑箱測試 CCQ 10
+### [Activity: sqa-ch05-ccq10] 🏛️ 四大經典變質關係模式庫 (MR Patterns)
+#### [CCQ] 設計高品質變質關係時，可套用以下四大經典模式： | 模式類別 | 變質關係數學表述 | 實戰工程案例 | | :--- | :--- | :--- | | **1. 對稱與等價性<br>(Symmetry / Invariance)** | f(Transform(x)) == f(x) | **自駕車視覺辨識**：輸入圖片水平翻轉、反轉色調或微幅旋轉 5°，系統辨識出的行人位置與類別不應改變。 | | **2. 包含與單調性<br>(Inclusion / Monotonicity)** | 若 x_1 subseteq x_2 ➔ f(x_1) subseteq f(x_2) | **搜尋引擎與推薦**：搜尋「台積電 股價」之結果集合，必然是搜尋「台積電」結果之子集。使用者增加同類瀏覽紀錄，推薦權重只增不減。 | | **3. 比例縮放一致性<br>(Scaling Consistency)** | f(k cdot x) == k cdot f(x) | **最短路徑與導航**：將地圖中所有道路權重同乘以 2，計算出的最佳行駛路線節點序列完全不變，總成本剛好放大 2 倍。 | | **4. 獨立抗擾動性<br>(Irrelevant Perturbation)** | f(x + noise) == f(x) | **情感分析 / 推薦演算法**：語句末尾加上無關空格、標點或停用詞，正面評價評分不應逆轉為負面。 | #### 💻 變質測試實戰：JUnit 5 演算法驗證 以下展示如何在黑箱測試中，將推薦系統的單調性（Monotonicity）變質關係轉化為可自動化執行的 JUnit 5 測試： ```java public class RecommendationMetamorphicTest { private final RecommenderService service = new RecommenderService(); // 變質關係 MR-1 (單調性)：歷史瀏覽清單額外加入同類商品，該類別推薦權重絕不可下降 @ParameterizedTest @ValueSource(strings = {"iPhone", "MacBook", "iPad"}) void testCategoryRecommendationMonotonicity(String product) { // 1. 原始執行 (Source Execution): 輸入 x -> 獲得 y UserProfile user = UserProfile.builder().history(List.of(product)).build(); List<Item> baseline = service.getRecommendations(user); // 2. 變質變換 (Follow-up Execution): 變換輸入 x' (加權同生態系商品) -> 獲得 y' UserProfile enrichedUser = user.withExtraView("AirPods"); List<Item> followUp = service.getRecommendations(enrichedUser); // 3. 變質關係判定 (MR Verification) double baseScore = calculateCategoryAffinity(baseline, "Apple"); double newScore = calculateCategoryAffinity(followUp, "Apple"); // 斷言：加權同類商品後，Apple 生態系的推薦親和力必須 >= 原先親和力 assertTrue(newScore >= baseScore, "變質關係違規：增加 Apple 商品瀏覽後，相關推薦權重反而下降！"); } private double calculateCategoryAffinity(List<Item> items, String category) { return items.stream() .filter(item -> category.equalsIgnoreCase(item.getCategory())) .count() / (double) Math.max(1, items.size()); } } ```
+
+### [Activity: sqa-ch05-ccq11] Chapter 5: 黑箱測試 CCQ 11
 #### [CCQ] 在屬性基礎測試 (Property-Based Testing) 中，我們不需要手動為每一組測試寫出確切的預期輸出數值，而是定義程式執行時必須永遠維持的「屬性或不變量」，並交由測試框架隨機生成大量測資來尋找反例。
 - 正確 (True) (Correct)
 - 錯誤 (False)
@@ -591,24 +602,16 @@
 **解析**：* **正確**：PBT 的核心就是「規格即測試」。它不關注個別的特定輸入與輸出配對（Example），而是關注系統通用不變量（Property），框架會模擬極端狀態自動發送上萬組隨機輸入，若發現任何失敗的反例，還會進行收斂（Shrinking）以回報最簡潔的錯誤測資。
 </details>
 
-### [Activity: sqa-ch05-ccq11] ✍️ 練習
-#### [CCQ] ✍️ 練習
+### [Activity: sqa-ch05-ccq12] ✍️ 練習
+#### [CCQ] ### 5.ex.spec 設計規格 一個功能模組的「規格」包含該模組的參數、回傳型態、前置條件、後置條件。寫出以下功能的規格，嘗試以正規的方式來描述之。並設計期測試案例。
+- 由一群陣列中找出最大的值回傳
+- 針對一個陣列做由小到大的排序
+- 輸入一段文字和一個單字，回傳該單字在該文字出現的位置
+- 輸入兩個字串型態的實數，回傳其相加的結果
 
 ## Chapter 6: 白箱測試
 
-### [Activity: sqa-ch06-ccq1] 6.1.1 概念核對問答 (CCQ 1)
-#### [CCQ] JaCoCo 作為 Java 軟體測試覆蓋率工具，在測量覆蓋率時是透過修改 Java 原始碼檔 (.java) 並插入計數器變數來追蹤執行狀態的。
-- 正確 (True)
-- 錯誤 (False) (Correct)
-
-<details>
-<summary>點擊查看答案與解析</summary>
-
-**正確答案**：B
-**解析**：* **錯誤**：JaCoCo 並不修改原始碼，而是利用 Java Agent 技術，在 JVM 載入類別檔案時，動態對編譯後的位元組碼（Bytecode, .class 檔案）進行插樁（On-the-fly Instrumentation）。這使得測試與開發程式碼解耦，無需改動原始碼即可測量覆蓋率。
-</details>
-
-### [Activity: sqa-ch06-ccq2] 6.2.4.1 概念核對問答 (CCQ 2)
+### [Activity: sqa-ch06-ccq2] 6.1.4.1 概念核對問答 (CCQ 2)
 #### [CCQ] 在包含短路求值 (Short-circuit evaluation) 的條件句 `if (A && B)` 中，若我們設計的測試案例集達到了 100% 分支涵蓋度 (Branch Coverage)，是否必定能達成 100% 條件涵蓋度 (Condition Coverage)？
 - 必定可以，因為分支涵蓋度強度高於條件涵蓋度
 - 不一定，因為短路求值可能使得第二個條件 B 在某些測試案例中完全沒有被執行到，導致其 True 或 False 狀態未被覆蓋 (Correct)
@@ -624,7 +627,7 @@
 **解析**：* **正確**：在 `A && B` 中，如果第一個測試案例為 (A=False, B=True)，此時由於 A 為 False，短路求值會直接跳過條件 B 的評估。如果第二個測試案例為 (A=True, B=False)。這兩個案例可以讓整個 `if` 判斷產生 True（不成立）與 False（成立）的分支變化，從而達成 100% 分支覆蓋。然而，條件 B 的 True 狀態實際上從未被評估與覆蓋到，因此條件涵蓋度並非 100%。
 </details>
 
-### [Activity: sqa-ch06-ccq3] 6.2.7.1 概念核對問答 (CCQ 3)
+### [Activity: sqa-ch06-ccq3] 6.1.7.1 概念核對問答 (CCQ 3)
 #### [CCQ] 考慮一個包含 n 個彼此獨立之布林條件的複雜判斷式（例如 `A && B && C`，n = 3）。若要滿足 MC/DC 覆蓋率，最少與最多分別需要設計幾個測試案例？
 - 最少 n + 1 個，最多 2n 個 (Correct)
 - 最少 n + 1 個，最多 2ⁿ 個
@@ -636,6 +639,18 @@
 
 **正確答案**：A
 **解析**：* **正確**：MC/DC 透過尋找「獨立影響對 (Independence Pairs)」來大幅精簡測試案例。對於 n 個布林條件，滿足 MC/DC 所需的測試案例數為線性的 n + 1 到 2n 個（通常情況下為 n + 1 個，這也是相較於多重條件組合覆蓋 2ⁿ 的最大優勢）。
+</details>
+
+### [Activity: sqa-ch06-ccq1] 6.2.1 概念核對問答 (CCQ 1)
+#### [CCQ] JaCoCo 作為 Java 軟體測試覆蓋率工具，在測量覆蓋率時是透過修改 Java 原始碼檔 (.java) 並插入計數器變數來追蹤執行狀態的。
+- 正確 (True)
+- 錯誤 (False) (Correct)
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **錯誤**：JaCoCo 並不修改原始碼，而是利用 Java Agent 技術，在 JVM 載入類別檔案時，動態對編譯後的位元組碼（Bytecode, .class 檔案）進行插樁（On-the-fly Instrumentation）。這使得測試與開發程式碼解耦，無需改動原始碼即可測量覆蓋率。
 </details>
 
 ### [Activity: sqa-ch06-ccq4] 6.3.1 概念核對問答 (CCQ 4)
@@ -698,7 +713,7 @@
 **解析**：* 若要測試多組不同的輸入值與預期輸出值（參數化測試），應該使用 **`Scenario Outline`（情境大綱）** 搭配 **`Examples`（範例表格）**，而非 `Scenario` 搭配 `Background`。`Background` 是用於在每個情境執行前設定共同的前置步驟（例如登入系統），無法實現表格化的參數對照測試。
 </details>
 
-### [Activity: sqa-ch08-ccq1] 8.3.5 概念核對問答 (CCQ 2)：AI 畫面模擬與無頭瀏覽器技術本質
+### [Activity: sqa-ch08-ccq2] 8.3.5 概念核對問答 (CCQ 2)：AI 畫面模擬與無頭瀏覽器技術本質
 #### [CCQ] 在現代 E2E 系統測試架構中，關於無頭瀏覽器 (Headless Browser)、桌面端自動化框架 (Spectron) 與 AI 瀏覽器代理人 (Browser Subagent) 的技術原理，下列敘述何者**最正確**？
 - 無頭瀏覽器因為沒有圖形介面 (No GUI)，因此在執行測試時不會載入 CSS 與排版引擎 (Layout Engine)，僅執行純粹的 JavaScript 邏輯運算以加快速度
 - Spectron 框架主要用於純 Web 應用的效能壓測，無法直接跨入 Electron 的主行程 (Main Process) 控制桌面原生對話框
@@ -1348,10 +1363,10 @@
   *(說明：Web 伺服器普遍採用執行緒池 ThreadPool 重複利用執行緒，若不在 `finally` 清除 MDC，下一個借用該執行緒的請求日誌將會殘留上一個請求的 `orderId`，造成致命的追蹤污染！)*
 </details>
 
-## Unit 5: Code Metrics
+## Unit 6: Code Metrics
 
 ### [Activity: sqa-u05-metrics-ccq1] 總結與關聯性
-#### [CCQ] MetricsReloaded 提供的這些指標通常需要**結合起來**看，才能全面評估程式碼品質： | 情境 | 指標組合 | 潛在問題 | 解決建議 | | :--- | :--- | :--- | :--- | | **方法過於複雜** | `v(G)` 或 `CogC` **高** | 單個方法邏輯分支太多，難以測試和理解。 | 應將複雜方法**拆解**成多個更小、功能單一的方法。 | | **類別職責過多** | `WMC` **高** 且 `LOC` **高** | 類別承擔了過多的責任（神級物件）。 | 應使用**設計模式**，將類別**拆分**成多個更專業的類別。 | | **方法複雜度不一** | `WMC` 高，但 `OCavg` 低 | 類別有很多簡單方法，但可能有一兩個**極度複雜**的方法。 | 專注於重構那幾個特別複雜的方法。 | 這些指標是您維護高品質程式碼庫的強大工具。 您想讓我針對其中一個指標，例如 **Cognitive Complexity (CogC)**，提供更多關於如何降低它的技巧嗎？
+#### [CCQ] MetricsReloaded 提供的這些指標通常需要**結合起來**看，才能全面評估程式碼品質： | 情境 | 指標組合 | 潛在問題 | 解決建議 | | :--- | :--- | :--- | :--- | | **方法過於複雜** | `v(G)` 或 `CogC` **高** | 單個方法邏輯分支太多，難以測試和理解。 | 應將複雜方法**拆解**成多個更小、功能單一的方法。 | | **類別職責過多** | `WMC` **高** 且 `LOC` **高** | 類別承擔了過多的責任（神級物件）。 | 應使用**設計模式**，將類別**拆分**成多個更專業的類別。 | | **方法複雜度不一** | `WMC` 高，但 `OCavg` 低 | 類別有很多簡單方法，但可能有一兩個**極度複雜**的方法。 | 專注於重構那幾個特別複雜的方法。 |
 
 ## Unit 6: White Box Testing Lab (白箱測試與覆蓋度分析實作手冊)
 
@@ -1367,3 +1382,69 @@
 
 ### [Activity: sqa-u04-pmd-ccq1] 如何只檢查特定類別（例如 BubbleSort）？
 #### [CCQ] 一般 Maven 預設會掃描專案內所有來源檔，但我們在 `pom.xml` 中預設將範圍鎖定於 `u04_inspection`。若在日常練習時只想針對特定檔案進行檢查，可透過 `-Dpmd.includes` 參數動態指定： ```bash
+
+## Unit 3: 實驗 3-2：Test Oracle 破局實驗 —— 從 assertEquals 失敗到變質關係 (The Oracle Sandbox)
+
+### [Activity: sqa-u03-testoraclemetamorphic-ccq1] 實驗目標 (Objectives)
+#### [CCQ] 
+- **體會「測試預言機難題 (The Test Oracle Problem)」**：
+- **掌握變質測試 (Metamorphic Testing, MT) 的核心哲學**：
+- **動手執行與設計變質斷言**：
+
+### [Activity: sqa-u03-testoraclemetamorphic-ccq2] 🏛️ 四大經典變質關係模式實戰
+#### [CCQ] #### 1. MR-1：對稱與等價性 (Symmetry Invariance) * **哲學**：在無向路網圖中，由台北出發到高雄的最短距離，必然嚴格等於由高雄出發到台北的最短距離！ * **代碼落地**： ```java double forwardDist = planner.findShortestDistance(graph, "Taipei", "Kaohsiung"); double backwardDist = planner.findShortestDistance(graph, "Kaohsiung", "Taipei"); assertEquals(forwardDist, backwardDist, 0.0001, "變質關係違規：雙向路徑不對稱！"); ``` #### 2. MR-2：比例縮放一致性 (Scaling Consistency) * **哲學**：若將全台灣所有道路權重同乘以 $k$ 倍（例如公里換算英哩），算出的最短距離必然精準放大 $k$ 倍！ * **代碼落地**： ```java double baseDist = planner.findShortestDistance(graph, "Taipei", "Pingtung"); RoadGraph scaledGraph = graph.scaleWeights(2.0); // 放大 2 倍 double scaledDist = planner.findShortestDistance(scaledGraph, "Taipei", "Pingtung"); assertEquals(baseDist * 2.0, scaledDist, 0.001, "變質關係違規：未等比例縮放！"); ``` #### 3. MR-3：中繼點三角不等式 (Triangle Inequality) * **哲學**：由台北直達高雄的最短路徑，絕對不會比「台北到台中 + 台中到高雄」還要長！ * **代碼落地**： ```java double distAB = planner.findShortestDistance(graph, "Taipei", "Kaohsiung"); double distAC = planner.findShortestDistance(graph, "Taipei", "Taichung"); double distCB = planner.findShortestDistance(graph, "Taichung", "Kaohsiung"); assertTrue(distAB <= (distAC + distCB) + 0.0001, "變質關係違規：違反三角不等式！"); ``` #### 4. MR-4：無關獨立節點抗擾動性 (Irrelevant Perturbation) * **哲學**：在路網中加入一個尚未連通的孤島節點（如澎湖 `Penghu_Isolated`），本島任何兩點之間的最短距離絕對不可受任何影響！ * **代碼落地**： ```java RoadGraph perturbedGraph = graph.copy();
+- addNode("Penghu_Isolated"); // 加入獨立孤島節點
+
+## Unit 3: 實驗 3-1：測試案例規格化設計 ＆ AI 協同生成盲區評審 (Test Spec & AI Co-Design)
+
+### [Activity: sqa-u03-testspeccodesign-ccq1] 實驗目標 (Objectives)
+#### [CCQ] 
+- **掌握專業規格化思維**：
+- **行為文氏圖落地分析**：
+- **AI 時代人機協同實戰 (AI Prompting & Review)**：
+
+### [Activity: sqa-u03-testspeccodesign-ccq2] ✍️ 任務一：人類工程師專業測試案例設計 (手動設計)
+#### [CCQ] > ⚠️ **請勿直接使用 AI！** 測試工程師的核心價值在於深入理解業務規格。請先研讀示範案例，接著親自動手推導並完成學生挑戰任務表。
+
+### [Activity: sqa-u03-testspeccodesign-ccq3] 實驗小結與收穫
+#### [CCQ] 實驗小結與收穫
+- **測試案例不是隨機點擊**：完整的測試案例必須具備前置條件、明確步驟與唯一可驗證的預期結果（Oracle）。
+- **AI 是優秀的初稿草擬者，但不是負責者**：AI 善於快速列舉排列組合，但在業務邊界嚴密性、浮點數運算順序與規格忠實度上極易產生隱形盲區。
+- **SQA 的終極價值**：掌握「規格定義與邊界裁判權」，人機協同才能達到 10x 的測試效能與 100% 的品質守門！
+
+## Unit 5: 🧪 Lab 05: 單元測試與黑箱測試實務 (JUnit 5 & Black-Box Testing)
+
+### [Activity: sqa-u05-junit-ccq1] 5.3: 邊界值分析 (BVA) 實戰
+#### [CCQ] 5.3: 邊界值分析 (BVA) 實戰
+
+### [Activity: sqa-u05-junit-ccq2] 5.7: 因果圖與決策表實戰
+#### [CCQ] 5.7: 因果圖與決策表實戰
+
+### [Activity: sqa-u05-junit-ccq3] 🕵️ 5.10: 經驗基礎與錯誤推測 (Error Guessing) 實戰
+#### [CCQ] 🕵️ 5.10: 經驗基礎與錯誤推測 (Error Guessing) 實戰
+
+## Unit 5: 全成對組合測試 (Pairwise / All-Pairs Testing) 實戰手冊
+
+### [Activity: sqa-u05-pairwisecombinatorial-ccq1] NIST 實證研究與 2-Way 交互作用理論
+#### [CCQ] 美國國家標準與技術研究院 (NIST) 針對醫療、航太、國防與伺服器軟體進行廣泛缺陷調查發現： * **67% ~ 93%** 的軟體缺陷是由「**單一參數**」或「**任意兩個參數之交互作用 (2-Way Interaction)**」所引發。 * 需要 3 個以上參數同時交互才會觸發的缺陷極為罕見（不到 10%）。 **全成對測試 (Pairwise / All-Pairs Testing) 原則**： > **確保受測系統中「任意兩個參數」的所有可能取值組合，在整個測試案例集中「至少出現過一次」。** > 如此可將案例數從幾萬組急劇縮減至數十組，卻能攔截 90% 以上的潛在交互缺陷！
+
+## Unit 5: 📚 Lab 05 練習題完整參考解答庫 (Exercise Solutions)
+
+### [Activity: sqa-u05-readme-ccq1] 🗂️ 快速章節跳轉導覽
+#### [CCQ] - [Unit 5.2：JUnit 5 基礎與 3A 原則解答](#unit-52-junit-5-基礎與-3a-原則) - [Unit 5.3：邊界值分析 (BVA) 解答](#unit-53-邊界值分析-bva) - [Unit 5.4：等價類分割 (EP) 解答](#unit-54-等價類分割-ep) - [Unit 5.5：全成對組合測試 (Pairwise) 解答](#unit-55-全成對組合測試-pairwise) - [Unit 5.6：分類樹方法 (CTM) 解答](#unit-56-分類樹方法-ctm) - [Unit 5.7：因果圖與決策表測試解答](#unit-57-因果圖與決策表測試) - [Unit 5.8：狀態轉換測試解答](#unit-58-狀態轉換測試) - [Unit 5.9：使用案例測試 (Use Case) 解答](#unit-59-使用案例測試-use-case) - [Unit 5.10：經驗基礎與錯誤推測解答](#unit-510-經驗基礎與錯誤推測) - [Unit 5.11：屬性測試 (PBT) 與變質測試解答](#unit-511-屬性測試-pbt-與變質測試)
+
+## Chapter 7: 軟體品質與測試
+
+### [Activity: sqa-ch07-ccq1] Chapter 7: 軟體品質與測試 CCQ 1
+#### [CCQ] 你們團隊正在開發一套無人自動駕駛車輛控制系統。底層是直接與 CAN 匯流排感測器（光達、雷達、輪速計）通訊的高頻硬體通訊驅動模組，頂層是決策與路徑規劃演算法。硬體部門回報感測器實體電路板極為敏感脆弱且容易過熱故障。軟體測試工程師此時若要展開整合測試，最合理的策略應為何？
+- 採用大霹靂整合，等待整車硬體與車載電腦全部組裝完畢後直接上路進行道路測試
+- 採用由下而上整合，直接在真實車輛上長時間持續讀取實體 CAN 匯流排感測器訊號
+- 採用由上而下整合，先為脆弱的底層硬體撰寫 Stubs 模擬雷達資料以驗證高層演算法
+- 完全不進行任何整合測試，只要感測器模組單元測試全數覆蓋即可直接出廠
+
+### [Activity: sqa-ch07-ccq2] Chapter 7: 軟體品質與測試 CCQ 2
+#### [CCQ] 資深架構師在審查小明的單元測試時，發現小明在測試 `OrderCheckoutService`（結帳服務）時，將底層的 `TaxCalculator`、`DiscountRuleEngine`、`InventoryClient` 全部使用 Mock 嚴格設定，甚至使用 `verify(taxCalculator, times(1)).calculate(...)`。架構師給予建議「不要過度 Mocking，應優先採用真實物件或 Fake 物件」。下列哪一項**不是**過度 Mock 帶來的缺點？
+- 重構內部私有變數或調用結構時容易造成測試非預期脆化
+- Mockito 的動態代理反射機制會稍微增加測試執行時間
+- 容易忽略外部依賴升級或真實行為契約變動所帶來的崩潰
+- 測試案例能有效且精準地度量系統於高併發下的死結狀況

@@ -377,10 +377,7 @@
 #### [Short] ##### 💡 SQA 2.0 應對 Test Oracle 難題的三大前沿技術：
 
 ### [Activity: sqa-ch03-ccq1] ✍️ 3.6 綜合練習
-#### [CCQ] ### 一、測試原則與理論辨析
-- 為了確保軟體絕對正確，我們是否應該進行窮盡式測試（Exhaustive Testing）？為什麼？
-- 說明何謂測試的「殺蟲劑效應（Pesticide Paradox）」？當使用 AI 輔助生成測試時，為什麼更容易產生殺蟲劑效應？
-- 比較 Verification 與 Validation 的核心差異。
+#### [CCQ] ✍️ 3.6 綜合練習
 
 ## Chapter 4: 軟體檢視
 
@@ -603,11 +600,7 @@
 </details>
 
 ### [Activity: sqa-ch05-ccq12] ✍️ 練習
-#### [CCQ] ### 5.ex.spec 設計規格 一個功能模組的「規格」包含該模組的參數、回傳型態、前置條件、後置條件。寫出以下功能的規格，嘗試以正規的方式來描述之。並設計期測試案例。
-- 由一群陣列中找出最大的值回傳
-- 針對一個陣列做由小到大的排序
-- 輸入一段文字和一個單字，回傳該單字在該文字出現的位置
-- 輸入兩個字串型態的實數，回傳其相加的結果
+#### [CCQ] ✍️ 練習
 
 ## Chapter 6: 白箱測試
 
@@ -728,6 +721,65 @@
 *   **B 選項錯誤**：Spectron 是專門為 Electron 桌面應用設計的測試框架，其核心特點正是能夠透過 ChromeDriver 同時管理 Electron 的主行程 (Main Process) 與渲染行程 (Renderer Process)，控制原生選單與系統對話框。
 *   **C 選項正確**：傳統 E2E 測試最大的維護噩夢在於前端程式碼重構（如 Tailwind CSS 類別更動）導致 XPath/CSS 定位器失效；AI 代理人透過多模態視覺與語意推斷，具備自我修復 (Self-healing) 與視覺辨識能力，有效攻克此痛點。
 *   **D 選項錯誤**：AI 瀏覽器代理人可完美在無頭 (Headless) 模式下運行，利用記憶體緩衝區光柵化即時擷取畫面送交多模態模型，並自動在背景將整個操作過程編碼存檔為 WebP 視訊軌與 DOM 工件。
+</details>
+
+### [Activity: sqa-ch08-ccq3] 8.4.4 概念核對問答 (CCQ 3)：Nielsen 十大可用性原則情境診斷
+#### [CCQ] 使用者在某網站註冊設定密碼時，系統僅冷冰冰地跳出紅字「❌ 密碼設定強度不足！」，卻沒有說明究竟是「長度未滿 8 碼」、「缺少大寫字母」還是「缺少特殊符號」，導致使用者反覆盲目重試。請問這主要違反了 Jakob Nielsen 十大可用性原則中的哪一項？
+- 原則 3：使用者控制與自由 (User control and freedom)
+- 原則 7：彈性與使用效率 (Flexibility and efficiency of use)
+- 原則 8：美學與極簡設計 (Aesthetic and minimalist design)
+- 原則 9：幫助使用者辨識、診斷並修復錯誤 (Help users recover from errors) (Correct)
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：D
+**解析**：Nielsen 第 9 條原則強調「錯誤訊息應以淺顯易懂的語言精確指出問題，並建設性地給出解決方法」。僅告知「密碼強度不足」而未指出缺少的條件與修復指引，即違反此原則。
+</details>
+
+### [Activity: sqa-ch08-ccq4] 8.5.8 概念核對問答 (CCQ 4)：工作負載指標與壓測執行原則
+#### [CCQ] 在規劃與執行 Web 系統的效能與壓力測試時，關於工作負載指標與測試執行原則，下列哪一項敘述是**最正確**的？
+- 網站的 Hit (請求點擊數) 越高代表獨立造訪人數越多，且壓力測試應與伺服器系統監控分開執行以免干擾數據
+- 使用輪廓 (Usage Profile) 是設計工作流量的重要依據，且 `Page View / Session` 越高代表每次進入系統瀏覽越多網頁 (Correct)
+- JMeter 中的 Thread (執行緒) 數量是指受測伺服器端是否開啟多工模式，且 JMeter 不具備錄製回放 (Record & Replay) 功能
+- 當系統達到飽和點 (Saturation Point) 時，吞吐量 (RPS) 會持續線性暴增，而回應時間則會保持平坦不變
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：B
+**解析**：* **A 錯誤**：Hit 是載入頁面所引發的所有靜態與動態請求數，Hit 高不代表人數多；且壓力測試必須與系統監控同步進行才能定位瓶頸。
+  * **B 正確**：使用輪廓反映各業務操作佔比；`Page View / Session` 衡量每次會話平均瀏覽頁數。
+  * **C 錯誤**：JMeter Thread 代表壓測端模擬之虛擬使用者數，且內建 HTTP Proxy 錄製回放功能。
+  * **D 錯誤**：到達飽和點後，吞吐量 (RPS) 停滯甚至下降，回應時間則呈指數級急彎飆升。
+</details>
+
+### [Activity: sqa-ch08-ccq5] 8.7.4 概念核對問答 (CCQ 5)：DevSecOps 安全測試技術選型
+#### [CCQ] 在 DevSecOps 安全測試流水線中，若團隊希望能自動掃描專案 `pom.xml` 中所引入的第三方開源函式庫（例如檢查是否誤用了含有已知 CVE 高風險漏洞的舊版 `Log4j` 套件），應該優先採用下列哪一種安全測試技術？
+- SAST (Static Application Security Testing，靜態應用安全測試)
+- DAST (Dynamic Application Security Testing，動態應用安全測試)
+- SCA (Software Composition Analysis，軟體成分分析) (Correct)
+- STRIDE 威脅建模中的 Repudiation (不可否認性檢驗)
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：C
+**解析**：**SCA (Software Composition Analysis，軟體成分分析)** 專門掃描專案引入的第三方套件並比對 NVD 漏洞資料庫（CVE）；SAST 掃描團隊自寫的原始碼，DAST 則從外部發動動態黑箱攻擊。
+</details>
+
+### [Activity: sqa-ch08-ccq6] 8.8.4 概念核對問答 (CCQ 6)：RTO、RPO、MTBF 與 MTTR 指標辨析
+#### [CCQ] 某銀行核心轉帳系統在災難復原規格書中規定：「當主機房發生斷電災難時，備援機房必須在 **3 分鐘內**完成切換並恢復對外轉帳服務；且已確認之交易紀錄**不允許遺失任何一筆（0 秒資料遺失）**。」請問這兩項要求依序對應至哪兩個回復性指標？
+- MTBF = 3 分鐘，MTTR = 0 秒
+- RPO = 3 分鐘，RTO = 0 秒
+- RTO = 3 分鐘，RPO = 0 秒 (Correct)
+- MTTR = 3 分鐘，MTBF = 0 秒
+
+<details>
+<summary>點擊查看答案與解析</summary>
+
+**正確答案**：C
+**解析**：**RTO (Recovery Time Objective，復原時間目標)** 代表業務能容忍的最大停機時間（3 分鐘內恢復服務）；**RPO (Recovery Point Objective，復原點目標)** 代表災難發生時業務能容忍的最大資料遺失量（0 秒零遺失）。
 </details>
 
 ## Unit 2: AI 程式碼破壞實驗 (AI Code Attack & Reliability Lab)
@@ -1386,7 +1438,7 @@
 ## Unit 3: 實驗 3-2：Test Oracle 破局實驗 —— 從 assertEquals 失敗到變質關係 (The Oracle Sandbox)
 
 ### [Activity: sqa-u03-testoraclemetamorphic-ccq1] 實驗目標 (Objectives)
-#### [CCQ] 
+#### [CCQ] 實驗目標 (Objectives)
 - **體會「測試預言機難題 (The Test Oracle Problem)」**：
 - **掌握變質測試 (Metamorphic Testing, MT) 的核心哲學**：
 - **動手執行與設計變質斷言**：
@@ -1398,7 +1450,7 @@
 ## Unit 3: 實驗 3-1：測試案例規格化設計 ＆ AI 協同生成盲區評審 (Test Spec & AI Co-Design)
 
 ### [Activity: sqa-u03-testspeccodesign-ccq1] 實驗目標 (Objectives)
-#### [CCQ] 
+#### [CCQ] 實驗目標 (Objectives)
 - **掌握專業規格化思維**：
 - **行為文氏圖落地分析**：
 - **AI 時代人機協同實戰 (AI Prompting & Review)**：
@@ -1415,13 +1467,13 @@
 ## Unit 5: 🧪 Lab 05: 單元測試與黑箱測試實務 (JUnit 5 & Black-Box Testing)
 
 ### [Activity: sqa-u05-junit-ccq1] 5.3: 邊界值分析 (BVA) 實戰
-#### [CCQ] 5.3: 邊界值分析 (BVA) 實戰
+#### [CCQ] ### 1. 痛點剖析：臨界測資密集與 Early Abort 陷阱 - 邊界值分析 (BVA) 會針對邊緣點產生大量測試數值（`min-, min, min+, nom, max-, max, max+`）。 - 若在同一方法中寫多行常規斷言，一旦第一個 `min-` 斷言失敗，測試會立即拋錯中止，導致後續所有 `max` 邊界檢驗直接被跳過（Early Abort），造成嚴重漏檢！
 
 ### [Activity: sqa-u05-junit-ccq2] 5.7: 因果圖與決策表實戰
-#### [CCQ] 5.7: 因果圖與決策表實戰
+#### [CCQ] ### 1. 痛點剖析：規則化簡與多動作覆蓋盲區 - 因果圖法轉出的 CAR 決策表，每一條化簡規則 (Rule) 包含多條件組合。 - 單一規則常激發多個系統外顯動作（例如：折扣價計算 + 發放贈品 + 標記免運）。 - 傳統斷言若第一個動作失敗即中止，將導致後續動作檢驗全部漏掉。
 
 ### [Activity: sqa-u05-junit-ccq3] 🕵️ 5.10: 經驗基礎與錯誤推測 (Error Guessing) 實戰
-#### [CCQ] 🕵️ 5.10: 經驗基礎與錯誤推測 (Error Guessing) 實戰
+#### [CCQ] ### 1. 痛點剖析：規格書不會寫的直覺盲區與攻擊向量 - 形式化規格書通常只定義「理想與標準的輸入輸出」，但惡意使用者或極端環境常輸入規格書未明定的髒資料。 - 測試工程師依據過去慘痛的踩坑經驗（直覺、缺陷歷史、安全弱點清單），主動設計「破壞性測試探針」。
 
 ## Unit 5: 全成對組合測試 (Pairwise / All-Pairs Testing) 實戰手冊
 
